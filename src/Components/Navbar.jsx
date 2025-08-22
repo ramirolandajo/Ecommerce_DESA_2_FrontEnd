@@ -1,6 +1,7 @@
 // Navbar.jsx
 import { useState } from "react";
 import { useNavigate, NavLink, Link } from "react-router-dom";
+import CartDrawer from "./CartDrawer.jsx";
 import {
   Disclosure,
   DisclosureButton,
@@ -28,9 +29,13 @@ const cx = (...c) => c.filter(Boolean).join(" ");
 
 export default function Navbar() {
   const [query, setQuery] = useState("");
+  const [cartOpen, setCartOpen] = useState(false);
   const navigate = useNavigate();
 
+  const toggleCart = () => setCartOpen((prev) => !prev);
+
   return (
+    <>
     <Disclosure
       as="nav"
       className="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200"
@@ -120,6 +125,7 @@ export default function Navbar() {
             <button
               className="p-2 rounded-full text-gray-700 hover:text-black focus:outline-none focus:ring-2 focus:ring-gray-900"
               aria-label="Cart"
+              onClick={toggleCart}
             >
               <ShoppingCartIcon className="size-6" />
             </button>
@@ -205,5 +211,7 @@ export default function Navbar() {
         </div>
       </DisclosurePanel>
     </Disclosure>
+    <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+    </>
   );
 }
