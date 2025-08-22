@@ -20,8 +20,6 @@ import {
 const navigation = [
   { name: "Home", href: "/" },
   { name: "Shop", href: "/shop" },
-  { name: "Contact Us", href: "/contact" },
-  { name: "Blog", href: "/blog" },
 ];
 
 const cx = (...c) => c.filter(Boolean).join(" ");
