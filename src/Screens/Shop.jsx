@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { tiles } from "../data/Products.js";
+import { tiles, categories } from "../data/Products.js";
 import GlassProductCard from "../Components/GlassProductCard.jsx";
 import FilterSidebar from "../Components/FilterSidebar.jsx";
 
@@ -27,6 +27,7 @@ export default function Shop() {
                 ? t.title?.toLowerCase().includes(q)
                       || t.description?.toLowerCase().includes(q)
                       || t.category?.toLowerCase().includes(q)
+                      || t.subcategory?.toLowerCase().includes(q)
                 : true;
             return matchesCat && matchesSub && matchesMin && matchesMax && matchesQuery;
         });
@@ -35,6 +36,7 @@ export default function Shop() {
     return (
         <>
             <FilterSidebar
+                categories={categories}
                 category={category}
                 subcategory={subcategory}
                 min={min}
