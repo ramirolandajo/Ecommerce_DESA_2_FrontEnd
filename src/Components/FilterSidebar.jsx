@@ -36,7 +36,7 @@ export default function FilterSidebar({
                 </button>
             )}
             <aside
-                className={`fixed left-0 top-0 z-10 h-full w-64 bg-white p-4 border-r border-zinc-200 transform transition-transform md:translate-x-0 ${
+                className={`sticky left-0 top-16 z-10 h-[calc(100vh-4rem)] overflow-y-auto w-64 bg-white p-4 border-r border-zinc-200 transform transition-transform md:translate-x-0 ${
                     open ? "translate-x-0" : "-translate-x-full md:translate-x-0"
                 }`}
             >
