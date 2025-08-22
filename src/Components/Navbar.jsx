@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { tiles } from "../data/Products";
 import {
     Disclosure,
     DisclosureButton,
@@ -27,7 +28,74 @@ const cx = (...c) => c.filter(Boolean).join(" ");
 
 export default function Navbar() {
     const [query, setQuery] = useState("");
+    const [suggestions, setSuggestions] = useState([]);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const q = query.trim().toLowerCase();
+        if (!q) {
+            setSuggestions([]);
+            return;
+        }
+        const results = tiles
+            .filter(
+                (item) =>
+                    item.title.toLowerCase().includes(q) ||
+                    item.category.toLowerCase().includes(q),
+            )
+            .slice(0, 5);
+        setSuggestions(results);
+    }, [query]);
+
+    const handleSelect = (item) => {
+        navigate(`/producto/${item.id}`);
+        setQuery("");
+        setSuggestions([]);
+    };
+
+    const SearchBar = ({ className = "" }) => (
+        <form
+            onSubmit={(e) => {
+                e.preventDefault();
+                navigate(`/shop?query=${encodeURIComponent(query)}`);
+            }}
+            className={className}
+        >
+            <div className="relative">
+                <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
+                <input
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search"
+                    className="w-full md:max-w-sm lg:max-w-md xl:max-w-lg 2xl:max-w-2xl rounded-xl border border-gray-200 bg-gray-100 pl-10 pr-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                {suggestions.length > 0 && (
+                    <ul className="absolute left-0 right-0 top-full z-10 mt-1 max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+                        {suggestions.map((item) => (
+                            <li key={item.id}>
+                                <button
+                                    type="button"
+                                    onClick={() => handleSelect(item)}
+                                    className="flex w-full items-center gap-3 p-2 text-left hover:bg-gray-50"
+                                >
+                                    <img
+                                        src={item.media.src}
+                                        alt={item.media.alt || item.title}
+                                        className="h-10 w-10 rounded object-cover"
+                                    />
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-900">{item.title.replace(/\n/g, " ")}</p>
+                                        <p className="text-xs text-gray-500">{item.category}</p>
+                                    </div>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+        </form>
+    );
 
     return (
         <Disclosure
@@ -58,30 +126,7 @@ export default function Navbar() {
                         </a>
 
                         {/* Search (solo md+) */}
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                navigate(`/shop?query=${encodeURIComponent(query)}`);
-                            }}
-                            className="hidden md:block flex-1 min-w-0"
-                        >
-                            <div className="relative">
-                                <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
-                                <input
-                                    type="search"
-                                    value={query}
-                                    onChange={(e) => setQuery(e.target.value)}
-                                    placeholder="Search"
-                                    className="
-                    w-full min-w-0
-                    md:max-w-sm lg:max-w-md xl:max-w-lg 2xl:max-w-2xl
-                    rounded-2xl border border-gray-200 bg-gray-100
-                    pl-10 pr-3 py-2.5 text-sm text-gray-900 placeholder-gray-400
-                    focus:outline-none focus:ring-2 focus:ring-gray-900
-                  "
-                                />
-                            </div>
-                        </form>
+                        <SearchBar className="hidden md:block flex-1 min-w-0" />
                     </div>
 
                     {/* CENTRO: tabs (sm+) centrados con aire escalable) */}
@@ -171,23 +216,7 @@ export default function Navbar() {
 
                     {/* Search en mobile */}
                     <div className="px-1 pt-2 pb-3">
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                navigate(`/shop?query=${encodeURIComponent(query)}`);
-                            }}
-                        >
-                            <div className="relative">
-                                <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
-                                <input
-                                    type="search"
-                                    value={query}
-                                    onChange={(e) => setQuery(e.target.value)}
-                                    placeholder="Search"
-                                    className="w-full rounded-xl border border-gray-200 bg-gray-100 pl-10 pr-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-900"
-                                />
-                            </div>
-                        </form>
+                        <SearchBar />
                     </div>
                 </div>
             </DisclosurePanel>
