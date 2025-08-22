@@ -25,7 +25,7 @@ const navigation = [
 
 const cx = (...c) => c.filter(Boolean).join(" ");
 
-export default function Navbar() {
+export default function Navbar({ onCartToggle = () => {} }) {
     const [query, setQuery] = useState("");
     const navigate = useNavigate();
 
@@ -108,6 +108,7 @@ export default function Navbar() {
                     {/* DERECHA: iconos siempre visibles con gap escalable */}
                     <div className="flex items-center justify-end gap-4 md:gap-6 lg:gap-8">
                         <button
+                            onClick={onCartToggle}
                             className="p-2 rounded-full text-gray-700 hover:text-black focus:outline-none focus:ring-2 focus:ring-gray-900"
                             aria-label="Cart"
                         >
