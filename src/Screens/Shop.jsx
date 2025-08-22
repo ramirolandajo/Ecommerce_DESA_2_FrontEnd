@@ -27,7 +27,9 @@ export default function Shop() {
             const matchesMin = min === "" ? true : price >= Number(min);
             const matchesMax = max === "" ? true : price <= Number(max);
             const matchesQuery = q
-                ? t.title?.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q)
+                ? t.title?.toLowerCase().includes(q)
+                      || t.description?.toLowerCase().includes(q)
+                      || t.category?.toLowerCase().includes(q)
                 : true;
             return matchesCat && matchesMin && matchesMax && matchesQuery;
         });
