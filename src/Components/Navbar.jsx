@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
     Disclosure,
     DisclosureButton,
@@ -17,10 +17,10 @@ import {
 } from "@heroicons/react/24/outline";
 
 const navigation = [
-    { name: "Home", href: "#", current: true },
-    { name: "Shop", href: "/shop", current: false },
-    { name: "Contact Us", href: "#", current: false },
-    { name: "Blog", href: "#", current: false },
+    { name: "Home", href: "/" },
+    { name: "Shop", href: "/shop" },
+    { name: "Contact Us", href: "#" },
+    { name: "Blog", href: "#" },
 ];
 
 const cx = (...c) => c.filter(Boolean).join(" ");
@@ -28,6 +28,7 @@ const cx = (...c) => c.filter(Boolean).join(" ");
 export default function Navbar() {
     const [query, setQuery] = useState("");
     const navigate = useNavigate();
+    const { pathname } = useLocation();
 
     return (
         <Disclosure
@@ -86,23 +87,26 @@ export default function Navbar() {
 
                     {/* CENTRO: tabs (sm+) centrados con aire escalable) */}
                     <nav className="hidden sm:flex min-w-0 items-center justify-center gap-6 md:gap-10 lg:gap-14">
-                        {navigation.map((item) => (
-                            <a
-                                key={item.name}
-                                href={item.href}
-                                aria-current={item.current ? "page" : undefined}
-                                className={cx(
-                                    "relative px-1 py-2 font-semibold transition",
-                                    "text-sm md:text-base", // tipografía escala
-                                    item.current ? "text-gray-900" : "text-gray-400 hover:text-gray-900"
-                                )}
-                            >
-                                {item.name}
-                                {item.current && (
-                                    <span className="pointer-events-none absolute -bottom-1 left-1/2 h-0.5 w-10 md:w-12 lg:w-14 -translate-x-1/2 rounded bg-gray-900" />
-                                )}
-                            </a>
-                        ))}
+                        {navigation.map((item) => {
+                            const active = pathname === item.href;
+                            return (
+                                <a
+                                    key={item.name}
+                                    href={item.href}
+                                    aria-current={active ? "page" : undefined}
+                                    className={cx(
+                                        "relative px-1 py-2 font-semibold transition",
+                                        "text-sm md:text-base",
+                                        active ? "text-gray-900" : "text-gray-400 hover:text-gray-900"
+                                    )}
+                                >
+                                    {item.name}
+                                    {active && (
+                                        <span className="pointer-events-none absolute -bottom-1 left-1/2 h-0.5 w-10 md:w-12 lg:w-14 -translate-x-1/2 rounded bg-gray-900" />
+                                    )}
+                                </a>
+                            );
+                        })}
                     </nav>
 
                     {/* DERECHA: iconos siempre visibles con gap escalable */}
@@ -153,21 +157,25 @@ export default function Navbar() {
             {/* MOBILE: navegación y buscador */}
             <DisclosurePanel className="sm:hidden border-t border-gray-200">
                 <div className="px-2 py-3 space-y-1">
-                    {navigation.map((item) => (
-                        <DisclosureButton
-                            key={item.name}
-                            as="a"
-                            href={item.href}
-                            className={cx(
-                                "block rounded-md px-3 py-2 text-base font-medium",
-                                item.current
-                                    ? "bg-gray-100 text-gray-900"
-                                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                            )}
-                        >
-                            {item.name}
-                        </DisclosureButton>
-                    ))}
+                    {navigation.map((item) => {
+                        const active = pathname === item.href;
+                        return (
+                            <DisclosureButton
+                                key={item.name}
+                                as="a"
+                                href={item.href}
+                                aria-current={active ? "page" : undefined}
+                                className={cx(
+                                    "block rounded-md px-3 py-2 text-base font-medium",
+                                    active
+                                        ? "bg-gray-100 text-gray-900"
+                                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                                )}
+                            >
+                                {item.name}
+                            </DisclosureButton>
+                        );
+                    })}
 
                     {/* Search en mobile */}
                     <div className="px-1 pt-2 pb-3">
