@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { productUrl } from "../routes/paths";
 
 const slides = [
     {
@@ -7,7 +9,7 @@ const slides = [
         eyebrow: "Sony",
         title: "Playstation 5",
         description: "Increíble potencia CPU/GPU y SSD con I/O integrado redefine tu experiencia.",
-        cta: { label: "Comprar", href: "#ps5" },
+        cta: { label: "Comprar" },
         media: {
             src: "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?q=80&w=627&auto=format&fit=crop",
             alt: "PlayStation 5",
@@ -18,7 +20,7 @@ const slides = [
         eyebrow: "Apple",
         title: "Macbook\nAir",
         description: "El nuevo MacBook Air 15'' te da espacio de sobra con Liquid Retina Display.",
-        cta: { label: "Comprar", href: "#mac" },
+        cta: { label: "Comprar" },
         media: {
             src: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1400&auto=format&fit=crop",
             alt: "Macbook",
@@ -29,7 +31,7 @@ const slides = [
         eyebrow: "Apple",
         title: "AirPods\nMax",
         description: "Computational audio. Livianos y potentes.",
-        cta: { label: "Comprar", href: "#airpods" },
+        cta: { label: "Comprar" },
         media: {
             src: "https://images.unsplash.com/photo-1641893978985-a0c233b14f9b?q=80&w=764&auto=format&fit=crop",
             alt: "AirPods Max",
@@ -40,7 +42,7 @@ const slides = [
         eyebrow: "Apple",
         title: "Vision\nPro",
         description: "Una forma inmersiva de experimentar entretenimiento.",
-        cta: { label: "Comprar", href: "#vision" },
+        cta: { label: "Comprar" },
         media: {
             src: "https://plus.unsplash.com/premium_photo-1711333057034-f845101448b0?q=80&w=808&auto=format&fit=crop",
             alt: "Vision Pro",
@@ -117,7 +119,7 @@ function SlideCard({ slide, className = "", medium = false, large = false }) {
     const lines = useMemo(() => slide.title.split("\n"), [slide.title]);
 
     return (
-        <motion.article
+        <Motion.article
             layoutId={slide.id}
             className={`relative overflow-hidden rounded-3xl border border-slate-700/40 bg-slate-900 ${className}`}
         >
@@ -168,8 +170,8 @@ function SlideCard({ slide, className = "", medium = false, large = false }) {
                 </p>
 
                 {/* CTA */}
-                <a
-                    href={slide.cta.href}
+                <Link
+                    to={productUrl(slide.id)}
                     className={`mt-3 inline-flex items-center justify-center rounded-xl border border-slate-600/50 bg-slate-700/40 ${
                         large
                             ? "px-5 py-2.5 text-sm"
@@ -179,9 +181,9 @@ function SlideCard({ slide, className = "", medium = false, large = false }) {
                     } font-medium backdrop-blur hover:bg-slate-700/60 text-slate-100`}
                 >
                     {slide.cta.label}
-                </a>
+                </Link>
             </div>
-        </motion.article>
+        </Motion.article>
     );
 }
 
