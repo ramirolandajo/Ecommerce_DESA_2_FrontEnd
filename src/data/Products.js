@@ -16,6 +16,7 @@ export const tiles = [
 
         // NUEVO
         category: "Computers",
+        subcategory: "Laptops",
         isNew: true,
         isBestseller: false,
         isFeatured: true,
@@ -35,6 +36,7 @@ export const tiles = [
 
         // NUEVO
         category: "Smart Watches",
+        subcategory: "Apple Watch",
         isNew: true,
         isBestseller: true,
         isFeatured: false,
@@ -56,6 +58,7 @@ export const tiles = [
 
         // NUEVO
         category: "Headphones",
+        subcategory: "Over-Ear",
         isNew: false,
         isBestseller: true,
         isFeatured: true,
@@ -75,8 +78,23 @@ export const tiles = [
 
         // NUEVO
         category: "Phones",
+        subcategory: "Foldables",
         isNew: true,
         isBestseller: false,
         isFeatured: false,
     },
 ];
+
+// Derive list of categories and their subcategories
+export const categories = tiles.reduce((acc, { category, subcategory }) => {
+    if (!category) return acc;
+    const found = acc.find((c) => c.category === category);
+    if (found) {
+        if (subcategory && !found.subcategories.includes(subcategory)) {
+            found.subcategories.push(subcategory);
+        }
+    } else {
+        acc.push({ category, subcategories: subcategory ? [subcategory] : [] });
+    }
+    return acc;
+}, []);
