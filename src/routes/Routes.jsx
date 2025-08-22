@@ -4,7 +4,7 @@ import Layout from "./Layout";
 
 // 👇 Importá según TU casing real de carpetas:
 const Home = lazy(() => import("../Screens/Home.jsx"));
-const ProductTilesSection = lazy(() => import("../Sections/ProductTilesSection.jsx")); // usa ../sections si tu carpeta es en minúscula
+const Shop = lazy(() => import("../Screens/Shop.jsx"));
 const ProductDetail = lazy(() => import("../Screens/ProductDetail.jsx")); // ← antes decía ../Screens/
 
 const NotFound = () => (
@@ -20,7 +20,7 @@ export default function AppRoutes() {
             element: <Layout />,
             children: [
                 { path: "/", element: <Home /> },
-                { path: "/store", element: <ProductTilesSection /> },
+                { path: "/shop", element: <Shop /> },
                 { path: "/producto/:id", element: <ProductDetail /> },
                 { path: "*", element: <NotFound /> },
             ],
