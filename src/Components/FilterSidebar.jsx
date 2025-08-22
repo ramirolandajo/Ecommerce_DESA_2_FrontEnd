@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { FunnelIcon } from "@heroicons/react/24/outline";
 
 export default function FilterSidebar({
     categories,
@@ -25,10 +26,13 @@ export default function FilterSidebar({
         <>
             {!open && (
                 <button
-                    className="md:hidden mb-4 border border-zinc-300 px-4 py-2 rounded"
+                    type="button"
+                    aria-label="Abrir filtros"
+                    className="md:hidden mb-4 inline-flex items-center gap-2 rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-400"
                     onClick={() => setOpen(true)}
                 >
-                    Filtros
+                    <FunnelIcon className="h-5 w-5" />
+                    <span className="sr-only sm:not-sr-only">Filtros</span>
                 </button>
             )}
             <aside
