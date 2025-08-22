@@ -1,6 +1,7 @@
 // Navbar.jsx
 import { useState } from "react";
 import { useNavigate, NavLink, Link } from "react-router-dom";
+import { tiles } from "../data/Products";
 import {
   Disclosure,
   DisclosureButton,
@@ -28,7 +29,32 @@ const cx = (...c) => c.filter(Boolean).join(" ");
 
 export default function Navbar() {
   const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
   const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+    setQuery(value);
+    if (!value.trim()) {
+      setSuggestions([]);
+      return;
+    }
+    const q = value.toLowerCase();
+    const filtered = tiles
+      .filter(
+        (item) =>
+          item.title.toLowerCase().includes(q) ||
+          item.category.toLowerCase().includes(q)
+      )
+      .slice(0, 5);
+    setSuggestions(filtered);
+  };
+
+  const handleSelect = (id) => {
+    navigate(`/producto/${id}`);
+    setSuggestions([]);
+    setQuery("");
+  };
 
   return (
     <Disclosure
@@ -74,7 +100,7 @@ export default function Navbar() {
                 <input
                   type="search"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={handleChange}
                   placeholder="Search"
                   className="
                     w-full min-w-0
@@ -84,6 +110,26 @@ export default function Navbar() {
                     focus:outline-none focus:ring-2 focus:ring-gray-900
                   "
                 />
+                {suggestions.length > 0 && (
+                  <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-md bg-white shadow-lg">
+                    {suggestions.map((item) => (
+                      <li key={item.id}>
+                        <button
+                          type="button"
+                          onClick={() => handleSelect(item.id)}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          <img
+                            src={item.media.src}
+                            alt={item.title}
+                            className="h-8 w-8 rounded object-cover"
+                          />
+                          <span>{item.title.replace(/\n/g, " ")}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </form>
           </div>
@@ -195,10 +241,30 @@ export default function Navbar() {
                 <input
                   type="search"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={handleChange}
                   placeholder="Search"
                   className="w-full rounded-xl border border-gray-200 bg-gray-100 pl-10 pr-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-900"
                 />
+                {suggestions.length > 0 && (
+                  <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-md bg-white shadow-lg">
+                    {suggestions.map((item) => (
+                      <li key={item.id}>
+                        <button
+                          type="button"
+                          onClick={() => handleSelect(item.id)}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          <img
+                            src={item.media.src}
+                            alt={item.title}
+                            className="h-8 w-8 rounded object-cover"
+                          />
+                          <span>{item.title.replace(/\n/g, " ")}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </form>
           </div>
