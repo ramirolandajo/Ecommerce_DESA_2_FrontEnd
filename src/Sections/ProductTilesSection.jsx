@@ -2,16 +2,7 @@
 import { useMemo, useState } from "react";
 import GlassProductCard from "../Components/GlassProductCard.jsx";
 import { tiles } from "../data/Products.js";
-
-// Iconos (lucide-react)
-import {
-    Smartphone,
-    Watch,
-    Camera,
-    Headphones,
-    Monitor,
-    Gamepad2,
-} from "lucide-react";
+import { CATEGORY_ICON } from "../data/categoryIcons.js";
 
 const TABS = [
     { key: "new", label: "New Arrival" },
@@ -19,15 +10,6 @@ const TABS = [
     { key: "featured", label: "Featured Products" },
 ];
 
-const CATEGORY_ICON = {
-    All: Monitor,
-    Phones: Smartphone,
-    "Smart Watches": Watch,
-    Cameras: Camera,
-    Headphones,
-    Computers: Monitor,
-    Gaming: Gamepad2,
-};
 
 export default function ProductTilesSection() {
     const [activeTab, setActiveTab] = useState("new");
@@ -78,7 +60,7 @@ export default function ProductTilesSection() {
                     <div className="flex flex-wrap justify-center gap-3">
                         {categories.map((cat) => {
                             const selected = category === cat;
-                            const Icon = CATEGORY_ICON[cat] ?? Monitor;
+                              const Icon = CATEGORY_ICON[cat] ?? CATEGORY_ICON.All;
                             return (
                                 <button
                                     key={cat}
