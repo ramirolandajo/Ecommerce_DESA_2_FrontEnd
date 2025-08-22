@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { tiles } from "../data/Products.js";
 
 export default function FilterSidebar({
+    categories,
     category,
     subcategory,
     min,
@@ -13,24 +13,12 @@ export default function FilterSidebar({
 }) {
     const [open, setOpen] = useState(false);
 
-    const categories = useMemo(() => {
-        const map = new Map();
-        tiles.forEach((t) => {
-            if (!t.category) return;
-            const sub = t.subcategory;
-            if (!map.has(t.category)) map.set(t.category, new Set());
-            if (sub) map.get(t.category).add(sub);
-        });
-        return [
-            { name: "All", subs: [] },
-            ...Array.from(map.entries()).map(([name, subs]) => ({
-                name,
-                subs: Array.from(subs),
-            })),
-        ];
-    }, []);
+    const allCategories = useMemo(
+        () => [{ name: "All", subs: [] }, ...categories],
+        [categories]
+    );
 
-    const current = categories.find((c) => c.name === category);
+    const current = allCategories.find((c) => c.name === category);
     const subcats = current?.subs ?? [];
 
     return (
@@ -66,7 +54,7 @@ export default function FilterSidebar({
                         }}
                         className="w-full rounded border border-zinc-300 px-2 py-1"
                     >
-                        {categories.map((c) => (
+                        {allCategories.map((c) => (
                             <option key={c.name} value={c.name}>
                                 {c.name}
                             </option>

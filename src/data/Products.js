@@ -16,6 +16,7 @@ export const tiles = [
 
         // NUEVO
         category: "Computers",
+        subcategory: "Laptops",
         isNew: true,
         isBestseller: false,
         isFeatured: true,
@@ -34,7 +35,8 @@ export const tiles = [
         },
 
         // NUEVO
-        category: "Smart Watches",
+        category: "Wearables",
+        subcategory: "Smart Watches",
         isNew: true,
         isBestseller: true,
         isFeatured: false,
@@ -55,7 +57,8 @@ export const tiles = [
         },
 
         // NUEVO
-        category: "Headphones",
+        category: "Audio",
+        subcategory: "Headphones",
         isNew: false,
         isBestseller: true,
         isFeatured: true,
@@ -75,8 +78,19 @@ export const tiles = [
 
         // NUEVO
         category: "Phones",
+        subcategory: "Smartphones",
         isNew: true,
         isBestseller: false,
         isFeatured: false,
     },
 ];
+
+export const categories = Array.from(
+    tiles.reduce((map, { category, subcategory }) => {
+        if (!category) return map;
+        if (!map.has(category)) map.set(category, new Set());
+        if (subcategory) map.get(category).add(subcategory);
+        return map;
+    }, new Map())
+).map(([name, subs]) => ({ name, subs: Array.from(subs) }));
+
