@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     Disclosure,
     DisclosureButton,
@@ -26,6 +27,7 @@ const cx = (...c) => c.filter(Boolean).join(" ");
 
 export default function Navbar() {
     const [query, setQuery] = useState("");
+    const navigate = useNavigate();
 
     return (
         <Disclosure
@@ -57,7 +59,10 @@ export default function Navbar() {
 
                         {/* Search (solo md+) */}
                         <form
-                            onSubmit={(e) => e.preventDefault()}
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                navigate(`/shop?query=${encodeURIComponent(query)}`);
+                            }}
                             className="hidden md:block flex-1 min-w-0"
                         >
                             <div className="relative">
@@ -166,14 +171,23 @@ export default function Navbar() {
 
                     {/* Search en mobile */}
                     <div className="px-1 pt-2 pb-3">
-                        <div className="relative">
-                            <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
-                            <input
-                                type="search"
-                                placeholder="Search"
-                                className="w-full rounded-xl border border-gray-200 bg-gray-100 pl-10 pr-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-900"
-                            />
-                        </div>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                navigate(`/shop?query=${encodeURIComponent(query)}`);
+                            }}
+                        >
+                            <div className="relative">
+                                <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
+                                <input
+                                    type="search"
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    placeholder="Search"
+                                    className="w-full rounded-xl border border-gray-200 bg-gray-100 pl-10 pr-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-900"
+                                />
+                            </div>
+                        </form>
                     </div>
                 </div>
             </DisclosurePanel>
