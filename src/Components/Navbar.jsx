@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
     Disclosure,
     DisclosureButton,
@@ -17,10 +17,10 @@ import {
 } from "@heroicons/react/24/outline";
 
 const navigation = [
-    { name: "Home", href: "#", current: true },
+    { name: "Home", href: "/", current: true },
     { name: "Shop", href: "/shop", current: false },
-    { name: "Contact Us", href: "#", current: false },
-    { name: "Blog", href: "#", current: false },
+    { name: "Contact Us", href: "/contact", current: false },
+    { name: "Blog", href: "/blog", current: false },
 ];
 
 const cx = (...c) => c.filter(Boolean).join(" ");
@@ -50,12 +50,12 @@ export default function Navbar() {
                         </div>
 
                         {/* Logo / Marca */}
-                        <a
-                            href="#"
+                        <Link
+                            to="/"
                             className="shrink-0 mr-4 md:mr-8 font-black text-2xl tracking-tight text-gray-900"
                         >
                             cyber
-                        </a>
+                        </Link>
 
                         {/* Search (solo md+) */}
                         <form
@@ -87,9 +87,9 @@ export default function Navbar() {
                     {/* CENTRO: tabs (sm+) centrados con aire escalable) */}
                     <nav className="hidden sm:flex min-w-0 items-center justify-center gap-6 md:gap-10 lg:gap-14">
                         {navigation.map((item) => (
-                            <a
+                            <Link
                                 key={item.name}
-                                href={item.href}
+                                to={item.href}
                                 aria-current={item.current ? "page" : undefined}
                                 className={cx(
                                     "relative px-1 py-2 font-semibold transition",
@@ -101,7 +101,7 @@ export default function Navbar() {
                                 {item.current && (
                                     <span className="pointer-events-none absolute -bottom-1 left-1/2 h-0.5 w-10 md:w-12 lg:w-14 -translate-x-1/2 rounded bg-gray-900" />
                                 )}
-                            </a>
+                            </Link>
                         ))}
                     </nav>
 
@@ -156,8 +156,8 @@ export default function Navbar() {
                     {navigation.map((item) => (
                         <DisclosureButton
                             key={item.name}
-                            as="a"
-                            href={item.href}
+                            as={Link}
+                            to={item.href}
                             className={cx(
                                 "block rounded-md px-3 py-2 text-base font-medium",
                                 item.current
