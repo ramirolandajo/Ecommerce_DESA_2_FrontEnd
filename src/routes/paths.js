@@ -1,7 +1,7 @@
 // src/routes/paths.js
 export const PATHS = {
     home: "/",
-    store: "/store",
+    shop: "/shop",
     product: "/producto/:id",
     notFound: "*",
 };
