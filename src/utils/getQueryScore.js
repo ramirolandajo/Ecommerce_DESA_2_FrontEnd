@@ -1,7 +1,10 @@
 const SYNONYMS = {
-  mac: ["apple", "notebook"],
-  apple: ["mac", "notebook"],
+  mac: ["apple", "notebook", "laptop"],
+  apple: ["mac", "notebook", "laptop", "iphone"],
   notebook: ["laptop", "mac", "apple"],
+  laptop: ["notebook", "mac", "apple"],
+  iphone: ["apple", "smartphone"],
+  smartphone: ["iphone", "apple"],
 };
 
 export function getQueryScore(item, q) {
