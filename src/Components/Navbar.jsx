@@ -165,11 +165,11 @@ export default function Navbar() {
                       focus:outline-none focus:ring-2 focus:ring-gray-900
                     "
                   />
-                    <SearchSuggestions
-                      isLoading={isLoading}
-                      suggestions={suggestions}
-                      onSelect={handleSelect}
-                    />
+                  <SearchSuggestions
+                    isLoading={isLoading}
+                    suggestions={suggestions}
+                    onSelect={handleSelect}
+                  />
                 </div>
               </form>
             </div>
@@ -286,13 +286,13 @@ export default function Navbar() {
                     placeholder="Search"
                     className="w-full rounded-xl border border-gray-200 bg-gray-100 pl-10 pr-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-900"
                   />
-                    <SearchSuggestions
-                      isLoading={isLoading}
-                      suggestions={suggestions}
-                      onSelect={handleSelect}
-                    />
-                  </div>
-                </form>
+                  <SearchSuggestions
+                    isLoading={isLoading}
+                    suggestions={suggestions}
+                    onSelect={handleSelect}
+                  />
+                </div>
+              </form>
             </div>
           </div>
         </DisclosurePanel>
