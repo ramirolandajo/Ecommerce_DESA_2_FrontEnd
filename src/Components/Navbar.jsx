@@ -150,7 +150,9 @@ export default function Navbar() {
                 }}
                 className="hidden md:block flex-1 min-w-0"
               >
-                <div className="relative">
+                <div
+                  className="relative md:max-w-sm lg:max-w-md xl:max-w-lg 2xl:max-w-2xl"
+                >
                   <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
                   <input
                     type="search"
