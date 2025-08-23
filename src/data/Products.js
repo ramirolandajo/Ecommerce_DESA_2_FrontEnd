@@ -2,7 +2,7 @@
 export const tiles = [
     {
         id: "macbook-air",
-        eyebrow: "Apple",
+        brand: "Apple",
         title: "Macbook\nAir",
         description:
             "El nuevo MacBook Air 15'' te da espacio de sobra con Liquid Retina Display.",
@@ -23,7 +23,7 @@ export const tiles = [
     },
     {
         id: "watch-series-9",
-        eyebrow: "Apple",
+        brand: "Apple",
         title: "Watch Series\n9 GPS 41mm",
         description: "Rendimiento y precisión en tu muñeca.",
         price: 399,
@@ -43,7 +43,7 @@ export const tiles = [
     },
     {
         id: "airpods-max",
-        eyebrow: "Apple",
+        brand: "Apple",
         title: "AirPods\nMax Silver",
         description: "Audio de alta fidelidad con cancelación activa de ruido.",
         price: 549,
@@ -65,7 +65,7 @@ export const tiles = [
     },
     {
         id: "z-fold5",
-        eyebrow: "Samsung",
+        brand: "Samsung",
         title: "Galaxy Z\nFold5 256GB",
         description: "Productividad y entretenimiento en formato plegable.",
         price: 1799,

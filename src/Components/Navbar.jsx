@@ -1,5 +1,5 @@
 // Navbar.jsx
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, NavLink, Link } from "react-router-dom";
 import CartDrawer from "./CartDrawer.jsx";
 import { tiles } from "../data/Products";
@@ -27,10 +27,43 @@ const navigation = [
 
 const cx = (...c) => c.filter(Boolean).join(" ");
 
+function SearchSuggestions({ isLoading, suggestions, onSelect }) {
+  if (isLoading) {
+    return (
+      <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-md bg-white shadow-lg flex justify-center p-4">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-transparent" />
+      </div>
+    );
+  }
+  if (suggestions.length === 0) return null;
+  return (
+    <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-md bg-white shadow-lg">
+      {suggestions.map((item) => (
+        <li key={item.id}>
+          <button
+            type="button"
+            onClick={() => onSelect(item.id)}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+          >
+            <img
+              src={item.media?.src}
+              alt={item.title}
+              className="h-8 w-8 rounded object-cover"
+            />
+            <span>{String(item.title || "").replace(/\n/g, " ")}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function Navbar() {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const searchTimeout = useRef(null);
   const navigate = useNavigate();
 
   const toggleCart = () => setCartOpen((prev) => !prev);
@@ -39,24 +72,37 @@ export default function Navbar() {
     const value = e.target.value;
     setQuery(value);
 
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+
     if (!value.trim()) {
       setSuggestions([]);
+      setIsLoading(false);
       return;
     }
 
+    setIsLoading(true);
     const q = value.toLowerCase();
     const pool = Array.isArray(tiles) ? tiles : [];
 
-    const filtered = pool
-      .filter(
-        (item) =>
-          item?.title?.toLowerCase().includes(q) ||
-          item?.category?.toLowerCase().includes(q)
-      )
-      .slice(0, 5);
+    searchTimeout.current = setTimeout(() => {
+      const filtered = pool
+        .filter(
+          (item) =>
+            item?.title?.toLowerCase().includes(q) ||
+            item?.category?.toLowerCase().includes(q)
+        )
+        .slice(0, 5);
 
-    setSuggestions(filtered);
+      setSuggestions(filtered);
+      setIsLoading(false);
+    }, 400);
   };
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    };
+  }, []);
 
   const handleSelect = (id) => {
     navigate(`/producto/${id}`);
@@ -119,26 +165,11 @@ export default function Navbar() {
                       focus:outline-none focus:ring-2 focus:ring-gray-900
                     "
                   />
-                  {suggestions.length > 0 && (
-                    <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-md bg-white shadow-lg">
-                      {suggestions.map((item) => (
-                        <li key={item.id}>
-                          <button
-                            type="button"
-                            onClick={() => handleSelect(item.id)}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            <img
-                              src={item.media?.src}
-                              alt={item.title}
-                              className="h-8 w-8 rounded object-cover"
-                            />
-                            <span>{String(item.title || "").replace(/\n/g, " ")}</span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <SearchSuggestions
+                    isLoading={isLoading}
+                    suggestions={suggestions}
+                    onSelect={handleSelect}
+                  />
                 </div>
               </form>
             </div>
@@ -255,26 +286,11 @@ export default function Navbar() {
                     placeholder="Search"
                     className="w-full rounded-xl border border-gray-200 bg-gray-100 pl-10 pr-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-900"
                   />
-                  {suggestions.length > 0 && (
-                    <ul className="absolute z-10 mt-1 w/full overflow-hidden rounded-md bg-white shadow-lg">
-                      {suggestions.map((item) => (
-                        <li key={item.id}>
-                          <button
-                            type="button"
-                            onClick={() => handleSelect(item.id)}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            <img
-                              src={item.media?.src}
-                              alt={item.title}
-                              className="h-8 w-8 rounded object-cover"
-                            />
-                            <span>{String(item.title || "").replace(/\n/g, " ")}</span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <SearchSuggestions
+                    isLoading={isLoading}
+                    suggestions={suggestions}
+                    onSelect={handleSelect}
+                  />
                 </div>
               </form>
             </div>

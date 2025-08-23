@@ -6,7 +6,7 @@ import { productUrl } from "../routes/paths";
 const slides = [
     {
         id: "ps5",
-        eyebrow: "Sony",
+        brand: "Sony",
         title: "Playstation 5",
         description: "Increíble potencia CPU/GPU y SSD con I/O integrado redefine tu experiencia.",
         cta: { label: "Comprar" },
@@ -17,7 +17,7 @@ const slides = [
     },
     {
         id: "macbook-air",
-        eyebrow: "Apple",
+        brand: "Apple",
         title: "Macbook\nAir",
         description: "El nuevo MacBook Air 15'' te da espacio de sobra con Liquid Retina Display.",
         cta: { label: "Comprar" },
@@ -28,7 +28,7 @@ const slides = [
     },
     {
         id: "airpods-max",
-        eyebrow: "Apple",
+        brand: "Apple",
         title: "AirPods\nMax",
         description: "Computational audio. Livianos y potentes.",
         cta: { label: "Comprar" },
@@ -39,7 +39,7 @@ const slides = [
     },
     {
         id: "vision-pro",
-        eyebrow: "Apple",
+        brand: "Apple",
         title: "Vision\nPro",
         description: "Una forma inmersiva de experimentar entretenimiento.",
         cta: { label: "Comprar" },
