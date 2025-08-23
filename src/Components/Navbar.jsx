@@ -1,6 +1,7 @@
 // Navbar.jsx
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, NavLink, Link } from "react-router-dom";
+import { useSelector } from "react-redux";
 import CartDrawer from "./CartDrawer.jsx";
 import { tiles } from "../data/Products";
 import { getQueryScore } from "../utils/getQueryScore.js";
@@ -61,6 +62,10 @@ export default function Navbar() {
   const [cartOpen, setCartOpen] = useState(false);
   const searchTimeout = useRef(null);
   const navigate = useNavigate();
+
+  const totalItems = useSelector((s) =>
+    s.cart.items.reduce((acc, i) => acc + i.quantity, 0)
+  );
 
   const toggleCart = () => setCartOpen((prev) => !prev);
 
@@ -224,11 +229,16 @@ export default function Navbar() {
             {/* DERECHA: iconos */}
             <div className="flex items-center justify-end gap-4 md:gap-6 lg:gap-8">
               <button
-                className="p-2 rounded-full text-gray-700 hover:text-black focus:outline-none focus:ring-2 focus:ring-gray-900"
+                className="relative p-2 rounded-full text-gray-700 hover:text-black focus:outline-none focus:ring-2 focus:ring-gray-900"
                 aria-label="Cart"
                 onClick={toggleCart}
               >
                 <ShoppingCartIcon className="size-6" />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                    {totalItems}
+                  </span>
+                )}
               </button>
 
               {/* Avatar / Menú usuario */}
