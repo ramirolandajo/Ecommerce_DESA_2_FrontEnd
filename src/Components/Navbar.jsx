@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, NavLink, Link } from "react-router-dom";
 import CartDrawer from "./CartDrawer.jsx";
 import { tiles } from "../data/Products";
+import { getQueryScore } from "../utils/getQueryScore.js";
 
 import {
   Disclosure,
@@ -92,14 +93,11 @@ export default function Navbar() {
 
     searchTimeout.current = setTimeout(() => {
       const filtered = pool
-        .filter(
-          (item) =>
-            item?.title?.toLowerCase().includes(q) ||
-            item?.category?.toLowerCase().includes(q) ||
-            item?.brand?.toLowerCase().includes(q) ||
-            item?.subcategory?.toLowerCase().includes(q)
-        )
-        .slice(0, 5);
+        .map((item) => ({ item, score: getQueryScore(item, q) }))
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5)
+        .map(({ item }) => item);
 
       setSuggestions(filtered);
       setIsLoading(false);

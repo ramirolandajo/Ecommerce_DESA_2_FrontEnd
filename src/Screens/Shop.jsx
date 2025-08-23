@@ -4,7 +4,7 @@ import { tiles, categories } from "../data/Products.js";
 import GlassProductCard from "../Components/GlassProductCard.jsx";
 import FilterSidebar from "../Components/FilterSidebar.jsx";
 import ProductSkeleton from "../Components/ProductSkeleton.jsx";
-import { matchesQuery } from "../utils/matchesQuery.js";
+import { getQueryScore } from "../utils/getQueryScore.js";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { ChevronDownIcon, FunnelIcon } from "@heroicons/react/24/outline";
 
@@ -49,21 +49,24 @@ export default function Shop() {
 
   const filtered = useMemo(() => {
     const q = query.trim();
-    return products.filter((t) => {
-      const matchesCat = category === "All" ? true : t.category === category;
-      const matchesSub = subcategory ? t.subcategory === subcategory : true;
-      const price = typeof t.price === "number" ? t.price : 0;
-      const matchesMin = min === "" ? true : price >= Number(min);
-      const matchesMax = max === "" ? true : price <= Number(max);
-      const matchesQueryFlag = matchesQuery(t, q);
-      return matchesCat && matchesSub && matchesMin && matchesMax && matchesQueryFlag;
-    });
+    return products
+      .map((t) => ({ ...t, _score: getQueryScore(t, q) }))
+      .filter((t) => {
+        const matchesCat = category === "All" ? true : t.category === category;
+        const matchesSub = subcategory ? t.subcategory === subcategory : true;
+        const price = typeof t.price === "number" ? t.price : 0;
+        const matchesMin = min === "" ? true : price >= Number(min);
+        const matchesMax = max === "" ? true : price <= Number(max);
+        const matchesQueryFlag = t._score > 0;
+        return matchesCat && matchesSub && matchesMin && matchesMax && matchesQueryFlag;
+      });
   }, [products, category, subcategory, min, max, query]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
     if (sort === "price-asc") arr.sort((a, b) => (a.price || 0) - (b.price || 0));
     if (sort === "price-desc") arr.sort((a, b) => (b.price || 0) - (a.price || 0));
+    if (sort === "relevance") arr.sort((a, b) => (b._score || 0) - (a._score || 0));
     return arr;
   }, [filtered, sort]);
 
