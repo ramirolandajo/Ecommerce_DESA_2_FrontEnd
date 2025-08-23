@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { tiles, categories } from "../data/Products.js";
 import GlassProductCard from "../Components/GlassProductCard.jsx";
 import FilterSidebar from "../Components/FilterSidebar.jsx";
+import { matchesQuery } from "../utils/matchesQuery.js";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { ChevronDownIcon, FunnelIcon } from "@heroicons/react/24/outline";
 
@@ -39,13 +40,8 @@ export default function Shop() {
             const price = typeof t.price === "number" ? t.price : 0;
             const matchesMin = min === "" ? true : price >= Number(min);
             const matchesMax = max === "" ? true : price <= Number(max);
-            const matchesQuery = q
-                ? t.title?.toLowerCase().includes(q) ||
-                t.description?.toLowerCase().includes(q) ||
-                t.category?.toLowerCase().includes(q) ||
-                t.subcategory?.toLowerCase().includes(q)
-                : true;
-            return matchesCat && matchesSub && matchesMin && matchesMax && matchesQuery;
+            const matchesQueryFlag = matchesQuery(t, q);
+            return matchesCat && matchesSub && matchesMin && matchesMax && matchesQueryFlag;
         });
     }, [category, subcategory, min, max, query]);
 

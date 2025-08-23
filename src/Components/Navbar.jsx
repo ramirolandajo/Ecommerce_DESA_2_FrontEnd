@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate, NavLink, Link } from "react-router-dom";
 import CartDrawer from "./CartDrawer.jsx";
 import { tiles } from "../data/Products";
+import { matchesQuery } from "../utils/matchesQuery.js";
 
 import {
   Disclosure,
@@ -44,16 +45,10 @@ export default function Navbar() {
       return;
     }
 
-    const q = value.toLowerCase();
+    const q = value;
     const pool = Array.isArray(tiles) ? tiles : [];
 
-    const filtered = pool
-      .filter(
-        (item) =>
-          item?.title?.toLowerCase().includes(q) ||
-          item?.category?.toLowerCase().includes(q)
-      )
-      .slice(0, 5);
+    const filtered = pool.filter((item) => matchesQuery(item, q)).slice(0, 5);
 
     setSuggestions(filtered);
   };
