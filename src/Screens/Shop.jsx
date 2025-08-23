@@ -34,7 +34,7 @@ export default function Shop() {
     }, [category, subcategory, min, max, query]);
 
     return (
-        <>
+        <div className="md:flex">
             <FilterSidebar
                 categories={categories}
                 category={category}
@@ -49,7 +49,7 @@ export default function Shop() {
                 onMin={setMin}
                 onMax={setMax}
             />
-            <section className="mx-auto max-w-7xl px-4 py-8 md:ml-64 mt-4">
+            <section className="mx-auto flex-1 max-w-7xl px-4 py-8 mt-4">
                 <h1 className="mb-6 text-2xl font-bold">Shop</h1>
 
                 {filtered.length === 0 ? (
@@ -62,7 +62,7 @@ export default function Shop() {
                     </div>
                 )}
             </section>
-        </>
+        </div>
     );
 }
 
