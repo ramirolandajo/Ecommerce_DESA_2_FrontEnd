@@ -6,7 +6,7 @@ import { productUrl } from "../routes/paths"; // ajustá el path si tu estructur
 export default function GlassProductCard({ item }) {
     const {
         id,
-        eyebrow,
+        brand,
         title,
         description,
         price,
@@ -50,9 +50,9 @@ export default function GlassProductCard({ item }) {
         >
             {/* Top bar: marca + precio (+ descuento si aplica) */}
             <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
-                {eyebrow && (
+                {brand && (
                     <span className="inline-flex items-center px-2 py-1 text-[11px] font-medium rounded-full bg-zinc-100 text-zinc-700">
-            {eyebrow}
+            {brand}
           </span>
                 )}
 

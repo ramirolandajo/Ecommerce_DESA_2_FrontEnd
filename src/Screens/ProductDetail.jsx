@@ -16,7 +16,7 @@ export default function ProductDetail() {
         );
     }
 
-    const { title, eyebrow, description, price, oldPrice, currency = "USD", media } = product;
+    const { title, brand, description, price, oldPrice, currency = "USD", media } = product;
     const money = (n, curr = currency) =>
         new Intl.NumberFormat("es-AR", { style: "currency", currency: curr, maximumFractionDigits: 0 }).format(n);
 
@@ -39,7 +39,7 @@ export default function ProductDetail() {
 
                 <div>
                     <h1 className="text-3xl font-bold text-zinc-900 whitespace-pre-line">{title}</h1>
-                    {eyebrow && <p className="mt-1 text-zinc-600">{eyebrow}</p>}
+                    {brand && <p className="mt-1 text-zinc-600">{brand}</p>}
 
                     <div className="mt-4 flex items-end gap-3">
                         <span className="text-3xl font-bold text-zinc-900">{money(price)}</span>
