@@ -18,6 +18,7 @@ export default function Shop() {
     const [min, setMin] = useState(initialMin);
     const [max, setMax] = useState(initialMax);
     const [sort, setSort] = useState("relevance");
+    const [isLoading, setIsLoading] = useState(false);
 
     // Estado para controlar la visibilidad del sidebar en móvil
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -55,6 +56,12 @@ export default function Shop() {
         if (sort === "price-desc") arr.sort((a, b) => (b.price || 0) - (a.price || 0));
         return arr;
     }, [filtered, sort]);
+
+    useEffect(() => {
+        setIsLoading(true);
+        const t = setTimeout(() => setIsLoading(false), 500);
+        return () => clearTimeout(t);
+    }, [category, subcategory, min, max, sort, query]);
 
     return (
         <div className="px-4 pb-12 pt-6 md:pt-8 md:grid md:grid-cols-[16rem_1fr] md:gap-8">
@@ -126,7 +133,11 @@ export default function Shop() {
                     </div>
                 </div>
 
-                {sorted.length === 0 ? (
+                {isLoading ? (
+                    <div className="flex justify-center py-20">
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
+                    </div>
+                ) : sorted.length === 0 ? (
                     <p className="text-sm text-zinc-500">No hay productos para esta combinación.</p>
                 ) : (
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
