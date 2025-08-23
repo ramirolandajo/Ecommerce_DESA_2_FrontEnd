@@ -1,136 +1,143 @@
-import { useMemo, useState } from "react";
-import CategoryButton from "./CategoryButton.jsx";
-import { FunnelIcon } from "@heroicons/react/24/outline";
+import { useMemo } from "react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 export default function FilterSidebar({
-  categories = [],
-  category = "All",
-  subcategory = "",
-  min = "",
-  max = "",
-  onCategory,
-  onSubcategory,
-  onMin,
-  onMax,
-}) {
-  const [open, setOpen] = useState(false);
+                                          open,
+                                          onClose,
+                                          categories,
+                                          category,
+                                          subcategory,
+                                          min,
+                                          max,
+                                          onCategory,
+                                          onSubcategory,
+                                          onMin,
+                                          onMax,
+                                      }) {
+    const allCategories = useMemo(
+        () => [{ name: "All", subs: [] }, ...(categories || [])],
+        [categories]
+    );
+    const current = allCategories.find((c) => c.name === category) || allCategories[0];
+    const subcats = current?.subs ?? [];
 
-  const allCategories = useMemo(
-    () => [{ name: "All", subs: [] }, ...(Array.isArray(categories) ? categories : [])],
-    [categories]
-  );
+    const reset = () => {
+        onCategory("All");
+        onSubcategory("");
+        onMin("");
+        onMax("");
+    };
 
-  const current = allCategories.find((c) => c.name === category) || allCategories[0];
-  const subcats = current?.subs ?? [];
-
-  return (
-    <>
-      {!open && (
-        <button
-          type="button"
-          aria-label="Abrir filtros"
-          className="md:hidden fixed top-20 left-4 z-20 inline-flex items-center gap-2 rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-400"
-          onClick={() => setOpen(true)}
-        >
-          <FunnelIcon className="h-5 w-5" />
-          <span className="sr-only sm:not-sr-only">Filtros</span>
-        </button>
-      )}
-
-      <aside
-        className={`fixed top-16 left-0 z-10 h-[calc(100vh-4rem)] overflow-y-auto w-64 bg-white p-4 border-r border-zinc-200 transform transition-transform md:sticky md:translate-x-0 ${
-          open ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        }`}
-      >
-        {/* Cerrar en mobile */}
-        <div className="md:hidden flex justify-end mb-4">
-          <button
-            type="button"
-            className="inline-flex items-center rounded-2xl border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-700 shadow-sm hover:bg-zinc-50"
-            onClick={() => setOpen(false)}
-          >
-            Cerrar
-          </button>
-        </div>
-
-        {/* Categoría */}
-        <div className="mb-4">
-          <label
-            htmlFor="categoryFilter"
-            className="block text-sm mb-1 text-zinc-600"
-          >
-            Categoría
-          </label>
-          <select
-            id="categoryFilter"
-            className="w-full rounded border border-zinc-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-zinc-400"
-            value={category}
-            onChange={(e) => {
-              onCategory?.(e.target.value);
-              onSubcategory?.("");
-            }}
-          >
-            {allCategories.map((c) => (
-              <option key={c.name} value={c.name}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Subcategoría */}
-        {subcats.length > 0 && (
-          <div className="mb-4">
-            <label className="block text-sm mb-1 text-zinc-600">Subcategoría</label>
-            <div className="flex flex-wrap gap-2">
-              <CategoryButton
-                name="Todas"
-                selected={subcategory === ""}
-                onClick={() => onSubcategory?.("")}
-                className="px-3 py-1"
-              />
-              {subcats.map((s) => (
-                <CategoryButton
-                  key={s}
-                  name={s}
-                  selected={subcategory === s}
-                  onClick={() => onSubcategory?.(s)}
-                  className="px-3 py-1"
-                />
-              ))}
+    const FiltersUI = (
+        <div className="flex flex-col space-y-6 ">
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-zinc-700">Categoría</label>
+                <select
+                    className="w-full h-10 rounded-2xl border border-zinc-300 bg-white px-3 text-sm text-zinc-800 shadow-sm"
+                    value={category}
+                    onChange={(e) => onCategory(e.target.value)}
+                >
+                    {allCategories.map((c) => (
+                        <option key={c.name} value={c.name}>{c.name}</option>
+                    ))}
+                </select>
             </div>
-          </div>
-        )}
 
-        {/* Precio */}
-        <div className="mb-4">
-          <label htmlFor="minPrice" className="block text-sm mb-1 text-zinc-600">
-            Precio mín.
-          </label>
-          <input
-            id="minPrice"
-            type="number"
-            inputMode="numeric"
-            value={min}
-            onChange={(e) => onMin?.(e.target.value)}
-            className="w-full rounded border border-zinc-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-zinc-400"
-          />
-        </div>
+            {subcats.length > 0 && (
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-zinc-700">Subcategoría</label>
+                    <select
+                        className="w-full h-10 rounded-2xl border border-zinc-300 bg-white px-3 text-sm text-zinc-800 shadow-sm"
+                        value={subcategory}
+                        onChange={(e) => onSubcategory(e.target.value)}
+                    >
+                        <option value="">Todas</option>
+                        {subcats.map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                        ))}
+                    </select>
+                </div>
+            )}
 
-        <div className="mb-4">
-          <label htmlFor="maxPrice" className="block text-sm mb-1 text-zinc-600">
-            Precio máx.
-          </label>
-          <input
-            id="maxPrice"
-            type="number"
-            inputMode="numeric"
-            value={max}
-            onChange={(e) => onMax?.(e.target.value)}
-            className="w-full rounded border border-zinc-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-zinc-400"
-          />
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-zinc-700">Precio mín.</label>
+                <input
+                    type="number"
+                    inputMode="numeric"
+                    className="w-full h-10 rounded-2xl border border-zinc-300 bg-white px-3 text-sm text-zinc-800 shadow-sm"
+                    value={min}
+                    onChange={(e) => onMin(e.target.value)}
+                    placeholder="0"
+                />
+            </div>
+
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-zinc-700">Precio máx.</label>
+                <input
+                    type="number"
+                    inputMode="numeric"
+                    className="w-full h-10 rounded-2xl border border-zinc-300 bg-white px-3 text-sm text-zinc-800 shadow-sm"
+                    value={max}
+                    onChange={(e) => onMax(e.target.value)}
+                    placeholder="9999"
+                />
+            </div>
+
+            <button
+                type="button"
+                onClick={reset}
+                className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm hover:bg-zinc-50"
+            >
+                Limpiar filtros
+            </button>
         </div>
-      </aside>
-    </>
-  );
+    );
+
+    return (
+        <>
+            {/* Sidebar para Desktop (sin cambios) */}
+            <aside
+                className="
+    hidden md:block
+    sticky top-4 self-start
+    max-h-[calc(100vh-6rem)] overflow-y-auto
+    w-56 border-r border-zinc-200 bg-white
+    px-2 py-6
+  "
+            >
+                {FiltersUI}
+            </aside>
+
+            {/* Overlay y panel para Mobile */}
+            {open && (
+                <div className="md:hidden">
+                    {/* Fondo oscuro que cierra el panel al hacer clic */}
+                    <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
+                    {/* Panel de filtros */}
+                    <div
+                        className="
+                fixed left-0 z-50
+                top-0 h-full
+                w-[85%] max-w-sm
+                bg-white shadow-xl flex flex-col
+              "
+                        role="dialog" aria-modal="true" aria-label="Filtros"
+                    >
+                        <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
+                            <span className="text-sm font-medium">Filtros</span>
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="rounded-full p-1 hover:bg-zinc-100"
+                                aria-label="Cerrar filtros"
+                            >
+                                <XMarkIcon className="h-5 w-5 text-zinc-700" />
+                            </button>
+                        </div>
+                        <div className="h-full overflow-y-auto px-4 py-6">{FiltersUI}</div>
+                    </div>
+                </div>
+            )}
+        </>
+    );
 }

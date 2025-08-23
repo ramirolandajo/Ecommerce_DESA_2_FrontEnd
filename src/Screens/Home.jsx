@@ -5,7 +5,7 @@ export default function Home() {
     return (
         <>
             <Hero_1 />
-            <div className="py-8" />
+            <div className="py-2" />
             <ProductTilesSection />
         </>
     );
