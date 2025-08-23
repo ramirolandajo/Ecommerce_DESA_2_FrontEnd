@@ -70,9 +70,14 @@ export default function Shop() {
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
-    if (sort === "price-asc") arr.sort((a, b) => (a.price || 0) - (b.price || 0));
-    else if (sort === "price-desc") arr.sort((a, b) => (b.price || 0) - (a.price || 0));
-    else if (query) arr.sort((a, b) => b.score - a.score);
+    if (sort === "price-asc") {
+      arr.sort((a, b) => (a.price || 0) - (b.price || 0));
+    } else if (sort === "price-desc") {
+      arr.sort((a, b) => (b.price || 0) - (a.price || 0));
+    } else if (query) {
+      // Relevancia solo si hay consulta
+      arr.sort((a, b) => (b.score || 0) - (a.score || 0));
+    }
     return arr;
   }, [filtered, sort, query]);
 
@@ -135,10 +140,10 @@ export default function Shop() {
             <Disclosure as="div" className="relative">
               {({ open }) => (
                 <>
-                    <DisclosureButton className="inline-flex w-full items-center justify-between rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 shadow-sm">
-                      {sortLabels[sort]}
-                      <ChevronDownIcon className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
-                    </DisclosureButton>
+                  <DisclosureButton className="inline-flex w-full items-center justify-between rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 shadow-sm">
+                    {sortLabels[sort]}
+                    <ChevronDownIcon className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
+                  </DisclosureButton>
                   <DisclosurePanel className="absolute right-0 z-10 mt-1 w-48 rounded-2xl border border-zinc-200 bg-white p-2 shadow-md">
                     <ul className="flex flex-col gap-1">
                       <li>
