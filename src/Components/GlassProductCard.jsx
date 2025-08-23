@@ -49,7 +49,7 @@ export default function GlassProductCard({ item }) {
             aria-label={title}
         >
             {/* Top bar: marca + precio (+ descuento si aplica) */}
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
                 {eyebrow && (
                     <span className="inline-flex items-center px-2 py-1 text-[11px] font-medium rounded-full bg-zinc-100 text-zinc-700">
             {eyebrow}
@@ -57,7 +57,7 @@ export default function GlassProductCard({ item }) {
                 )}
 
                 {typeof price !== "undefined" && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-end gap-2">
                         {hasDiscount && (
                             <span className="text-xs text-zinc-500 line-through">
                 {money(oldPrice)}
@@ -68,7 +68,7 @@ export default function GlassProductCard({ item }) {
                 -{percentOff}%
               </span>
                         )}
-                        <span className="inline-flex items-center rounded-full px-3 py-1 font-semibold bg-black text-white">
+                        <span className="inline-flex flex-shrink-0 whitespace-nowrap items-center rounded-full px-3 py-1 text-sm font-semibold bg-black text-white">
               {money(price)}
             </span>
                     </div>
