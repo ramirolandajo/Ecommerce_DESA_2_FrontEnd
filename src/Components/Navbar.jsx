@@ -113,6 +113,14 @@ export default function Navbar() {
     navigate(`/shop?query=${encodeURIComponent(query)}`);
   };
 
+  const handleClear = () => {
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    setIsLoading(false);
+    setQuery("");
+    setSuggestions([]);
+    navigate("/shop");
+  };
+
   return (
     <>
       <Disclosure
@@ -167,6 +175,16 @@ export default function Navbar() {
                       focus:outline-none focus:ring-2 focus:ring-gray-900
                     "
                   />
+                  {query && (
+                    <button
+                      type="button"
+                      onClick={handleClear}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                      aria-label="Clear search"
+                    >
+                      <XMarkIcon className="size-4" />
+                    </button>
+                  )}
                   <SearchSuggestions
                     isLoading={isLoading}
                     suggestions={suggestions}
@@ -283,6 +301,16 @@ export default function Navbar() {
                     placeholder="Search"
                     className="w-full rounded-xl border border-gray-200 bg-gray-100 pl-10 pr-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-900"
                   />
+                  {query && (
+                    <button
+                      type="button"
+                      onClick={handleClear}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                      aria-label="Clear search"
+                    >
+                      <XMarkIcon className="size-4" />
+                    </button>
+                  )}
                   <SearchSuggestions
                     isLoading={isLoading}
                     suggestions={suggestions}

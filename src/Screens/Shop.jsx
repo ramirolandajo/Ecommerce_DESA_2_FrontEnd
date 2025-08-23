@@ -55,6 +55,17 @@ export default function Shop() {
 
   const filtered = useMemo(() => {
     const q = query.trim();
+    if (!q) {
+      return products.filter((t) => {
+        const matchesCat = category === "All" ? true : t.category === category;
+        const matchesSub = subcategory ? t.subcategory === subcategory : true;
+        const price = typeof t.price === "number" ? t.price : 0;
+        const matchesMin = min === "" ? true : price >= Number(min);
+        const matchesMax = max === "" ? true : price <= Number(max);
+        return matchesCat && matchesSub && matchesMin && matchesMax;
+      });
+    }
+
     return products
       .map((t) => ({ ...t, score: getQueryScore(t, q) }))
       .filter((t) => {
@@ -63,8 +74,7 @@ export default function Shop() {
         const price = typeof t.price === "number" ? t.price : 0;
         const matchesMin = min === "" ? true : price >= Number(min);
         const matchesMax = max === "" ? true : price <= Number(max);
-        const matchesQueryFlag = q ? t.score > 0 : true;
-        return matchesCat && matchesSub && matchesMin && matchesMax && matchesQueryFlag;
+        return matchesCat && matchesSub && matchesMin && matchesMax && t.score > 0;
       });
   }, [products, category, subcategory, min, max, query]);
 
