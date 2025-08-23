@@ -1,9 +1,12 @@
 // src/Components/GlassProductCard.jsx
 // Card clickeable en estilo claro, sin blur ni glass, textos más oscuros.
 import { Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addItem } from "../store/cartSlice";
 import { productUrl } from "../routes/paths"; // ajustá el path si tu estructura difiere
 
 export default function GlassProductCard({ item }) {
+    const dispatch = useDispatch();
     const {
         id,
         brand,
@@ -36,18 +39,19 @@ export default function GlassProductCard({ item }) {
     const to = id ? productUrl(id) : (cta?.href || "#");
 
     return (
-        <Link
-            to={to}
-            className={[
-                "group relative block overflow-hidden rounded-2xl p-5 sm:p-6 h-full",
-                "bg-white border border-zinc-200 shadow-md",
-                "transition hover:-translate-y-[2px] hover:shadow-lg",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-black/20",
-                "focus-visible:ring-offset-2 focus-visible:ring-offset-white",
-                "flex flex-col text-zinc-900",
-            ].join(" ")}
-            aria-label={title}
-        >
+        <div className="flex flex-col h-full">
+            <Link
+                to={to}
+                className={[
+                    "group relative block overflow-hidden rounded-2xl p-5 sm:p-6 flex-1",
+                    "bg-white border border-zinc-200 shadow-md",
+                    "transition hover:-translate-y-[2px] hover:shadow-lg",
+                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-black/20",
+                    "focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                    "flex flex-col text-zinc-900",
+                ].join(" ")}
+                aria-label={title}
+            >
             {/* Top bar: marca + precio (+ descuento si aplica) */}
             <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
                 {brand && (
@@ -99,7 +103,17 @@ export default function GlassProductCard({ item }) {
                 </div>
             )}
 
-            <div className="mt-auto" />
-        </Link>
+                <div className="mt-auto" />
+            </Link>
+            <button
+                onClick={(e) => {
+                    e.preventDefault();
+                    dispatch(addItem({ ...item, quantity: 1 }));
+                }}
+                className="mt-4 rounded-xl bg-indigo-600 px-5 py-2 text-white font-medium hover:bg-indigo-700"
+            >
+                Agregar al carrito
+            </button>
+        </div>
     );
 }
