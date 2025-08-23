@@ -1,9 +1,12 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { tiles } from "../data/Products";
+import { useDispatch } from "react-redux";
+import { addItem } from "../store/cartSlice.js";
 
 export default function ProductDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const product = tiles.find((p) => p.id === id);
 
@@ -21,6 +24,10 @@ export default function ProductDetail() {
         new Intl.NumberFormat("es-AR", { style: "currency", currency: curr, maximumFractionDigits: 0 }).format(n);
 
     const hasDiscount = typeof oldPrice === "number" && oldPrice > price;
+
+    const handleAddToCart = () => {
+        dispatch(addItem({ id: product.id, name: title, price, quantity: 1 }));
+    };
 
     return (
         <section className="mx-auto max-w-6xl px-4 py-8">
@@ -49,7 +56,7 @@ export default function ProductDetail() {
                     {description && <p className="mt-4 text-zinc-700">{description}</p>}
 
                     <div className="mt-8 flex gap-3">
-                        <button className="rounded-xl bg-indigo-600 px-5 py-3 text-white font-medium hover:bg-indigo-700">
+                        <button onClick={handleAddToCart} className="rounded-xl bg-indigo-600 px-5 py-3 text-white font-medium hover:bg-indigo-700">
                             Agregar al carrito
                         </button>
                         <button className="rounded-xl border border-zinc-300 px-5 py-3 font-medium text-zinc-800 hover:border-zinc-400">
