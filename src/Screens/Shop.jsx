@@ -4,7 +4,7 @@ import { tiles, categories } from "../data/Products.js";
 import GlassProductCard from "../Components/GlassProductCard.jsx";
 import FilterSidebar from "../Components/FilterSidebar.jsx";
 import ProductSkeleton from "../Components/ProductSkeleton.jsx";
-import { getMatchScore } from "../utils/getMatchScore.js";
+import { getQueryScore } from "../utils/getQueryScore.js";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { ChevronDownIcon, FunnelIcon } from "@heroicons/react/24/outline";
 
@@ -56,7 +56,7 @@ export default function Shop() {
   const filtered = useMemo(() => {
     const q = query.trim();
     return products
-      .map((t) => ({ ...t, score: getMatchScore(t, q) }))
+      .map((t) => ({ ...t, score: getQueryScore(t, q) }))
       .filter((t) => {
         const matchesCat = category === "All" ? true : t.category === category;
         const matchesSub = subcategory ? t.subcategory === subcategory : true;
