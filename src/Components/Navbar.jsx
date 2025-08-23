@@ -42,7 +42,7 @@ function SearchSuggestions({ isLoading, suggestions, onSelect }) {
         <li key={item.id}>
           <button
             type="button"
-            onClick={() => onSelect(item.id)}
+            onClick={() => onSelect(item.title)}
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
           >
             <img
@@ -112,10 +112,18 @@ export default function Navbar() {
     };
   }, []);
 
-  const handleSelect = (id) => {
-    navigate(`/producto/${id}`);
+  const handleSelect = (title) => {
+    navigate(`/shop?query=${encodeURIComponent(title)}`);
     setSuggestions([]);
-    setQuery("");
+    setQuery(title);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    setIsLoading(false);
+    setSuggestions([]);
+    navigate(`/shop?query=${encodeURIComponent(query)}`);
   };
 
   return (
@@ -152,13 +160,7 @@ export default function Navbar() {
 
               {/* Search (solo md+) */}
               <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (searchTimeout.current) clearTimeout(searchTimeout.current);
-                  setIsLoading(false);
-                  setSuggestions([]);
-                  navigate(`/shop?query=${encodeURIComponent(query)}`);
-                }}
+                onSubmit={handleSubmit}
                 className="hidden md:block flex-1 min-w-0"
               >
                 <div
@@ -284,15 +286,7 @@ export default function Navbar() {
 
             {/* Search en mobile */}
             <div className="px-1 pt-2 pb-3">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (searchTimeout.current) clearTimeout(searchTimeout.current);
-                  setIsLoading(false);
-                  setSuggestions([]);
-                  navigate(`/shop?query=${encodeURIComponent(query)}`);
-                }}
-              >
+              <form onSubmit={handleSubmit}>
                 <div className="relative">
                   <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
                   <input
