@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { tiles, categories } from "../data/Products.js";
 import GlassProductCard from "../Components/GlassProductCard.jsx";
 import FilterSidebar from "../Components/FilterSidebar.jsx";
+import ProductSkeleton from "../Components/ProductSkeleton.jsx";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { ChevronDownIcon, FunnelIcon } from "@heroicons/react/24/outline";
 
@@ -18,6 +19,8 @@ export default function Shop() {
     const [min, setMin] = useState(initialMin);
     const [max, setMax] = useState(initialMax);
     const [sort, setSort] = useState("relevance");
+    const [products, setProducts] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Estado para controlar la visibilidad del sidebar en móvil
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -31,9 +34,20 @@ export default function Shop() {
         });
     }, [category, setSearchParams]);
 
+    useEffect(() => {
+        const load = async () => {
+            setIsLoading(true);
+            // Simulación de llamada async para cargar productos
+            await new Promise((r) => setTimeout(r, 500));
+            setProducts(tiles);
+            setIsLoading(false);
+        };
+        load();
+    }, []);
+
     const filtered = useMemo(() => {
         const q = query.trim();
-        return tiles.filter((t) => {
+        return products.filter((t) => {
             const matchesCat = category === "All" ? true : t.category === category;
             const matchesSub = subcategory ? t.subcategory === subcategory : true;
             const price = typeof t.price === "number" ? t.price : 0;
@@ -47,7 +61,7 @@ export default function Shop() {
                 : true;
             return matchesCat && matchesSub && matchesMin && matchesMax && matchesQuery;
         });
-    }, [category, subcategory, min, max, query]);
+    }, [products, category, subcategory, min, max, query]);
 
     const sorted = useMemo(() => {
         const arr = [...filtered];
@@ -126,7 +140,13 @@ export default function Shop() {
                     </div>
                 </div>
 
-                {sorted.length === 0 ? (
+                {isLoading ? (
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                            <ProductSkeleton key={i} />
+                        ))}
+                    </div>
+                ) : sorted.length === 0 ? (
                     <p className="text-sm text-zinc-500">No hay productos para esta combinación.</p>
                 ) : (
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
