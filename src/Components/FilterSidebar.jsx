@@ -55,20 +55,27 @@ export default function FilterSidebar({
 
         {/* Categoría */}
         <div className="mb-4">
-          <label className="block text-sm mb-1 text-zinc-600">Categoría</label>
-          <div className="flex flex-wrap gap-2">
+          <label
+            htmlFor="categoryFilter"
+            className="block text-sm mb-1 text-zinc-600"
+          >
+            Categoría
+          </label>
+          <select
+            id="categoryFilter"
+            className="w-full rounded border border-zinc-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-zinc-400"
+            value={category}
+            onChange={(e) => {
+              onCategory?.(e.target.value);
+              onSubcategory?.("");
+            }}
+          >
             {allCategories.map((c) => (
-              <CategoryButton
-                key={c.name}
-                name={c.name}
-                selected={category === c.name}
-                onClick={() => {
-                  onCategory?.(c.name);
-                  onSubcategory?.("");
-                }}
-              />
+              <option key={c.name} value={c.name}>
+                {c.name}
+              </option>
             ))}
-          </div>
+          </select>
         </div>
 
         {/* Subcategoría */}
