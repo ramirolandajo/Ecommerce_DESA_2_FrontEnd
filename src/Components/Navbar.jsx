@@ -50,7 +50,13 @@ function SearchSuggestions({ isLoading, suggestions, onSelect }) {
               alt={item.title}
               className="h-8 w-8 rounded object-cover"
             />
-            <span>{String(item.title || "").replace(/\n/g, " ")}</span>
+            <div className="flex flex-col flex-1 min-w-0">
+              <span className="truncate">{String(item.title || "").replace(/\n/g, " ")}</span>
+              <span className="truncate text-sm text-gray-500">
+                {String(item.description || "").replace(/\n/g, " ")}
+              </span>
+              <span className="text-sm text-gray-700">${item.price}</span>
+            </div>
           </button>
         </li>
       ))}
