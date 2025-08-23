@@ -1,5 +1,6 @@
 // src/sections/ProductTilesSection.jsx
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import GlassProductCard from "../Components/GlassProductCard.jsx";
 import { tiles } from "../data/Products.js";
 import { CATEGORY_ICON } from "../data/categoryIcons.js";
@@ -13,7 +14,6 @@ const TABS = [
 
 export default function ProductTilesSection() {
     const [activeTab, setActiveTab] = useState("new");
-    const [category, setCategory] = useState("All");
 
     // categorías dinámicas (ordenadas como en el mock)
     const categories = useMemo(() => {
@@ -34,7 +34,6 @@ export default function ProductTilesSection() {
 
     const filtered = useMemo(() => {
         return tiles.filter((t) => {
-            const byCat = category === "All" ? true : t.category === category;
             const flagsPresent =
                 "isNew" in t || "isBestseller" in t || "isFeatured" in t;
             const byTab =
@@ -44,9 +43,9 @@ export default function ProductTilesSection() {
                         ? !!t.isBestseller
                         : !!t.isFeatured;
             const fallback = activeTab === "new" && !flagsPresent;
-            return byCat && (byTab || fallback);
+            return byTab || fallback;
         });
-    }, [activeTab, category]);
+    }, [activeTab]);
 
     return (
         <section className="relative py-10 sm:py-12 bg-white">
@@ -57,24 +56,18 @@ export default function ProductTilesSection() {
                         Browse By Category
                     </h3>
 
-                    <div className="flex flex-wrap justify-center gap-3">
+                    <div className="overflow-x-auto flex gap-3">
                         {categories.map((cat) => {
-                            const selected = category === cat;
                               const Icon = CATEGORY_ICON[cat] ?? CATEGORY_ICON.All;
                             return (
-                                <button
+                                <Link
                                     key={cat}
-                                    onClick={() => setCategory(cat)}
-                                    className={[
-                                        "inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm whitespace-nowrap transition",
-                                        selected
-                                            ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
-                                            : "bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50",
-                                    ].join(" ")}
+                                    to={`/shop?category=${encodeURIComponent(cat)}`}
+                                    className="inline-flex items-center gap-2 rounded-2xl border px-6 py-4 text-base whitespace-nowrap transition bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50"
                                 >
-                                    <Icon className="size-4" aria-hidden="true" />
+                                    <Icon className="size-5" aria-hidden="true" />
                                     <span>{cat}</span>
-                                </button>
+                                </Link>
                             );
                         })}
                     </div>
