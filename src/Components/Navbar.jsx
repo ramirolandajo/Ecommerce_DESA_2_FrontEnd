@@ -154,6 +154,9 @@ export default function Navbar() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
+                  if (searchTimeout.current) clearTimeout(searchTimeout.current);
+                  setIsLoading(false);
+                  setSuggestions([]);
                   navigate(`/shop?query=${encodeURIComponent(query)}`);
                 }}
                 className="hidden md:block flex-1 min-w-0"
@@ -284,6 +287,9 @@ export default function Navbar() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
+                  if (searchTimeout.current) clearTimeout(searchTimeout.current);
+                  setIsLoading(false);
+                  setSuggestions([]);
                   navigate(`/shop?query=${encodeURIComponent(query)}`);
                 }}
               >
