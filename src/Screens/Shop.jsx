@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { tiles, categories } from "../data/Products.js";
 import GlassProductCard from "../Components/GlassProductCard.jsx";
@@ -7,12 +7,13 @@ import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react
 import { ChevronDownIcon, FunnelIcon } from "@heroicons/react/24/outline";
 
 export default function Shop() {
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const initialCat = searchParams.get("category") ?? "All";
     const query = searchParams.get("query")?.toLowerCase() || "";
     const initialMin = searchParams.get("min") ?? "";
     const initialMax = searchParams.get("max") ?? "";
 
-    const [category, setCategory] = useState("All");
+    const [category, setCategory] = useState(initialCat);
     const [subcategory, setSubcategory] = useState("");
     const [min, setMin] = useState(initialMin);
     const [max, setMax] = useState(initialMax);
@@ -20,6 +21,15 @@ export default function Shop() {
 
     // Estado para controlar la visibilidad del sidebar en móvil
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    useEffect(() => {
+        setSearchParams((prev) => {
+            const params = new URLSearchParams(prev);
+            if (category === "All") params.delete("category");
+            else params.set("category", category);
+            return params;
+        });
+    }, [category, setSearchParams]);
 
     const filtered = useMemo(() => {
         const q = query.trim();
