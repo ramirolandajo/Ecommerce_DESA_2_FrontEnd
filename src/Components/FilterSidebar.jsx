@@ -29,7 +29,7 @@ export default function FilterSidebar({
         <button
           type="button"
           aria-label="Abrir filtros"
-          className="md:hidden mb-4 inline-flex items-center gap-2 rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-400"
+          className="md:hidden fixed top-20 left-4 z-20 inline-flex items-center gap-2 rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-400"
           onClick={() => setOpen(true)}
         >
           <FunnelIcon className="h-5 w-5" />
@@ -38,7 +38,7 @@ export default function FilterSidebar({
       )}
 
       <aside
-        className={`sticky left-0 top-16 z-10 h-[calc(100vh-4rem)] overflow-y-auto w-64 bg-white p-4 border-r border-zinc-200 transform transition-transform md:translate-x-0 ${
+        className={`fixed top-16 left-0 z-10 h-[calc(100vh-4rem)] overflow-y-auto w-64 bg-white p-4 border-r border-zinc-200 transform transition-transform md:sticky md:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
