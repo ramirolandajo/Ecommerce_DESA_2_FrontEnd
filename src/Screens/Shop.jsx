@@ -4,7 +4,7 @@ import { tiles, categories } from "../data/Products.js";
 import GlassProductCard from "../Components/GlassProductCard.jsx";
 import FilterSidebar from "../Components/FilterSidebar.jsx";
 import ProductSkeleton from "../Components/ProductSkeleton.jsx";
-import { getQueryScore } from "../utils/getQueryScore.js";
+import { getMatchScore } from "../utils/getMatchScore.js";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { ChevronDownIcon, FunnelIcon } from "@heroicons/react/24/outline";
 
@@ -26,6 +26,12 @@ export default function Shop() {
 
   // Sidebar mobile
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const sortLabels = {
+    relevance: "Relevancia",
+    "price-asc": "Precio: menor a mayor",
+    "price-desc": "Precio: mayor a menor",
+  };
 
   useEffect(() => {
     setSearchParams((prev) => {
@@ -50,25 +56,30 @@ export default function Shop() {
   const filtered = useMemo(() => {
     const q = query.trim();
     return products
-      .map((t) => ({ ...t, _score: getQueryScore(t, q) }))
+      .map((t) => ({ ...t, score: getMatchScore(t, q) }))
       .filter((t) => {
         const matchesCat = category === "All" ? true : t.category === category;
         const matchesSub = subcategory ? t.subcategory === subcategory : true;
         const price = typeof t.price === "number" ? t.price : 0;
         const matchesMin = min === "" ? true : price >= Number(min);
         const matchesMax = max === "" ? true : price <= Number(max);
-        const matchesQueryFlag = t._score > 0;
+        const matchesQueryFlag = q ? t.score > 0 : true;
         return matchesCat && matchesSub && matchesMin && matchesMax && matchesQueryFlag;
       });
   }, [products, category, subcategory, min, max, query]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
-    if (sort === "price-asc") arr.sort((a, b) => (a.price || 0) - (b.price || 0));
-    if (sort === "price-desc") arr.sort((a, b) => (b.price || 0) - (a.price || 0));
-    if (sort === "relevance") arr.sort((a, b) => (b._score || 0) - (a._score || 0));
+    if (sort === "price-asc") {
+      arr.sort((a, b) => (a.price || 0) - (b.price || 0));
+    } else if (sort === "price-desc") {
+      arr.sort((a, b) => (b.price || 0) - (a.price || 0));
+    } else if (query) {
+      // Relevancia solo si hay consulta
+      arr.sort((a, b) => (b.score || 0) - (a.score || 0));
+    }
     return arr;
-  }, [filtered, sort]);
+  }, [filtered, sort, query]);
 
   // Mini shimmer al cambiar filtros/orden
   useEffect(() => {
@@ -130,7 +141,7 @@ export default function Shop() {
               {({ open }) => (
                 <>
                   <DisclosureButton className="inline-flex w-full items-center justify-between rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 shadow-sm">
-                    Relevancia
+                    {sortLabels[sort]}
                     <ChevronDownIcon className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
                   </DisclosureButton>
                   <DisclosurePanel className="absolute right-0 z-10 mt-1 w-48 rounded-2xl border border-zinc-200 bg-white p-2 shadow-md">
