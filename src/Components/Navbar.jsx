@@ -89,7 +89,9 @@ export default function Navbar() {
         .filter(
           (item) =>
             item?.title?.toLowerCase().includes(q) ||
-            item?.category?.toLowerCase().includes(q)
+            item?.category?.toLowerCase().includes(q) ||
+            item?.brand?.toLowerCase().includes(q) ||
+            item?.subcategory?.toLowerCase().includes(q)
         )
         .slice(0, 5);
 

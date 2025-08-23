@@ -7,6 +7,7 @@ export function matchesQuery(item, q) {
     item.description,
     item.category,
     item.subcategory,
+    item.brand,
     item.id,
   ];
   return fields.some(
