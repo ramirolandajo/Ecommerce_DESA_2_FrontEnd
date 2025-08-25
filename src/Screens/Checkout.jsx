@@ -1,4 +1,5 @@
-import { useState } from "react";
+// src/pages/Checkout.jsx
+import { useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   incrementItem,
@@ -7,42 +8,44 @@ import {
   removeItem,
 } from "../store/cartSlice";
 import { createPreference } from "../utils/mercadoPago.js";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import { tiles } from "../data/Products.js";
 
 export default function Checkout() {
-  // Toma items del slice
   const { items = [] } = useSelector((s) => s.cart) ?? {};
   const dispatch = useDispatch();
 
-  // Estados para códigos de descuento y tarjeta de bono
+  // index rápido por id para traer media/título/brand
+  const productIndex = useMemo(() => {
+    const map = new Map();
+    tiles.forEach((t) => map.set(t.id, t));
+    return map;
+  }, []);
+
   const [discountCode, setDiscountCode] = useState("");
   const [bonusCard, setBonusCard] = useState("");
 
-  // Subtotal calculado localmente
   const subtotal = items.reduce(
-    (acc, i) => acc + (i.price ?? 0) * (i.quantity ?? 1),
-    0
+      (acc, i) => acc + (i.price ?? 0) * (i.quantity ?? 1),
+      0
   );
 
-  // Impuestos y envío estimados
-  const taxRate = 0.05;
-  const shipping = 10;
-  const tax = subtotal * taxRate;
+  // Para parecerse a la imagen: números fijos de “Estimated …”
+  const tax = 50;
+  const shipping = 29;
   const total = subtotal + tax + shipping;
+
+  const money = (n) =>
+      new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }).format(n ?? 0);
 
   const handleQtyChange = (id, raw) => {
     const n = Number(raw);
-    if (!Number.isNaN(n) && n > 0) {
-      dispatch(updateQuantity({ id, quantity: n }));
-    }
+    if (!Number.isNaN(n) && n > 0) dispatch(updateQuantity({ id, quantity: n }));
   };
-
-  const money = (n) =>
-    new Intl.NumberFormat("es-AR", {
-      style: "currency",
-      currency: "USD", // si querés ARS cambiá a "ARS"
-      maximumFractionDigits: 0,
-    }).format(n ?? 0);
 
   const handleConfirm = async () => {
     new window.MercadoPago(import.meta.env.VITE_MP_PUBLIC_KEY);
@@ -52,142 +55,158 @@ export default function Checkout() {
 
   if (!items.length) {
     return (
-      <section className="mx-auto max-w-3xl px-4 py-12">
-        <h1 className="mb-4 text-2xl font-bold">Checkout</h1>
-        <p className="text-zinc-600">No hay productos en el carrito.</p>
-      </section>
+        <section className="mx-auto max-w-3xl px-4 py-12">
+          <h1 className="mb-4 text-3xl font-bold">Checkout</h1>
+          <p className="text-zinc-600">No hay productos en el carrito.</p>
+        </section>
     );
   }
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-12">
-      <h1 className="mb-6 text-2xl font-bold">Checkout</h1>
+      <section className="mx-auto max-w-6xl px-4 py-12">
+        <h1 className="mb-8 text-3xl font-bold">Checkout</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Columna izquierda: carrito */}
-        <div>
-          <h2 className="mb-4 text-lg font-semibold">Shopping Cart</h2>
-          <ul className="divide-y divide-zinc-200 rounded border">
-            {items.map((item) => (
-              <li
-                key={`${item.id}-${item.variant ?? ""}`}
-                className="flex items-center justify-between gap-2 p-4 text-sm"
-              >
-                <span className="flex-1 text-zinc-700">{item.title}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* IZQUIERDA: lista de productos */}
+          <div>
+            <h2 className="mb-6 text-lg font-semibold">Shopping Cart</h2>
 
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    className="px-2 border rounded text-sm disabled:opacity-50"
-                    aria-label={`Disminuir cantidad de ${item.title}`}
-                    onClick={() => dispatch(decrementItem(item.id))}
-                    disabled={(item.quantity ?? 1) <= 1}
-                  >
-                    -
-                  </button>
+            <ul className="space-y-6">
+              {items.map((item) => {
+                const p = productIndex.get(item.id);
+                const img = item.image ?? p?.media?.src;
+                const alt = p?.media?.alt ?? item.title;
+                const title = p?.title ?? item.title;
+                const brand = p?.brand;
 
+                return (
+                    <li
+                        key={`${item.id}-${item.variant ?? ""}`}
+                        className="flex items-center gap-4"
+                    >
+                      {img ? (
+                          <img
+                              src={img}
+                              alt={alt}
+                              className="h-16 w-16 rounded object-cover border border-zinc-200"
+                          />
+                      ) : (
+                          <div className="h-16 w-16 rounded bg-zinc-100" />
+                      )}
+
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate font-medium text-zinc-900">
+                          {brand ? `${brand} ` : ""}
+                          {title?.replace(/\n/g, " ")}
+                        </p>
+                        <p className="text-xs text-zinc-500">#{item.id}</p>
+
+                        <div className="mt-3 inline-flex items-center gap-2">
+                          <button
+                              type="button"
+                              className="h-8 w-8 rounded border text-zinc-700 disabled:opacity-40"
+                              onClick={() => dispatch(decrementItem(item.id))}
+                              disabled={(item.quantity ?? 1) <= 1}
+                              aria-label="Disminuir"
+                          >
+                            –
+                          </button>
+                          <input
+                              type="number"
+                              min={1}
+                              value={item.quantity ?? 1}
+                              onChange={(e) => handleQtyChange(item.id, e.target.value)}
+                              className="h-8 w-12 rounded border text-center"
+                              aria-label="Cantidad"
+                          />
+                          <button
+                              type="button"
+                              className="h-8 w-8 rounded border text-zinc-700"
+                              onClick={() => dispatch(incrementItem(item.id))}
+                              aria-label="Aumentar"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <p className="font-semibold">{money(item.price)}</p>
+                      </div>
+
+                      <button
+                          type="button"
+                          className="ml-2 text-zinc-400 hover:text-red-500"
+                          onClick={() => dispatch(removeItem(item.id))}
+                          aria-label="Quitar"
+                      >
+                        <XMarkIcon className="h-5 w-5" />
+                      </button>
+                    </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          {/* DERECHA: resumen */}
+          <aside>
+            <h2 className="mb-6 text-lg font-semibold">Order Summary</h2>
+
+            <div className="rounded-lg border border-zinc-200 p-6 space-y-6 shadow-sm bg-white">
+              <div className="space-y-3">
+                <input
+                    type="text"
+                    value={discountCode}
+                    onChange={(e) => setDiscountCode(e.target.value)}
+                    placeholder="Discount code / Promo code"
+                    className="w-full rounded border border-zinc-300 px-3 py-2 text-sm"
+                />
+                <div className="flex gap-2">
                   <input
-                    type="number"
-                    min={1}
-                    value={item.quantity ?? 1}
-                    onChange={(e) => handleQtyChange(item.id, e.target.value)}
-                    className="w-12 border rounded px-1 py-0.5 text-center"
-                    aria-label={`Cantidad de ${item.title}`}
+                      type="text"
+                      value={bonusCard}
+                      onChange={(e) => setBonusCard(e.target.value)}
+                      placeholder="Your bonus card number"
+                      className="flex-1 rounded border border-zinc-300 px-3 py-2 text-sm"
                   />
-
                   <button
-                    type="button"
-                    className="px-2 border rounded text-sm"
-                    aria-label={`Aumentar cantidad de ${item.title}`}
-                    onClick={() => dispatch(incrementItem(item.id))}
+                      type="button"
+                      className="rounded border border-zinc-300 px-4 text-sm hover:bg-zinc-50"
                   >
-                    +
+                    Apply
                   </button>
                 </div>
+              </div>
 
-                <span className="w-20 text-right font-medium">
-                  {money((item.price ?? 0) * (item.quantity ?? 1))}
-                </span>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-zinc-700">Subtotal</span>
+                  <span className="text-zinc-900">{money(subtotal)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-700">Estimated Tax</span>
+                  <span className="text-zinc-900">{money(tax)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-700">Estimated shipping &amp; Handling</span>
+                  <span className="text-zinc-900">{money(shipping)}</span>
+                </div>
+                <div className="flex justify-between font-semibold text-base border-t pt-4">
+                  <span>Total</span>
+                  <span>{money(total)}</span>
+                </div>
+              </div>
 
-                <button
+              <button
                   type="button"
-                  className="p-1 text-zinc-400 hover:text-red-600"
-                  aria-label={`Eliminar ${item.title}`}
-                  onClick={() => dispatch(removeItem(item.id))}
-                >
-                  <TrashIcon className="h-4 w-4" />
-                </button>
-              </li>
-            ))}
-          </ul>
+                  className="w-full rounded bg-black py-3 text-white font-medium hover:bg-zinc-800"
+                  onClick={handleConfirm}
+              >
+                Checkout
+              </button>
+            </div>
+          </aside>
         </div>
-
-        {/* Columna derecha: resumen de pedido */}
-        <aside className="self-start">
-          <h2 className="mb-4 text-lg font-semibold">Order Summary</h2>
-          <div className="space-y-4 rounded border p-4 shadow-sm">
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={discountCode}
-                  onChange={(e) => setDiscountCode(e.target.value)}
-                  placeholder="Discount code / Promo code"
-                  className="flex-1 rounded border px-2 py-1 text-sm"
-                />
-                <button
-                  type="button"
-                  className="rounded border px-3 py-1 text-sm"
-                >
-                  Apply
-                </button>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={bonusCard}
-                  onChange={(e) => setBonusCard(e.target.value)}
-                  placeholder="Your bonus card number"
-                  className="flex-1 rounded border px-2 py-1 text-sm"
-                />
-                <button
-                  type="button"
-                  className="rounded border px-3 py-1 text-sm"
-                >
-                  Apply
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-1 border-t pt-4 text-sm">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>{money(subtotal)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Estimated Tax (5%)</span>
-                <span>{money(tax)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Estimated shipping &amp; handling</span>
-                <span>{money(shipping)}</span>
-              </div>
-              <div className="flex justify-between text-base font-semibold">
-                <span>Total</span>
-                <span>{money(total)}</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              className="w-full rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 active:bg-indigo-800"
-              onClick={handleConfirm}
-            >
-              Checkout
-            </button>
-          </div>
-        </aside>
-      </div>
-    </section>
+      </section>
   );
 }

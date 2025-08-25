@@ -1,6 +1,7 @@
+// src/components/CartDrawer.jsx
 import { useRef, useMemo } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -13,9 +14,26 @@ import {
 import { PATHS } from "../routes/paths.js";
 
 export default function CartDrawer({ open, onClose }) {
-  const { items = [], totalAmount = 0 } = useSelector((s) => s.cart ?? {});
+  const { items = [] } = useSelector((s) => s.cart ?? {});
   const dispatch = useDispatch();
   const closeButtonRef = useRef(null);
+
+  // Subtotal calculado (evita depender de totalAmount por si se desincroniza)
+  const subtotal = useMemo(
+      () =>
+          items.reduce(
+              (acc, i) => acc + (Number(i.price ?? 0) * Number(i.quantity ?? 1)),
+              0
+          ),
+      [items]
+  );
+
+  const money = (n) =>
+      new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }).format(Number(n) || 0);
 
   const handleQtyChange = (id, qty) => {
     const quantity = Number(qty);
@@ -24,148 +42,203 @@ export default function CartDrawer({ open, onClose }) {
     }
   };
 
-  // Evita NaN en los totales si faltan datos
-  const safeTotal = useMemo(() => Number(totalAmount ?? 0), [totalAmount]);
-
-  const panelClasses = `fixed right-0 top-0 z-40 h-full w-64 sm:w-80 bg-white p-4 border-l border-gray-200 transform transition-transform ${
-    open ? "translate-x-0" : "translate-x-full"
-  }`;
-
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      initialFocus={closeButtonRef}
-      className="relative z-40"
-    >
-      {/* Backdrop accesible */}
-      <DialogBackdrop
-        className={`fixed inset-0 bg-black/30 transition-opacity ${
-          open ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
-      />
+      <Dialog
+          open={open}
+          onClose={onClose}
+          initialFocus={closeButtonRef}
+          className="relative z-50"
+      >
+        {/* Backdrop */}
+        <DialogBackdrop
+            className={`fixed inset-0 bg-black/40 backdrop-blur-[1px] transition-opacity ${
+                open ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+        />
 
-      {/* Panel deslizante a la derecha */}
-      <DialogPanel className={panelClasses}>
-        <div className="flex justify-between mb-4">
-          <h2 className="font-semibold text-lg">Cart</h2>
-          <button
-            ref={closeButtonRef}
-            className="p-2 text-gray-700 hover:text-gray-900"
-            aria-label="Cerrar carrito"
-            onClick={onClose}
-            type="button"
-          >
-            <XMarkIcon className="size-5" />
-          </button>
-        </div>
+        {/* Panel */}
+        <DialogPanel
+            className={`fixed right-0 top-0 h-dvh w-full max-w-[420px] sm:max-w-[480px]
+        bg-white shadow-2xl border-l border-zinc-200
+        transform transition-transform duration-300
+        ${open ? "translate-x-0" : "translate-x-full"}`}
+        >
+          {/* Header */}
+          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white/95 px-5 py-4 backdrop-blur">
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-900">Your Cart</h2>
+              <p className="text-xs text-zinc-500">{items.length} item(s)</p>
+            </div>
+            <button
+                ref={closeButtonRef}
+                className="p-2 text-zinc-600 hover:text-zinc-900"
+                aria-label="Cerrar carrito"
+                onClick={onClose}
+                type="button"
+            >
+              <XMarkIcon className="h-6 w-6" />
+            </button>
+          </div>
 
-        {items.length === 0 ? (
-          <p>Carrito vacío</p>
-        ) : (
-          <div className="flex h-[calc(100%-40px)] flex-col overflow-hidden">
-            <ul className="flex-1 overflow-y-auto divide-y">
-              {items.map((item) => (
-                <li
-                  key={`${item.id}-${item.variant ?? ""}`}
-                  className="py-2 flex items-center gap-3 justify-between"
-                >
-                  <img
-                    src={item.image || "https://via.placeholder.com/48"}
-                    alt={item.title}
-                    className="h-12 w-12 object-cover rounded"
-                  />
+          {items.length === 0 ? (
+              <EmptyState onClose={onClose} />
+          ) : (
+              <div className="flex h-[calc(100dvh-64px)] flex-col">
+                {/* Lista */}
+                <ul className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+                  {items.map((item) => {
+                    const qty = Number(item.quantity ?? 1);
+                    const unit = Number(item.price ?? 0);
+                    const line = unit * qty;
+                    return (
+                        <li
+                            key={`${item.id}-${item.variant ?? ""}`}
+                            className="flex items-center gap-4"
+                        >
+                          <img
+                              src={
+                                item.image ||
+                                "https://via.placeholder.com/150?text=No+Image"
+                              }
+                              alt={item.title}
+                              className="h-16 w-16 rounded border border-zinc-200 object-cover"
+                          />
 
-                  <span className="flex-1 text-sm line-clamp-2">
-                    {item.title}
-                  </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-zinc-900">
+                              {item.title}
+                            </p>
+                            <p className="text-xs text-zinc-500">#{item.id}</p>
 
-                  {/* Controles de cantidad */}
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      className="px-2 border rounded text-sm disabled:opacity-50"
-                      aria-label={`Disminuir cantidad de ${item.title}`}
-                      onClick={() => dispatch(decrementItem(item.id))}
-                      disabled={(item.quantity ?? 1) <= 1}
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min={1}
-                      value={item.quantity ?? 1}
-                      onChange={(e) =>
-                        handleQtyChange(item.id, e.target.value)
-                      }
-                      className="w-12 border rounded px-1 py-0.5 text-sm text-center"
-                      aria-label={`Cantidad de ${item.title}`}
-                    />
-                    <button
-                      type="button"
-                      className="px-2 border rounded text-sm"
-                      aria-label={`Aumentar cantidad de ${item.title}`}
-                      onClick={() => dispatch(incrementItem(item.id))}
-                    >
-                      +
-                    </button>
+                            <div className="mt-2 flex items-center gap-2">
+                              <button
+                                  type="button"
+                                  className="h-8 w-8 rounded border border-zinc-300 text-zinc-700 disabled:opacity-40"
+                                  aria-label={`Disminuir cantidad de ${item.title}`}
+                                  onClick={() => dispatch(decrementItem(item.id))}
+                                  disabled={qty <= 1}
+                              >
+                                –
+                              </button>
+                              <input
+                                  type="number"
+                                  min={1}
+                                  value={qty}
+                                  onChange={(e) =>
+                                      handleQtyChange(item.id, e.target.value)
+                                  }
+                                  className="h-8 w-12 rounded border border-zinc-300 text-center text-sm"
+                                  aria-label={`Cantidad de ${item.title}`}
+                              />
+                              <button
+                                  type="button"
+                                  className="h-8 w-8 rounded border border-zinc-300 text-zinc-700"
+                                  aria-label={`Aumentar cantidad de ${item.title}`}
+                                  onClick={() => dispatch(incrementItem(item.id))}
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-zinc-900">
+                              {money(line)}
+                            </p>
+                            <p className="text-[11px] text-zinc-500">
+                              {money(unit)} c/u
+                            </p>
+                          </div>
+
+                          <button
+                              type="button"
+                              className="ml-1 rounded p-1 text-zinc-400 hover:text-red-600"
+                              onClick={() => dispatch(removeItem(item.id))}
+                              aria-label={`Eliminar ${item.title}`}
+                              title="Eliminar"
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </button>
+                        </li>
+                    );
+                  })}
+                </ul>
+
+                {/* Footer fijo */}
+                <div className="sticky bottom-0 space-y-3 border-t border-zinc-200 bg-white/95 px-5 py-4 backdrop-blur">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-zinc-700">Subtotal</span>
+                    <span className="font-semibold text-zinc-900">
+                  {money(subtotal)}
+                </span>
                   </div>
 
-                  {/* Precios */}
-                  <div className="text-xs text-right min-w-[72px]">
-                    <span>
-                      ${Number(item.price ?? 0).toFixed(2)}
-                    </span>
-                    <span className="block">
-                      ${Number((item.price ?? 0) * (item.quantity ?? 1)).toFixed(2)}
-                    </span>
+                  <Link
+                      to={PATHS.checkout}
+                      onClick={onClose}
+                      className="block w-full rounded-lg bg-black py-3 text-center text-white font-medium hover:bg-zinc-800"
+                  >
+                    Checkout
+                  </Link>
+
+                  <div className="flex gap-2">
+                    <Link
+                        to={PATHS.cart}
+                        onClick={onClose}
+                        className="flex-1 rounded-lg border border-zinc-300 py-2.5 text-center text-sm hover:bg-zinc-50"
+                    >
+                      Ver carrito
+                    </Link>
+                    <button
+                        type="button"
+                        className="rounded-lg border border-red-200 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50"
+                        onClick={() => dispatch(clearCart())}
+                    >
+                      Vaciar
+                    </button>
                   </div>
 
                   <button
-                    type="button"
-                    className="text-red-600 text-xs"
-                    onClick={() => dispatch(removeItem(item.id))}
+                      type="button"
+                      onClick={onClose}
+                      className="w-full text-center text-sm text-zinc-500 hover:text-zinc-700"
                   >
-                    Eliminar
+                    Seguir comprando
                   </button>
-                </li>
-              ))}
-            </ul>
+                </div>
+              </div>
+          )}
+        </DialogPanel>
+      </Dialog>
+  );
+}
 
-            {/* Footer del drawer */}
-            <div className="mt-4 border-t pt-2 text-sm shrink-0">
-              <p className="flex justify-between">
-                <span>Total:</span>
-                <span>${safeTotal.toFixed(2)}</span>
-              </p>
+function EmptyState({ onClose }) {
+  return (
+      <div className="flex h-[calc(100dvh-64px)] flex-col items-center justify-center gap-4 px-6 text-center">
+        <div className="h-16 w-16 rounded-full bg-zinc-100 flex items-center justify-center">
+          <CartIcon />
+        </div>
+        <h3 className="text-lg font-semibold text-zinc-900">Tu carrito está vacío</h3>
+        <p className="text-sm text-zinc-500">
+          Agregá productos y volvé para finalizar la compra.
+        </p>
+        <button
+            onClick={onClose}
+            className="mt-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50"
+        >
+          Seguir explorando
+        </button>
+      </div>
+  );
+}
 
-              <Link
-                to={PATHS.checkout}
-                onClick={onClose}
-                className="mt-2 block w-full rounded bg-indigo-600 px-3 py-1 text-center text-white hover:bg-indigo-700"
-              >
-                Finalizar compra
-              </Link>
-
-              <button
-                type="button"
-                className="mt-2 w-full rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300"
-                onClick={() => dispatch(clearCart())}
-              >
-                Vaciar carrito
-              </button>
-
-              <Link
-                to={PATHS.cart}
-                onClick={onClose}
-                className="mt-2 block w-full rounded bg-indigo-600 px-3 py-1 text-center text-white hover:bg-indigo-700"
-              >
-                Ver carrito
-              </Link>
-            </div>
-          </div>
-        )}
-      </DialogPanel>
-    </Dialog>
+function CartIcon() {
+  return (
+      <svg viewBox="0 0 24 24" className="h-6 w-6 text-zinc-400" fill="none" stroke="currentColor">
+        <path strokeWidth="1.5" d="M3 3h2l.4 2M7 13h9l3-7H6.4" />
+        <circle cx="9" cy="19" r="1.5" />
+        <circle cx="18" cy="19" r="1.5" />
+      </svg>
   );
 }
