@@ -1,9 +1,13 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addItem } from "../store/cartSlice";
+import { PATHS } from "../routes/paths";
 import { tiles } from "../data/Products";
 
 export default function ProductDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const product = tiles.find((p) => p.id === id);
 
@@ -49,10 +53,22 @@ export default function ProductDetail() {
                     {description && <p className="mt-4 text-zinc-700">{description}</p>}
 
                     <div className="mt-8 flex gap-3">
-                        <button className="rounded-xl bg-indigo-600 px-5 py-3 text-white font-medium hover:bg-indigo-700">
+                        <button
+                            onClick={() => {
+                                dispatch(addItem({ id, title, price }));
+                                navigate(PATHS.cart);
+                            }}
+                            className="rounded-xl bg-indigo-600 px-5 py-3 text-white font-medium hover:bg-indigo-700"
+                        >
                             Agregar al carrito
                         </button>
-                        <button className="rounded-xl border border-zinc-300 px-5 py-3 font-medium text-zinc-800 hover:border-zinc-400">
+                        <button
+                            onClick={() => {
+                                dispatch(addItem({ id, title, price }));
+                                navigate(PATHS.checkout);
+                            }}
+                            className="rounded-xl border border-zinc-300 px-5 py-3 font-medium text-zinc-800 hover:border-zinc-400"
+                        >
                             Comprar ahora
                         </button>
                     </div>
