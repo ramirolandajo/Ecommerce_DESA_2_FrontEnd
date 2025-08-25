@@ -11,7 +11,7 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Estado local (nuevo) con validación
+  // Estado local con validación
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
 
@@ -28,6 +28,7 @@ export default function ProductDetail() {
 
   const { title, brand, description, price, oldPrice, currency = "USD", media } = product;
 
+  // Stock: si no viene, lo tratamos como infinito (sin límite)
   const stock = Number.isFinite(product.stock) ? product.stock : Infinity;
   const isQtyValid = qty >= 1 && qty <= stock;
 
@@ -41,7 +42,7 @@ export default function ProductDetail() {
   const hasDiscount = typeof oldPrice === "number" && oldPrice > price;
 
   const handleAdd = () => {
-    if (!isQtyValid) return;
+    if (!isQtyValid || stock === 0) return;
     dispatch(addItem({ id, title, price, quantity: qty }));
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -81,6 +82,16 @@ export default function ProductDetail() {
             )}
           </div>
 
+          <p className="mt-2 text-sm">
+            {stock === 0 ? (
+              <span className="text-red-600">Sin stock</span>
+            ) : Number.isFinite(stock) ? (
+              <>Stock: {stock}</>
+            ) : (
+              <>Stock disponible</>
+            )}
+          </p>
+
           {description && <p className="mt-4 text-zinc-700">{description}</p>}
 
           <div className="mt-6">
@@ -110,7 +121,7 @@ export default function ProductDetail() {
               disabled={!isQtyValid || stock === 0}
               className="rounded-xl bg-indigo-600 px-5 py-3 text-white font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Agregar al carrito
+              {stock === 0 ? "Sin stock" : "Agregar al carrito"}
             </button>
 
             <button
