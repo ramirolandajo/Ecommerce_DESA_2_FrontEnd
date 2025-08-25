@@ -12,6 +12,7 @@ import { addItem } from "../store/cartSlice";
 import { PATHS } from "../routes/paths.js";
 import { tiles } from "../data/Products";
 import Breadcrumbs from "../Components/Breadcrumbs.jsx";
+import RelatedProductsSection from "../Sections/RelatedProductsSection.jsx";
 
 export default function ProductDetail() {
     const { id } = useParams();
@@ -531,6 +532,12 @@ export default function ProductDetail() {
                     {description || "Sin descripción disponible."}
                 </p>
             </div>
+
+            <RelatedProductsSection
+                excludeId={product.id}
+                category={category}
+                subcategory={subcategory}
+            />
         </section>
     );
 }
