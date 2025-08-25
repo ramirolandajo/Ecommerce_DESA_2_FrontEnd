@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { addItem } from "../store/cartSlice";
@@ -8,6 +9,7 @@ export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [qty, setQty] = useState(1);
 
   const product = tiles.find((p) => p.id === id);
 
@@ -21,6 +23,8 @@ export default function ProductDetail() {
   }
 
   const { title, brand, description, price, oldPrice, currency = "USD", media } = product;
+  const stock = product.stock ?? Infinity;
+  const isQtyValid = qty >= 1 && qty <= stock;
 
   const money = (n, curr = currency) =>
     new Intl.NumberFormat("es-AR", {
@@ -59,20 +63,36 @@ export default function ProductDetail() {
 
           {description && <p className="mt-4 text-zinc-700">{description}</p>}
 
+          <div className="mt-6">
+            <input
+              type="number"
+              min={1}
+              max={product.stock}
+              value={qty}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                const clamped = Math.max(1, Math.min(stock, value));
+                setQty(clamped);
+              }}
+              className="w-24 rounded-xl border border-zinc-300 px-3 py-2"
+            />
+          </div>
+
           <div className="mt-8 flex gap-3">
             <button
               onClick={() => {
-                dispatch(addItem({ id, title, price }));
+                dispatch(addItem({ id, title, price, quantity: qty }));
                 navigate(PATHS.cart);
               }}
-              className="rounded-xl bg-indigo-600 px-5 py-3 text-white font-medium hover:bg-indigo-700"
+              disabled={!isQtyValid || product.stock === 0}
+              className="rounded-xl bg-indigo-600 px-5 py-3 text-white font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Agregar al carrito
             </button>
 
             <button
               onClick={() => {
-                dispatch(addItem({ id, title, price }));
+                dispatch(addItem({ id, title, price, quantity: qty }));
                 navigate(PATHS.checkout);
               }}
               className="rounded-xl border border-zinc-300 px-5 py-3 font-medium text-zinc-800 hover:border-zinc-400"

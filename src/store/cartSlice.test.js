@@ -32,6 +32,16 @@ describe("cartSlice", () => {
     expect(state.totalAmount).toBe(10);
   });
 
+  it("should add an item with a custom quantity", () => {
+    const state = cartReducer(
+      undefined,
+      addItem({ id: 2, title: "Qty Test", price: 5, quantity: 4 })
+    );
+    expect(state.items[0].quantity).toBe(4);
+    expect(state.totalQuantity).toBe(4);
+    expect(state.totalAmount).toBe(20);
+  });
+
   it("should update quantity", () => {
     const state = cartReducer(
       { items: [{ id: 1, title: "Test", price: 10, quantity: 1 }], totalQuantity: 1, totalAmount: 10 },
