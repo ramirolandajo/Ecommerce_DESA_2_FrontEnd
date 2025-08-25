@@ -2,53 +2,9 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { motion as Motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { productUrl } from "../routes/paths";
+import { tiles } from "../data/Products";
 
-const slides = [
-    {
-        id: "ps5",
-        brand: "Sony",
-        title: "Playstation 5",
-        description: "Increíble potencia CPU/GPU y SSD con I/O integrado redefine tu experiencia.",
-        cta: { label: "Comprar" },
-        media: {
-            src: "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?q=80&w=627&auto=format&fit=crop",
-            alt: "PlayStation 5",
-        },
-    },
-    {
-        id: "macbook-air",
-        brand: "Apple",
-        title: "Macbook\nAir",
-        description: "El nuevo MacBook Air 15'' te da espacio de sobra con Liquid Retina Display.",
-        cta: { label: "Comprar" },
-        media: {
-            src: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1400&auto=format&fit=crop",
-            alt: "Macbook",
-        },
-    },
-    {
-        id: "airpods-max",
-        brand: "Apple",
-        title: "AirPods\nMax",
-        description: "Computational audio. Livianos y potentes.",
-        cta: { label: "Comprar" },
-        media: {
-            src: "https://images.unsplash.com/photo-1641893978985-a0c233b14f9b?q=80&w=764&auto=format&fit=crop",
-            alt: "AirPods Max",
-        },
-    },
-    {
-        id: "vision-pro",
-        brand: "Apple",
-        title: "Vision\nPro",
-        description: "Una forma inmersiva de experimentar entretenimiento.",
-        cta: { label: "Comprar" },
-        media: {
-            src: "https://plus.unsplash.com/premium_photo-1711333057034-f845101448b0?q=80&w=808&auto=format&fit=crop",
-            alt: "Vision Pro",
-        },
-    },
-];
+const slides = tiles.filter((p) => p.hero);
 
 export default function HeroShowcase() {
     const [index, setIndex] = useState(0);
@@ -180,7 +136,7 @@ function SlideCard({ slide, className = "", medium = false, large = false }) {
                                 : "px-3 py-1.5 text-[11px]"
                     } font-medium backdrop-blur hover:bg-slate-700/60 text-slate-100`}
                 >
-                    {slide.cta.label}
+                    {slide.cta?.label ?? "Comprar"}
                 </Link>
             </div>
         </Motion.article>
