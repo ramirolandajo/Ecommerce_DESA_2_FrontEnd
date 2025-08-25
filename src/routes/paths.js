@@ -3,6 +3,7 @@ export const PATHS = {
     home: "/",
     shop: "/shop",
     product: "/producto/:id",
+    checkout: "/checkout",
     notFound: "*",
 };
 

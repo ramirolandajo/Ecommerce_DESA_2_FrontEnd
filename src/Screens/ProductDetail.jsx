@@ -1,4 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { PATHS } from "../routes/paths.js";
 import { tiles } from "../data/Products";
 
 export default function ProductDetail() {
@@ -52,7 +53,10 @@ export default function ProductDetail() {
                         <button className="rounded-xl bg-indigo-600 px-5 py-3 text-white font-medium hover:bg-indigo-700">
                             Agregar al carrito
                         </button>
-                        <button className="rounded-xl border border-zinc-300 px-5 py-3 font-medium text-zinc-800 hover:border-zinc-400">
+                        <button
+                            className="rounded-xl border border-zinc-300 px-5 py-3 font-medium text-zinc-800 hover:border-zinc-400"
+                            onClick={() => navigate(PATHS.checkout)}
+                        >
                             Comprar ahora
                         </button>
                     </div>
