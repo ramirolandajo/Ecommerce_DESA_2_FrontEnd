@@ -1,4 +1,5 @@
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   removeItem,
@@ -7,6 +8,7 @@ import {
   incrementItem,
   decrementItem,
 } from "../store/cartSlice";
+import { PATHS } from "../routes/paths.js";
 
 export default function CartDrawer({ open, onClose }) {
   const { items, totalAmount } = useSelector((s) => s.cart);
@@ -88,6 +90,13 @@ export default function CartDrawer({ open, onClose }) {
                 <span>Total:</span>
                 <span>${totalAmount.toFixed(2)}</span>
               </p>
+              <Link
+                to={PATHS.checkout}
+                onClick={onClose}
+                className="mt-2 block w-full rounded bg-indigo-600 px-3 py-1 text-center text-white"
+              >
+                Finalizar compra
+              </Link>
               <button
                 className="mt-2 w-full rounded bg-gray-200 px-3 py-1 text-sm"
                 onClick={() => dispatch(clearCart())}
