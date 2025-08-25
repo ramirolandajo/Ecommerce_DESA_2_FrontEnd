@@ -30,7 +30,7 @@ export default function CartDrawer({ open, onClose }) {
         onClick={onClose}
       />
       <aside
-        className={`fixed right-0 top-0 z-40 h-full w-64 bg-white p-4 border-l border-gray-200 transform transition-transform ${
+        className={`fixed right-0 top-0 z-40 h-full w-64 sm:w-80 bg-white p-4 border-l border-gray-200 transform transition-transform ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
         aria-hidden={!open}
@@ -48,8 +48,8 @@ export default function CartDrawer({ open, onClose }) {
         {items.length === 0 ? (
           <p>Carrito vacío</p>
         ) : (
-          <div className="flex flex-col h-full">
-            <ul className="flex-1 overflow-auto divide-y">
+          <div className="flex flex-col h-full overflow-y-auto">
+            <ul className="flex-1 divide-y">
               {items.map((item) => (
                 <li key={item.id} className="py-2 flex items-center gap-3 justify-between">
                   <img
@@ -113,6 +113,13 @@ export default function CartDrawer({ open, onClose }) {
                 Vaciar carrito
               </button>
             </div>
+            <Link
+              to={PATHS.cart}
+              onClick={onClose}
+              className="mt-2 block w-full rounded bg-indigo-600 px-3 py-1 text-center text-white"
+            >
+              Ver carrito
+            </Link>
           </div>
         )}
       </aside>
