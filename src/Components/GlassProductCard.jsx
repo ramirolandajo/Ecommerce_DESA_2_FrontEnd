@@ -14,6 +14,7 @@ export default function GlassProductCard({ item }) {
         currency = "USD",
         cta = { href: "#" },
         media = {},
+        stock = 0,
     } = item || {};
 
     const money = (n, curr = currency) =>
@@ -33,11 +34,17 @@ export default function GlassProductCard({ item }) {
         : null;
 
     // si hay id → detalle; si no, cae al cta.href por compatibilidad
-    const to = id ? productUrl(id) : (cta?.href || "#");
+    const to = id ? productUrl(id) : cta?.href || "#";
+    const outOfStock = stock === 0;
 
     return (
         <Link
             to={to}
+            onClick={(e) => {
+                if (outOfStock) e.preventDefault();
+            }}
+            tabIndex={outOfStock ? -1 : undefined}
+            aria-disabled={outOfStock}
             className={[
                 "group relative block overflow-hidden rounded-2xl p-5 sm:p-6 h-full",
                 "bg-white border border-zinc-200 shadow-md",
@@ -45,9 +52,15 @@ export default function GlassProductCard({ item }) {
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-black/20",
                 "focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                 "flex flex-col text-zinc-900",
+                outOfStock ? "pointer-events-none opacity-60" : "",
             ].join(" ")}
             aria-label={title}
         >
+            {outOfStock && (
+                <span className="absolute top-2 left-2 rounded-md bg-red-600 px-2 py-1 text-xs font-semibold text-white">
+                    Sin stock
+                </span>
+            )}
             {/* Top bar: marca + precio (+ descuento si aplica) */}
             <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
                 {brand && (

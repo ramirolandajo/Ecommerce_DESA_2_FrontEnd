@@ -38,6 +38,7 @@ describe("cartSlice", () => {
       addItem({ id: 2, title: "Bulk", price: 5, quantity: 3 })
     );
     expect(state.items).toHaveLength(1);
+    expect(state.items[0].quantity).toBe(3);
     expect(state.totalQuantity).toBe(3);
     expect(state.totalAmount).toBe(15);
   });
