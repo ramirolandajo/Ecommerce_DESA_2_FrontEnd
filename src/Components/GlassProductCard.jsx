@@ -1,8 +1,6 @@
 // src/Components/GlassProductCard.jsx
 // Card clickeable en estilo claro, sin blur ni glass, textos más oscuros.
 import { Link } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { addItem } from "../store/cartSlice";
 import { productUrl } from "../routes/paths"; // ajustá el path si tu estructura difiere
 
 export default function GlassProductCard({ item }) {
@@ -18,7 +16,6 @@ export default function GlassProductCard({ item }) {
         media = {},
     } = item || {};
 
-    const dispatch = useDispatch();
     const money = (n, curr = currency) =>
         new Intl.NumberFormat("es-AR", {
             style: "currency",
@@ -37,11 +34,6 @@ export default function GlassProductCard({ item }) {
 
     // si hay id → detalle; si no, cae al cta.href por compatibilidad
     const to = id ? productUrl(id) : (cta?.href || "#");
-
-    const handleAdd = (e) => {
-        e.preventDefault();
-        dispatch(addItem({ id, title, price }));
-    };
 
     return (
         <Link
@@ -108,12 +100,6 @@ export default function GlassProductCard({ item }) {
             )}
 
             <div className="mt-auto" />
-            <button
-                onClick={handleAdd}
-                className="mt-4 rounded bg-black px-4 py-2 text-sm font-medium text-white hover:bg-black/80"
-            >
-                Add to cart
-            </button>
         </Link>
     );
 }
