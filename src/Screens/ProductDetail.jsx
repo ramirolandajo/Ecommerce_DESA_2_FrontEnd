@@ -20,7 +20,7 @@ export default function ProductDetail() {
     );
   }
 
-  const { title, brand, description, price, oldPrice, currency = "USD", media } = product;
+  const { title, brand, description, price, oldPrice, currency = "USD", media, stock = 0 } = product;
 
   const money = (n, curr = currency) =>
     new Intl.NumberFormat("es-AR", {
@@ -56,26 +56,47 @@ export default function ProductDetail() {
               <span className="text-lg text-zinc-400 line-through">{money(oldPrice)}</span>
             )}
           </div>
+          <p className="mt-2 text-sm">
+            {stock > 0 ? (
+              <>Stock: {stock}</>
+            ) : (
+              <span className="text-red-600">Sin stock</span>
+            )}
+          </p>
 
           {description && <p className="mt-4 text-zinc-700">{description}</p>}
 
           <div className="mt-8 flex gap-3">
             <button
+              disabled={stock === 0}
               onClick={() => {
+                if (stock === 0) return;
                 dispatch(addItem({ id, title, price }));
                 navigate(PATHS.cart);
               }}
-              className="rounded-xl bg-indigo-600 px-5 py-3 text-white font-medium hover:bg-indigo-700"
+              className={[
+                "rounded-xl px-5 py-3 font-medium",
+                stock === 0
+                  ? "bg-gray-300 text-white cursor-not-allowed"
+                  : "bg-indigo-600 text-white hover:bg-indigo-700",
+              ].join(" ")}
             >
-              Agregar al carrito
+              {stock === 0 ? "Sin stock" : "Agregar al carrito"}
             </button>
 
             <button
+              disabled={stock === 0}
               onClick={() => {
+                if (stock === 0) return;
                 dispatch(addItem({ id, title, price }));
                 navigate(PATHS.checkout);
               }}
-              className="rounded-xl border border-zinc-300 px-5 py-3 font-medium text-zinc-800 hover:border-zinc-400"
+              className={[
+                "rounded-xl border px-5 py-3 font-medium",
+                stock === 0
+                  ? "border-zinc-200 text-zinc-400 cursor-not-allowed"
+                  : "border-zinc-300 text-zinc-800 hover:border-zinc-400",
+              ].join(" ")}
             >
               Comprar ahora
             </button>

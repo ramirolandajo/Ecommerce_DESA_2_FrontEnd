@@ -83,7 +83,7 @@ export default function Navbar() {
 
     setIsLoading(true);
     const q = value.toLowerCase();
-    const pool = Array.isArray(tiles) ? tiles : [];
+    const pool = Array.isArray(tiles) ? tiles.filter((t) => t.stock > 0) : [];
 
     searchTimeout.current = setTimeout(() => {
       const filtered = pool
