@@ -61,3 +61,12 @@ function Cart() {
 ```
 
 Consulta `src/Components/GlassProductCard.jsx` y `src/Components/CartDrawer.jsx` para ejemplos completos de integración.
+
+## Mercado Pago (modo de prueba)
+
+Para habilitar los pagos en el entorno de desarrollo se utilizan las siguientes variables de entorno:
+
+- `VITE_MP_PUBLIC_KEY`: *public key* de prueba utilizada en el frontend para inicializar el SDK de Mercado Pago.
+- `MP_ACCESS_TOKEN`: *access token* de prueba que debe configurar el backend para crear las preferencias de pago.
+
+Asegúrate de definirlas (por ejemplo en un archivo `.env`) antes de ejecutar la aplicación en modo de prueba.

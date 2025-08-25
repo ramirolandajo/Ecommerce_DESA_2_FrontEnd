@@ -4,6 +4,7 @@ import {
   decrementItem,
   updateQuantity,
 } from "../store/cartSlice";
+import { createPreference } from "../utils/mercadoPago.js";
 
 export default function Checkout() {
   // Toma items y, si existe en el slice, totalAmount
@@ -32,6 +33,12 @@ export default function Checkout() {
       currency: "USD", // si querés ARS cambiá a "ARS"
       maximumFractionDigits: 0,
     }).format(n ?? 0);
+
+  const handleConfirm = async () => {
+    new window.MercadoPago(import.meta.env.VITE_MP_PUBLIC_KEY);
+    const initPoint = await createPreference(items);
+    window.location.href = initPoint;
+  };
 
   if (!items.length) {
     return (
@@ -119,6 +126,7 @@ export default function Checkout() {
         <button
           type="button"
           className="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 active:bg-indigo-800"
+          onClick={handleConfirm}
         >
           Confirmar compra
         </button>
