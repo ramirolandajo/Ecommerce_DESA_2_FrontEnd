@@ -1,7 +1,25 @@
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  incrementItem,
+  decrementItem,
+  updateQuantity,
+} from "../store/cartSlice";
 
 export default function Checkout() {
-  const { items = [], totalAmount = 0 } = useSelector((s) => s.cart) ?? {};
+  const { items = [] } = useSelector((s) => s.cart) ?? {};
+  const dispatch = useDispatch();
+
+  const handleQtyChange = (id, qty) => {
+    const quantity = Number(qty);
+    if (quantity > 0) {
+      dispatch(updateQuantity({ id, quantity }));
+    }
+  };
+
+  const total = items.reduce(
+    (acc, i) => acc + (i.price ?? 0) * (i.quantity ?? 1),
+    0,
+  );
 
   const money = (n) =>
     new Intl.NumberFormat("es-AR", {
@@ -25,10 +43,34 @@ export default function Checkout() {
 
       <ul className="mb-6 divide-y divide-zinc-200">
         {items.map((item) => (
-          <li key={`${item.id}-${item.variant ?? ""}`} className="flex justify-between py-2 text-sm">
-            <span className="text-zinc-700">
-              {item.title} <span className="text-zinc-500">x {item.quantity}</span>
-            </span>
+          <li
+            key={`${item.id}-${item.variant ?? ""}`}
+            className="flex items-center justify-between py-2 text-sm"
+          >
+            <span className="flex-1 text-zinc-700">{item.title}</span>
+            <div className="mr-2 flex items-center gap-1">
+              <button
+                className="px-2 border rounded text-sm"
+                aria-label="Decrease quantity"
+                onClick={() => dispatch(decrementItem(item.id))}
+              >
+                -
+              </button>
+              <input
+                type="number"
+                min={1}
+                value={item.quantity}
+                onChange={(e) => handleQtyChange(item.id, e.target.value)}
+                className="w-12 border rounded px-1 py-0.5 text-sm text-center"
+              />
+              <button
+                className="px-2 border rounded text-sm"
+                aria-label="Increase quantity"
+                onClick={() => dispatch(incrementItem(item.id))}
+              >
+                +
+              </button>
+            </div>
             <span className="font-medium">
               {money((item.price ?? 0) * (item.quantity ?? 1))}
             </span>
@@ -37,7 +79,7 @@ export default function Checkout() {
       </ul>
 
       <p className="mb-8 text-right text-lg font-semibold">
-        Total: {money(totalAmount)}
+        Total: {money(total)}
       </p>
 
       <form className="flex flex-col gap-4">
