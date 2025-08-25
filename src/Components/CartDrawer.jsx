@@ -51,7 +51,12 @@ export default function CartDrawer({ open, onClose }) {
           <div className="flex flex-col h-full">
             <ul className="flex-1 overflow-auto divide-y">
               {items.map((item) => (
-                <li key={item.id} className="py-2 flex items-center justify-between gap-2">
+                <li key={item.id} className="py-2 flex items-center gap-3 justify-between">
+                  <img
+                    src={item.image || "https://via.placeholder.com/48"}
+                    alt={item.title}
+                    className="h-12 w-12 object-cover"
+                  />
                   <span className="flex-1 text-sm">{item.title}</span>
                   <div className="flex items-center gap-1">
                     <button
@@ -75,6 +80,10 @@ export default function CartDrawer({ open, onClose }) {
                     >
                       +
                     </button>
+                  </div>
+                  <div className="text-xs text-right">
+                    <span>${item.price.toFixed(2)}</span>
+                    <span className="block">${(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                   <button
                     className="text-red-600 text-xs"
