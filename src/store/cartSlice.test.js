@@ -32,14 +32,15 @@ describe("cartSlice", () => {
     expect(state.totalAmount).toBe(10);
   });
 
-  it("should add an item with a custom quantity", () => {
+  it("should add an item with quantity", () => {
     const state = cartReducer(
       undefined,
-      addItem({ id: 2, title: "Qty Test", price: 5, quantity: 4 })
+      addItem({ id: 2, title: "Bulk", price: 5, quantity: 3 })
     );
-    expect(state.items[0].quantity).toBe(4);
-    expect(state.totalQuantity).toBe(4);
-    expect(state.totalAmount).toBe(20);
+    expect(state.items).toHaveLength(1);
+    expect(state.items[0].quantity).toBe(3);
+    expect(state.totalQuantity).toBe(3);
+    expect(state.totalAmount).toBe(15);
   });
 
   it("should update quantity", () => {
@@ -70,6 +71,26 @@ describe("cartSlice", () => {
     expect(state.items[0].quantity).toBe(1);
     expect(state.totalQuantity).toBe(1);
     expect(state.totalAmount).toBe(10);
+  });
+
+  it("should not add item with invalid quantity", () => {
+    const state = cartReducer(
+      undefined,
+      addItem({ id: 3, title: "Bad", price: 10, quantity: 0 })
+    );
+    expect(state.items).toHaveLength(0);
+    expect(state.totalQuantity).toBe(0);
+    expect(state.totalAmount).toBe(0);
+  });
+
+  it("should ignore update with invalid quantity", () => {
+    const state = cartReducer(
+      { items: [{ id: 1, title: "Test", price: 10, quantity: 2 }], totalQuantity: 2, totalAmount: 20 },
+      updateQuantity({ id: 1, quantity: 0 })
+    );
+    expect(state.items[0].quantity).toBe(2);
+    expect(state.totalQuantity).toBe(2);
+    expect(state.totalAmount).toBe(20);
   });
 
   it("should remove item", () => {
