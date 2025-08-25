@@ -21,6 +21,7 @@ export const tiles = [
         isBestseller: false,
         isFeatured: true,
         stock: 5,
+        hero: true,
     },
     {
         id: "watch-series-9",
@@ -42,6 +43,7 @@ export const tiles = [
         isBestseller: true,
         isFeatured: false,
         stock: 0,
+        hero: false,
     },
     {
         id: "airpods-max",
@@ -65,6 +67,7 @@ export const tiles = [
         isBestseller: true,
         isFeatured: true,
         stock: 8,
+        hero: true,
     },
     {
         id: "z-fold5",
@@ -86,6 +89,7 @@ export const tiles = [
         isBestseller: false,
         isFeatured: false,
         stock: 3,
+        hero: false,
     },
 ];
 
