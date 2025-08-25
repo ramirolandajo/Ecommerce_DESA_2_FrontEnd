@@ -13,8 +13,6 @@ export const tiles = [
             src: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1400&auto=format&fit=crop",
             alt: "Macbook",
         },
-
-        // NUEVO
         category: "Computers",
         subcategory: "Laptops",
         isNew: true,
@@ -35,8 +33,6 @@ export const tiles = [
             src: "https://images.unsplash.com/photo-1624096104992-9b4fa3a279dd?q=80&w=702&auto=format&fit=crop&ixlib=rb-4.1.0",
             alt: "Apple Watch",
         },
-
-        // NUEVO
         category: "Wearables",
         subcategory: "Smart Watches",
         isNew: true,
@@ -59,8 +55,6 @@ export const tiles = [
             src: "https://images.unsplash.com/photo-1655628143559-d6ab5a201c9c?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0",
             alt: "AirPods Max",
         },
-
-        // NUEVO
         category: "Audio",
         subcategory: "Headphones",
         isNew: false,
@@ -81,14 +75,98 @@ export const tiles = [
             src: "https://images.unsplash.com/photo-1721864428881-dbabb9ea0017?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0",
             alt: "Galaxy Z Fold",
         },
-
-        // NUEVO
         category: "Phones",
         subcategory: "Smartphones",
         isNew: true,
         isBestseller: false,
         isFeatured: false,
         stock: 3,
+        hero: false,
+    },
+
+    // 🔥 NUEVOS
+    {
+        id: "apple-vision-pro",
+        brand: "Apple",
+        title: "Apple\nVision Pro",
+        description:
+            "La nueva era de la computación espacial: realidad aumentada y virtual en un solo dispositivo.",
+        price: 3499,
+        cta: { label: "Pre-Order", href: "#visionpro" },
+        media: {
+            type: "image",
+            src: "https://plus.unsplash.com/premium_photo-1711333057034-f845101448b0?q=80&w=808&auto=format&fit=crop",
+            alt: "Apple Vision Pro",
+        },
+        category: "Wearables",
+        subcategory: "AR/VR",
+        isNew: true,
+        isBestseller: false,
+        isFeatured: true,
+        stock: 2,
+        hero: true,
+    },
+    {
+        id: "ps5",
+        brand: "Sony",
+        title: "PlayStation 5\nStandard Edition",
+        description:
+            "La consola de última generación con gráficos 4K, SSD ultrarrápido y DualSense.",
+        price: 499,
+        cta: { label: "Buy Now", href: "#ps5" },
+        media: {
+            type: "image",
+            src: "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            alt: "PlayStation 5",
+        },
+        category: "Gaming",
+        subcategory: "Consoles",
+        isNew: false,
+        isBestseller: true,
+        isFeatured: true,
+        stock: 10,
+        hero: true,
+    },
+    {
+        id: "ipad-pro",
+        brand: "Apple",
+        title: "iPad Pro\n12.9'' M2",
+        description:
+            "Potencia de computadora en formato tablet, con chip M2 y Liquid Retina XDR.",
+        price: 1299,
+        cta: { label: "Shop Now", href: "#ipad" },
+        media: {
+            type: "image",
+            src: "https://images.unsplash.com/photo-1585790051609-09928c362a42?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            alt: "iPad Pro",
+        },
+        category: "Tablets",
+        subcategory: "iPad",
+        isNew: true,
+        isBestseller: false,
+        isFeatured: false,
+        stock: 6,
+        hero: false,
+    },
+    {
+        id: "airpods-pro-2",
+        brand: "Apple",
+        title: "AirPods Pro\n2nd Gen",
+        description:
+            "Cancelación activa de ruido, audio espacial y chip H2 para mejor sonido.",
+        price: 249,
+        cta: { label: "Buy Now", href: "#airpodspro2" },
+        media: {
+            type: "image",
+            src: "https://images.unsplash.com/photo-1594074586687-2bb43be26a55?q=80&w=1229&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            alt: "AirPods Pro 2",
+        },
+        category: "Audio",
+        subcategory: "Earbuds",
+        isNew: true,
+        isBestseller: true,
+        isFeatured: false,
+        stock: 15,
         hero: false,
     },
 ];
@@ -101,4 +179,3 @@ export const categories = Array.from(
         return map;
     }, new Map())
 ).map(([name, subs]) => ({ name, subs: Array.from(subs) }));
-
