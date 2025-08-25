@@ -11,6 +11,7 @@ import {
 import { addItem } from "../store/cartSlice";
 import { PATHS } from "../routes/paths.js";
 import { tiles } from "../data/Products";
+import Breadcrumbs from "../Components/Breadcrumbs.jsx";
 
 export default function ProductDetail() {
     const { id } = useParams();
@@ -46,7 +47,29 @@ export default function ProductDetail() {
         media,
         stock: rawStock,
         freeShipping, // opcional en tus tiles
+        category,
+        subcategory,
     } = product;
+
+    const segments = useMemo(() => {
+        const segs = [];
+        if (category) {
+            segs.push({
+                label: category,
+                to: `${PATHS.shop}?category=${encodeURIComponent(category)}`,
+            });
+            if (subcategory) {
+                segs.push({
+                    label: subcategory,
+                    to: `${PATHS.shop}?category=${encodeURIComponent(
+                        category
+                    )}&subcategory=${encodeURIComponent(subcategory)}`,
+                });
+            }
+        }
+        segs.push({ label: title });
+        return segs;
+    }, [category, subcategory, title]);
 
     // Stock y validaciones
     const stock = Number.isFinite(rawStock) ? rawStock : Infinity;
@@ -319,6 +342,7 @@ export default function ProductDetail() {
 
                 {/* Columna derecha */}
                 <div className="lg:col-span-5 xl:col-span-4">
+                    <Breadcrumbs segments={segments} />
                     {/* Título y marca */}
                     <div className="space-y-1">
                         {brand && <p className="text-sm font-medium text-zinc-500">{brand}</p>}
