@@ -1,46 +1,21 @@
-const SYNONYMS = {
-  mac: ["apple", "notebook", "laptop"],
-  apple: ["mac", "notebook", "laptop", "iphone"],
-  notebook: ["laptop", "mac", "apple"],
-  laptop: ["notebook", "mac", "apple"],
-  iphone: ["apple", "smartphone"],
-  smartphone: ["iphone", "apple"],
-};
+// src/utils/getQueryScore.js
+import getMatchScore, { normalize, tokenize } from "./getMatchScore.js";
 
+/**
+ * Wrapper para mantener compat con código viejo.
+ * Hoy delega en getMatchScore; si querés, podés sumar extras suaves
+ * por campos secundarios (eyebrow, description, id).
+ */
 export function getQueryScore(item, q) {
-  const query = q?.toLowerCase().trim();
-  if (!query) return 1;
+  const base = getMatchScore(item, q);
+  if (base <= 0) return 0;
 
-  const fields = [
-    item.title,
-    item.eyebrow,
-    item.description,
-    item.category,
-    item.subcategory,
-    item.brand,
-    item.id,
-  ];
+  // Opcional: micro bonus por presencia en eyebrow/description/id
+  const query = normalize(q ?? "");
+  const extraFields = [item.eyebrow, item.description, item.id].filter(Boolean).map(normalize);
+  const hasAny = extraFields.some((f) => f.includes(query));
 
-  let score = 0;
-  const related = SYNONYMS[query] || [];
-
-  for (const field of fields) {
-    if (typeof field !== "string") continue;
-    const value = field.toLowerCase();
-    if (value.startsWith(query)) {
-      score = Math.max(score, 3);
-    } else if (value.includes(query)) {
-      score = Math.max(score, 2);
-    }
-    for (const rel of related) {
-      if (value.includes(rel)) {
-        score = Math.max(score, 1);
-      }
-    }
-  }
-
-  return score;
+  return hasAny ? Math.min(base + 0.5, 12) : base;
 }
 
 export default getQueryScore;
-
