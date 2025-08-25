@@ -1,5 +1,6 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { addItem } from "../store/cartSlice";
 import { PATHS } from "../routes/paths.js";
 import { tiles } from "../data/Products";
@@ -33,9 +34,17 @@ export default function ProductDetail() {
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-8">
-      <button onClick={() => navigate(-1)} className="mb-6 text-zinc-600 hover:text-zinc-900">
-        ← Volver
-      </button>
+      <Link
+        to={PATHS.shop}
+        onClick={(e) => {
+          e.preventDefault();
+          navigate(-1);
+        }}
+        className="mb-6 inline-flex items-center gap-1 rounded-md text-zinc-600 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-gray-900"
+      >
+        <ArrowLeftIcon className="size-5" aria-hidden="true" />
+        <span>Volver</span>
+      </Link>
 
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
