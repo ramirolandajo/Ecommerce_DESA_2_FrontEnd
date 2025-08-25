@@ -10,3 +10,52 @@ Currently, two official plugins are available:
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+## Cart state management
+
+Este proyecto incluye un slice de Redux (`cartSlice`) para manejar el carrito de compras.
+
+### Estado inicial
+
+```js
+{
+  items: [],
+  totalQuantity: 0,
+  totalAmount: 0
+}
+```
+
+El estado se persiste en `localStorage` para mantener los datos entre recargas.
+
+### Acciones principales
+
+- `addItem({ id, title, price, quantity })`
+- `removeItem(id)`
+- `updateQuantity({ id, quantity })`
+- `clearCart()`
+
+### Ejemplo de uso en componentes
+
+```jsx
+import { useDispatch, useSelector } from "react-redux";
+import { addItem, removeItem } from "../store/cartSlice";
+
+function Product({ product }) {
+  const dispatch = useDispatch();
+  return (
+    <button onClick={() => dispatch(addItem(product))}>Agregar</button>
+  );
+}
+
+function Cart() {
+  const items = useSelector((s) => s.cart.items);
+  return items.map((i) => (
+    <div key={i.id}>
+      {i.title}
+      <button onClick={() => dispatch(removeItem(i.id))}>Quitar</button>
+    </div>
+  ));
+}
+```
+
+Consulta `src/Components/GlassProductCard.jsx` y `src/Components/CartDrawer.jsx` para ejemplos completos de integración.
