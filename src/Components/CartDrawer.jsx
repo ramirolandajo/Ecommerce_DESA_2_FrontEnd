@@ -4,6 +4,8 @@ import {
   removeItem,
   updateQuantity,
   clearCart,
+  incrementItem,
+  decrementItem,
 } from "../store/cartSlice";
 
 export default function CartDrawer({ open, onClose }) {
@@ -49,13 +51,29 @@ export default function CartDrawer({ open, onClose }) {
               {items.map((item) => (
                 <li key={item.id} className="py-2 flex items-center justify-between gap-2">
                   <span className="flex-1 text-sm">{item.title}</span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={item.quantity}
-                    onChange={(e) => handleQtyChange(item.id, e.target.value)}
-                    className="w-12 border rounded px-1 py-0.5 text-sm"
-                  />
+                  <div className="flex items-center gap-1">
+                    <button
+                      className="px-2 border rounded text-sm"
+                      aria-label="Decrease quantity"
+                      onClick={() => dispatch(decrementItem(item.id))}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      value={item.quantity}
+                      onChange={(e) => handleQtyChange(item.id, e.target.value)}
+                      className="w-12 border rounded px-1 py-0.5 text-sm text-center"
+                    />
+                    <button
+                      className="px-2 border rounded text-sm"
+                      aria-label="Increase quantity"
+                      onClick={() => dispatch(incrementItem(item.id))}
+                    >
+                      +
+                    </button>
+                  </div>
                   <button
                     className="text-red-600 text-xs"
                     onClick={() => dispatch(removeItem(item.id))}

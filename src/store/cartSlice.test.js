@@ -4,6 +4,8 @@ import cartReducer, {
   removeItem,
   updateQuantity,
   clearCart,
+  incrementItem,
+  decrementItem,
 } from "./cartSlice";
 import { configureStore } from "@reduxjs/toolkit";
 
@@ -40,6 +42,26 @@ describe("cartSlice", () => {
     expect(state.totalAmount).toBe(30);
   });
 
+  it("should increment item quantity", () => {
+    const state = cartReducer(
+      { items: [{ id: 1, title: "Test", price: 10, quantity: 1 }], totalQuantity: 1, totalAmount: 10 },
+      incrementItem(1)
+    );
+    expect(state.items[0].quantity).toBe(2);
+    expect(state.totalQuantity).toBe(2);
+    expect(state.totalAmount).toBe(20);
+  });
+
+  it("should decrement item quantity", () => {
+    const state = cartReducer(
+      { items: [{ id: 1, title: "Test", price: 10, quantity: 2 }], totalQuantity: 2, totalAmount: 20 },
+      decrementItem(1)
+    );
+    expect(state.items[0].quantity).toBe(1);
+    expect(state.totalQuantity).toBe(1);
+    expect(state.totalAmount).toBe(10);
+  });
+
   it("should remove item", () => {
     const state = cartReducer(
       { items: [{ id: 1, title: "Test", price: 10, quantity: 1 }], totalQuantity: 1, totalAmount: 10 },
@@ -69,11 +91,13 @@ describe("cartSlice integration", () => {
     };
   });
 
-  it("allows adding, updating and removing items via store", () => {
+  it("allows adding, adjusting and removing items via store", () => {
     const store = configureStore({ reducer: { cart: cartReducer } });
     store.dispatch(addItem({ id: 1, title: "Test", price: 5 }));
-    store.dispatch(updateQuantity({ id: 1, quantity: 4 }));
-    expect(store.getState().cart.totalAmount).toBe(20);
+    store.dispatch(incrementItem(1));
+    expect(store.getState().cart.totalAmount).toBe(10);
+    store.dispatch(decrementItem(1));
+    expect(store.getState().cart.totalAmount).toBe(5);
     store.dispatch(removeItem(1));
     expect(store.getState().cart.items).toHaveLength(0);
   });
