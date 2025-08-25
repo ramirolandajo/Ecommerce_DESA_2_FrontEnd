@@ -32,6 +32,8 @@ El estado se persiste en `localStorage` para mantener los datos entre recargas.
 - `addItem({ id, title, price, quantity })`
 - `removeItem(id)`
 - `updateQuantity({ id, quantity })`
+- `incrementItem(id)`
+- `decrementItem(id)`
 - `clearCart()`
 
 ### Ejemplo de uso en componentes
