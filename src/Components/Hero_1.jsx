@@ -70,7 +70,7 @@ export default function HeroShowcase() {
     const small2 = slides[(index + 3) % slides.length];
 
     return (
-        <section className="w-full bg-gradient-to-br from-slate-800 via-black to-slate-900 text-white mt-16 lg:mt-20">
+        <section className="w-full bg-gradient-to-br from-slate-800 via-black to-slate-900 text-white">
             <div className="w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12 max-w-screen-2xl mx-auto">
                 <div
                     className="grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-[280px_140px] xl:grid-rows-[340px_160px] gap-4 lg:gap-6"

@@ -45,7 +45,7 @@ export default function FilterSidebar({
 
             {subcats.length > 0 && (
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-zinc-700">Subcategoría</label>
+                    <label className=" text-sm font-medium text-zinc-700">Subcategoría</label>
                     <select
                         className="w-full h-10 rounded-2xl border border-zinc-300 bg-white px-3 text-sm text-zinc-800 shadow-sm"
                         value={subcategory}
