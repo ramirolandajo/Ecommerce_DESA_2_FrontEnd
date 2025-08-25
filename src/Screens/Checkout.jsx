@@ -2,6 +2,10 @@ import { useSelector } from "react-redux";
 
 export default function Checkout() {
   const { items = [], totalAmount = 0 } = useSelector((s) => s.cart) ?? {};
+  const subtotal = items.reduce(
+    (acc, i) => acc + (i.price ?? 0) * (i.quantity ?? 1),
+    0,
+  );
 
   const money = (n) =>
     new Intl.NumberFormat("es-AR", {
@@ -24,18 +28,25 @@ export default function Checkout() {
       <h1 className="mb-6 text-2xl font-bold">Checkout</h1>
 
       <ul className="mb-6 divide-y divide-zinc-200">
-        {items.map((item) => (
-          <li key={`${item.id}-${item.variant ?? ""}`} className="flex justify-between py-2 text-sm">
-            <span className="text-zinc-700">
-              {item.title} <span className="text-zinc-500">x {item.quantity}</span>
-            </span>
-            <span className="font-medium">
-              {money((item.price ?? 0) * (item.quantity ?? 1))}
-            </span>
-          </li>
-        ))}
+        {items.map((item) => {
+          const itemSubtotal = (item.price ?? 0) * (item.quantity ?? 1);
+          return (
+            <li
+              key={`${item.id}-${item.variant ?? ""}`}
+              className="flex justify-between py-2 text-sm"
+            >
+              <span className="text-zinc-700">
+                {item.title} <span className="text-zinc-500">x {item.quantity}</span>
+              </span>
+              <span className="font-medium">{money(itemSubtotal)}</span>
+            </li>
+          );
+        })}
       </ul>
 
+      <p className="mb-2 text-right text-lg font-semibold">
+        Subtotal: {money(subtotal)}
+      </p>
       <p className="mb-8 text-right text-lg font-semibold">
         Total: {money(totalAmount)}
       </p>
