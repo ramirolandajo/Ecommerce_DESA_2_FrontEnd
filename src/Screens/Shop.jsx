@@ -14,9 +14,10 @@ export default function Shop() {
   const query = searchParams.get("query")?.toLowerCase() || "";
   const initialMin = searchParams.get("min") ?? "";
   const initialMax = searchParams.get("max") ?? "";
+  const initialSub = searchParams.get("subcategory") ?? "";
 
   const [category, setCategory] = useState(initialCat);
-  const [subcategory, setSubcategory] = useState("");
+  const [subcategory, setSubcategory] = useState(initialSub);
   const [min, setMin] = useState(initialMin);
   const [max, setMax] = useState(initialMax);
   const [sort, setSort] = useState("relevance");
@@ -38,9 +39,11 @@ export default function Shop() {
       const params = new URLSearchParams(prev);
       if (category === "All") params.delete("category");
       else params.set("category", category);
+      if (subcategory) params.set("subcategory", subcategory);
+      else params.delete("subcategory");
       return params;
     });
-  }, [category, setSearchParams]);
+  }, [category, subcategory, setSearchParams]);
 
   useEffect(() => {
     const load = async () => {
