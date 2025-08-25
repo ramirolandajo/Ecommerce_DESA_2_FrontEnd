@@ -1,5 +1,6 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import { useState } from "react";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { addItem } from "../store/cartSlice";
 import { PATHS } from "../routes/paths.js";
@@ -9,6 +10,8 @@ export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [quantity, setQuantity] = useState(1);
+  const [added, setAdded] = useState(false);
 
   const product = tiles.find((p) => p.id === id);
 
@@ -31,6 +34,12 @@ export default function ProductDetail() {
     }).format(n);
 
   const hasDiscount = typeof oldPrice === "number" && oldPrice > price;
+
+  const handleAdd = () => {
+    dispatch(addItem({ id, title, price, quantity }));
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-8">
@@ -68,12 +77,16 @@ export default function ProductDetail() {
 
           {description && <p className="mt-4 text-zinc-700">{description}</p>}
 
-          <div className="mt-8 flex gap-3">
+          <div className="mt-8 flex items-center gap-3">
+            <input
+              type="number"
+              min="1"
+              value={quantity}
+              onChange={(e) => setQuantity(Number(e.target.value))}
+              className="w-20 rounded-xl border border-zinc-300 px-3 py-2 text-center"
+            />
             <button
-              onClick={() => {
-                dispatch(addItem({ id, title, price }));
-                navigate(PATHS.cart);
-              }}
+              onClick={handleAdd}
               className="rounded-xl bg-indigo-600 px-5 py-3 text-white font-medium hover:bg-indigo-700"
             >
               Agregar al carrito
@@ -81,7 +94,7 @@ export default function ProductDetail() {
 
             <button
               onClick={() => {
-                dispatch(addItem({ id, title, price }));
+                dispatch(addItem({ id, title, price, quantity }));
                 navigate(PATHS.checkout);
               }}
               className="rounded-xl border border-zinc-300 px-5 py-3 font-medium text-zinc-800 hover:border-zinc-400"
@@ -89,6 +102,10 @@ export default function ProductDetail() {
               Comprar ahora
             </button>
           </div>
+
+          {added && (
+            <p className="mt-2 text-sm text-green-600">Producto añadido al carrito</p>
+          )}
         </div>
       </div>
     </section>
