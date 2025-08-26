@@ -8,6 +8,8 @@ const Shop = lazy(() => import("../Screens/Shop.jsx"));
 const ProductDetail = lazy(() => import("../Screens/ProductDetail.jsx"));
 const Cart = lazy(() => import("../Screens/Cart.jsx"));
 const Checkout = lazy(() => import("../Screens/Checkout.jsx"));
+const Login = lazy(() => import("../Screens/Login.jsx"));
+const Register = lazy(() => import("../Screens/Register.jsx"));
 
 const NotFound = () => (
   <div className="mx-auto max-w-3xl px-4 py-16">
@@ -18,6 +20,9 @@ const NotFound = () => (
 
 export default function AppRoutes() {
   return useRoutes([
+    { path: "/login", element: <Login /> },
+    { path: "/register", element: <Register /> },
+
     {
       element: <Layout />,
       children: [
@@ -27,6 +32,7 @@ export default function AppRoutes() {
         { path: "/cart", element: <Cart /> },
         { path: "/checkout", element: <Checkout /> },
         { path: "*", element: <NotFound /> },
+
       ],
     },
   ]);
