@@ -1,10 +1,11 @@
 // Navbar.jsx
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, NavLink, Link } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import CartDrawer from "./CartDrawer.jsx";
 import { tiles } from "../data/Products";
 import { getQueryScore } from "../utils/getQueryScore.js";
+import { logout } from "../store/user/userSlice.js";
 
 import {
   Disclosure,
@@ -62,6 +63,8 @@ export default function Navbar() {
   const [cartOpen, setCartOpen] = useState(false);
   const searchTimeout = useRef(null);
   const navigate = useNavigate();
+  const user = useSelector((state) => state.user);
+  const dispatch = useDispatch()
 
   const totalItems = useSelector((s) =>
     s.cart.items.reduce((acc, i) => acc + i.quantity, 0)
@@ -97,6 +100,12 @@ export default function Navbar() {
       setIsLoading(false);
     }, 400);
   };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/"); // Volver al login si cierra sesión
+  };
+
 
   useEffect(() => {
     return () => {
@@ -241,37 +250,47 @@ export default function Navbar() {
                 )}
               </button>
               {/*TODO: Crear un botón que diga Ingresar si el usuario no está logueado, caso contrario renderizar el Menu*/}
-              <Menu as="div" className="relative">
-                <MenuButton className="flex rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
-                  <img
-                    className="h-8 w-8 rounded-full"
-                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                    alt="User"
-                  />
-                </MenuButton>
-                <MenuItems
-                  transition
-                  className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none
+              {user.isLoggedIn ? (
+                <Menu as="div" className="relative">
+                  <MenuButton className="flex rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
+                    <img
+                      className="h-8 w-8 rounded-full"
+                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                      alt="User"
+                    />
+                  </MenuButton>
+                  <MenuItems
+                    transition
+                    className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none
                              data-[closed]:scale-95 data-[closed]:opacity-0
                              data-[enter]:duration-100 data-[enter]:ease-out data-[leave]:duration-75 data-[leave]:ease-in"
+                  >
+                    <MenuItem>
+                      <a className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Your profile
+                      </a>
+                    </MenuItem>
+                    <MenuItem>
+                      <a className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Settings
+                      </a>
+                    </MenuItem>
+                    <MenuItem>
+                      <button className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100" onClick={handleLogout}>
+                        Sign out
+                      </button>
+                    </MenuItem>
+                  </MenuItems>
+                </Menu>
+              ) : (
+                <Link
+                  to="/login"
+                  className="font-bold  tracking-tight text-gray-800"
                 >
-                  <MenuItem>
-                    <a className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      Your profile
-                    </a>
-                  </MenuItem>
-                  <MenuItem>
-                    <a className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      Settings
-                    </a>
-                  </MenuItem>
-                  <MenuItem>
-                    <button className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100">
-                      Sign out
-                    </button>
-                  </MenuItem>
-                </MenuItems>
-              </Menu>
+                  Ingresa
+                </Link>
+              )
+              }
             </div>
           </div>
         </div>
