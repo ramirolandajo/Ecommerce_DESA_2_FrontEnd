@@ -8,7 +8,7 @@ import {
     TruckIcon,
     ArrowsPointingOutIcon,
 } from "@heroicons/react/24/outline";
-import { addItem } from "../store/cartSlice";
+import { addItem } from "../store/cart/cartSlice.js";
 import { PATHS } from "../routes/paths.js";
 import { tiles } from "../data/Products";
 import Breadcrumbs from "../Components/Breadcrumbs.jsx";

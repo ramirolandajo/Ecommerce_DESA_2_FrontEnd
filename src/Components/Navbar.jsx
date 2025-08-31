@@ -39,19 +39,19 @@ function SearchSuggestions({ isLoading, suggestions, onSelect }) {
   }
   if (suggestions.length === 0) return null;
   return (
-      <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-md bg-white shadow-lg">
-        {suggestions.map((item) => (
-          <li key={item.id}>
-            <button
-              type="button"
-              onClick={() => onSelect(item.title)}
-              className="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 truncate"
-            >
-              {String(item.title || "").replace(/\n/g, " ")}
-            </button>
-          </li>
-        ))}
-      </ul>
+    <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-md bg-white shadow-lg">
+      {suggestions.map((item) => (
+        <li key={item.id}>
+          <button
+            type="button"
+            onClick={() => onSelect(item.title)}
+            className="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 truncate"
+          >
+            {String(item.title || "").replace(/\n/g, " ")}
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -240,8 +240,7 @@ export default function Navbar() {
                   </span>
                 )}
               </button>
-
-              {/* Avatar / Menú usuario */}
+              {/*TODO: Crear un botón que diga Ingresar si el usuario no está logueado, caso contrario renderizar el Menu*/}
               <Menu as="div" className="relative">
                 <MenuButton className="flex rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
                   <img

@@ -16,7 +16,7 @@ import {
     clearCart,
     incrementItem,
     decrementItem,
-} from "../store/cartSlice";
+} from "../store/cart/cartSlice.js";
 import { PATHS } from "../routes/paths.js";
 
 export default function CartDrawer({ open, onClose }) {
