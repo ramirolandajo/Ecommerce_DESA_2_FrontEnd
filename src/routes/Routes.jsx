@@ -26,6 +26,8 @@ export default function AppRoutes() {
     {
       element: <Layout />,
       children: [
+        {path: "/login", element: <Login />},
+        {path: "/register", element: <Register />},
         { path: "/", element: <Home /> },
         { path: "/shop", element: <Shop /> },
         { path: "/producto/:id", element: <ProductDetail /> },
