@@ -40,7 +40,7 @@ export default function Stepper({ items, money, handleConfirm }) {
       <div className="mx-auto w-full max-w-5xl space-y-8">
         {/* Step header con iconos */}
         <ol className="grid grid-cols-3 gap-4">
-          {steps.map(({ id, label, Icon }) => {
+          {steps.map(({ id, label }) => {
             const active = step === id;
             const done = step > id;
             return (
