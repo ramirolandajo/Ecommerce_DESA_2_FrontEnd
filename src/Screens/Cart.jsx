@@ -7,7 +7,7 @@ import {
   incrementItem,
   decrementItem,
   clearCart,
-} from "../store/cartSlice";
+} from "../store/cart/cartSlice";
 import { PATHS } from "../routes/paths";
 import { TrashIcon } from "@heroicons/react/24/outline";
 
