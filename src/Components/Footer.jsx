@@ -14,8 +14,8 @@ export default function Footer() {
                         </a>
 
                         <p className="mt-6 max-w-xl text-gray-400 leading-relaxed break-words">
-                            We are a residential interior design firm located in Portland.
-                            Our boutique–studio offers more than
+                            Somos una tienda en línea especializada en productos exclusivos y de alta calidad.
+                            Ofrecemos una experiencia de compra personalizada y segura para nuestros clientes.
                         </p>
 
                     </div>
@@ -24,7 +24,7 @@ export default function Footer() {
 
                 {/* Mini‑footer */}
                 <div className="mt-12 border-t border-white/10 pt-6 text-sm text-gray-500">
-                    © {new Date().getFullYear()} cyber. All rights reserved.
+                    © {new Date().getFullYear()} cyber. Todos los derechos reservados.
                 </div>
             </div>
         </footer>

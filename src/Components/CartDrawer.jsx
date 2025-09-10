@@ -8,7 +8,7 @@ import {
     TransitionChild,
 } from "@headlessui/react";
 import { XMarkIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
     removeItem,
@@ -22,6 +22,7 @@ import { PATHS } from "../routes/paths.js";
 export default function CartDrawer({ open, onClose }) {
     const { items = [] } = useSelector((s) => s.cart ?? {});
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const closeButtonRef = useRef(null);
 
     // Subtotal calculado (evita depender de totalAmount por si se desincroniza)
@@ -35,11 +36,16 @@ export default function CartDrawer({ open, onClose }) {
     );
 
     const money = (n) =>
-        new Intl.NumberFormat("en-US", {
+        new Intl.NumberFormat("es-ES", {
             style: "currency",
             currency: "USD",
             maximumFractionDigits: 0,
         }).format(Number(n) || 0);
+
+    const handleCheckout = () => {
+        navigate(PATHS.checkout);
+        onClose();
+    };
 
     return (
         <Transition show={open} appear as={Fragment}>
@@ -83,8 +89,8 @@ export default function CartDrawer({ open, onClose }) {
                                 {/* Header */}
                                 <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white/95 px-5 py-4 backdrop-blur">
                                     <div>
-                                        <h2 className="text-lg font-semibold text-zinc-900">Your Cart</h2>
-                                        <p className="text-xs text-zinc-500">{items.length} item(s)</p>
+                                        <h2 className="text-lg font-semibold text-zinc-900">Tu carrito</h2>
+                                        <p className="text-xs text-zinc-500">{items.length} producto(s)</p>
                                     </div>
                                     <button
                                         ref={closeButtonRef}
@@ -188,13 +194,13 @@ export default function CartDrawer({ open, onClose }) {
                         </span>
                                             </div>
 
-                                            <Link
-                                                to={PATHS.checkout}
-                                                onClick={onClose}
+                                            <button
+                                                type="button"
+                                                onClick={handleCheckout}
                                                 className="block w-full rounded-lg bg-black py-3 text-center text-white font-medium hover:bg-zinc-800"
                                             >
-                                                Checkout
-                                            </Link>
+                                                Finalizar compra
+                                            </button>
 
                                             <div className="flex gap-2">
                                                 <Link

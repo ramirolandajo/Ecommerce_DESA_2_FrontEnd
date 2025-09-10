@@ -1,6 +1,7 @@
-import { useId, useMemo, useState, useCallback } from "react";
+import React from 'react';
+import { useId, useMemo, useState, useCallback, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
     ArrowLeftIcon,
     CheckCircleIcon,
@@ -8,101 +9,76 @@ import {
     TruckIcon,
     ArrowsPointingOutIcon,
 } from "@heroicons/react/24/outline";
-import { addItem } from "../store/cart/cartSlice.js";
-import { PATHS } from "../routes/paths.js";
-import { tiles } from "../data/Products";
+import { HeartIcon } from "@heroicons/react/24/outline";
+import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
+import { addItemIfLoggedIn } from "../store/cart/cartSlice.js";
+import { PATHS, productUrl } from "../routes/paths.js";
 import Breadcrumbs from "../Components/Breadcrumbs.jsx";
+import Loader from "../Components/Loader.jsx";
 import RelatedProductsSection from "../Sections/RelatedProductsSection.jsx";
+import { fetchProduct } from "../store/products/productsSlice.js";
+import { addFavourite, removeFavourite } from "../store/favourites/favouritesSlice.js";
 
 export default function ProductDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const { current: product, status, error, related } = useSelector((state) => state.products);
+    const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
+    const isFavourite = useSelector((s) =>
+        s.favourites.items.some((p) => String(p.id) === String(id))
+    );
 
-    // Match robusto por si el id de tiles es number
-    const product = tiles.find((p) => String(p.id) === String(id));
-
-    // Estado UI - Se declaran aquí para evitar reglas de hooks
+    // Estado UI
     const [qty, setQty] = useState(1);
     const [added, setAdded] = useState(false);
-    const [activeIndex, setActiveIndex] = useState(0);
-    const [isZoomed, setIsZoomed] = useState(false);
-    const [bgPos, setBgPos] = useState("50% 50%");
-    const [touching, setTouching] = useState(false);
-    const [lightboxOpen, setLightboxOpen] = useState(false);
     const qtyId = useId();
 
-    // Todos los useMemo y useCallback se declaran aquí para evitar hook violations
+    useEffect(() => {
+        if (!product || String(product.id) !== String(id)) {
+            dispatch(fetchProduct(id));
+        }
+    }, [dispatch, id, product]);
+
+    const {
+        title = '',
+        brand = {},
+        description = '',
+        price,
+        priceUnit,
+        discount,
+        currency = "USD",
+        mediaSrc = [],
+        stock: rawStock,
+        freeShipping,
+        categories: categoriesArr = [],
+        subcategory,
+    } = product || {};
+    const subcategoryName =
+        typeof subcategory === "string" ? subcategory : subcategory?.name;
+    const categoryObj = categoriesArr[0] || null;
+    const category =
+        typeof categoryObj === "string" ? categoryObj : categoryObj?.name;
+
     const segments = useMemo(() => {
-        if (!product) return [];
-        const { category, subcategory, title } = product;
         const segs = [];
         if (category) {
             segs.push({
                 label: category,
                 to: `${PATHS.shop}?category=${encodeURIComponent(category)}`,
             });
-            if (subcategory) {
+            if (subcategoryName) {
                 segs.push({
-                    label: subcategory,
+                    label: subcategoryName,
                     to: `${PATHS.shop}?category=${encodeURIComponent(
                         category
-                    )}&subcategory=${encodeURIComponent(subcategory)}`,
+                    )}&subcategory=${encodeURIComponent(subcategoryName)}`,
                 });
             }
         }
         segs.push({ label: title });
         return segs;
-    }, [product]);
-
-    const formatter = useMemo(() => {
-        if (!product) return null;
-        return new Intl.NumberFormat("es-AR", {
-            style: "currency",
-            currency: product.currency || "USD",
-            maximumFractionDigits: 0,
-        });
-    }, [product]);
-
-    const discountInfo = useMemo(() => {
-        if (!product) return { discountPercent: 0, savings: 0 };
-        const { price, oldPrice } = product;
-        const hasDiscount = oldPrice && oldPrice > price;
-        if (!hasDiscount) return { discountPercent: 0, savings: 0 };
-        const diff = oldPrice - price;
-        const pct = Math.round((diff / oldPrice) * 100);
-        return { discountPercent: pct, savings: diff };
-    }, [product]);
-
-    const gallery = useMemo(() => {
-        if (!product?.media) return [];
-        return Array.isArray(product.media) ? product.media : [product.media];
-    }, [product]);
-
-    const getSrc = useCallback((m) => (typeof m === "string" ? m : m?.src || m?.url || ""), []);
-
-    if (!product) {
-        return (
-            <section className="mx-auto max-w-3xl px-4 py-12">
-                <p className="text-zinc-700">Producto no encontrado.</p>
-                <Link to="/" className="text-indigo-600 underline">
-                    Volver
-                </Link>
-            </section>
-        );
-    }
-
-    const {
-        title,
-        brand,
-        description,
-        price,
-        oldPrice,
-        stock: rawStock,
-        freeShipping, // opcional en tus tiles
-        category,
-        subcategory,
-    } = product;
+    }, [category, subcategoryName, title]);
 
     // Stock y validaciones
     const stock = Number.isFinite(rawStock) ? rawStock : Infinity;
@@ -111,20 +87,63 @@ export default function ProductDetail() {
     const isQtyValid = qty >= 1 && qty <= stock;
 
     // Formateador monetario memoizado
-    const money = (n) => formatter?.format(n) || n;
+    const formatter = useMemo(
+        () =>
+            new Intl.NumberFormat("es-AR", {
+                style: "currency",
+                currency,
+                maximumFractionDigits: 0,
+            }),
+        [currency]
+    );
+    const money = (n) => formatter.format(n);
+
+    const finalPrice = useMemo(() => {
+        if (typeof price === "number") return price;
+        if (typeof priceUnit === "number") {
+            return priceUnit * (1 - (typeof discount === "number" ? discount : 0) / 100);
+        }
+        return undefined;
+    }, [price, priceUnit, discount]);
 
     const hasDiscount =
-        typeof oldPrice === "number" && typeof price === "number" && oldPrice > price;
-    
-    const { discountPercent, savings } = discountInfo;
+        (typeof discount === "number" && discount > 0) ||
+        (typeof priceUnit === "number" && typeof finalPrice === "number" && priceUnit > finalPrice);
+
+    const { discountPercent, savings } = useMemo(() => {
+        if (!hasDiscount) return { discountPercent: null, savings: null };
+        const pct =
+            typeof discount === "number"
+                ? Math.round(discount)
+                : typeof priceUnit === "number" && typeof finalPrice === "number"
+                ? Math.round(((priceUnit - finalPrice) / priceUnit) * 100)
+                : null;
+        const diff =
+            typeof priceUnit === "number" && typeof finalPrice === "number"
+                ? priceUnit - finalPrice
+                : null;
+        return { discountPercent: pct, savings: diff };
+    }, [hasDiscount, discount, priceUnit, finalPrice]);
 
     // Galería
+    const gallery = useMemo(() => {
+        const arr = Array.isArray(mediaSrc) ? mediaSrc : [mediaSrc];
+        return arr
+            .map((m) => (typeof m === "string" ? m : m?.src || m?.url))
+            .filter(Boolean);
+    }, [mediaSrc]);
+
+    const [activeIndex, setActiveIndex] = useState(0);
     const activeImage = gallery[activeIndex];
 
     // Helper de URL
+    const getSrc = useCallback((m) => (typeof m === "string" ? m : m?.src || m?.url || ""), []);
     const activeSrc = getSrc(activeImage);
 
     // Zoom hover/touch
+    const [isZoomed, setIsZoomed] = useState(false);
+    const [bgPos, setBgPos] = useState("50% 50%");
+    const [touching, setTouching] = useState(false);
 
     const updateBgPos = (clientX, clientY, target) => {
         const rect = target.getBoundingClientRect();
@@ -153,6 +172,7 @@ export default function ProductDetail() {
     };
 
     // Lightbox
+    const [lightboxOpen, setLightboxOpen] = useState(false);
     const openLightbox = () => setLightboxOpen(true);
     const closeLightbox = () => setLightboxOpen(false);
     const goPrev = (e) => {
@@ -176,10 +196,48 @@ export default function ProductDetail() {
 
     const handleAdd = () => {
         if (!isQtyValid || outOfStock) return;
-        dispatch(addItem({ id: String(product.id), title, price, quantity: qty }));
-        setAdded(true);
-        setTimeout(() => setAdded(false), 1600);
+        if (isLoggedIn) {
+            dispatch(
+                addItemIfLoggedIn({
+                    id: String(product.id),
+                    title,
+                    price: finalPrice,
+                    quantity: qty,
+                })
+            );
+            setAdded(true);
+            setTimeout(() => setAdded(false), 1600);
+        } else {
+            if (typeof localStorage !== "undefined" && product?.id) {
+                localStorage.setItem("postLoginRedirect", productUrl(product.id));
+            }
+            navigate("/login");
+        }
     };
+
+    const toggleFavourite = () => {
+        dispatch(isFavourite ? removeFavourite(product.productCode) : addFavourite(product.productCode));
+    };
+
+    // --- Returns condicionales después de los hooks ---
+    if (status === "loading" || !product || String(product.id) !== String(id)) {
+        return (
+            <section className="mx-auto flex items-center justify-center max-w-3xl px-4 py-12">
+                <Loader />
+            </section>
+        );
+    }
+
+    if (status === "failed") {
+        return (
+            <section className="mx-auto max-w-3xl px-4 py-12">
+                <p className="text-zinc-700">{error}</p>
+                <Link to="/" className="text-indigo-600 underline">
+                    Volver
+                </Link>
+            </section>
+        );
+    }
 
     return (
         <section className="mx-auto max-w-6xl px-4 pb-28 pt-6 lg:pt-10">
@@ -321,7 +379,7 @@ export default function ProductDetail() {
                                             aria-hidden="true"
                                             className="pointer-events-none absolute inset-0 h-0 w-0 opacity-0"
                                             decoding="async"
-                                            fetchpriority="high"
+                                            fetchPriority="high"
                                         />
                                     )}
 
@@ -353,20 +411,24 @@ export default function ProductDetail() {
                     <Breadcrumbs segments={segments} />
                     {/* Título y marca */}
                     <div className="space-y-1">
-                        {brand && <p className="text-sm font-medium text-zinc-500">{brand}</p>}
+                        {brand?.name && (
+                            <p className="text-sm font-medium text-zinc-500">{brand.name}</p>
+                        )}
                         <h1 className="text-2xl font-semibold text-zinc-900">{title}</h1>
                     </div>
 
                     {/* Precios */}
                     <div className="mt-4 flex items-end gap-3">
-                        <p className="text-3xl font-bold text-zinc-900">{money(price)}</p>
+                        <p className="text-3xl font-bold text-zinc-900">{money(finalPrice)}</p>
                         {hasDiscount && (
                             <>
-                                <p className="text-lg text-zinc-400 line-through">{money(oldPrice)}</p>
+                                {typeof priceUnit === "number" && (
+                                    <p className="text-lg text-zinc-400 line-through">{money(priceUnit)}</p>
+                                )}
                                 {typeof discountPercent === "number" && (
                                     <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">
-                    -{discountPercent}%
-                  </span>
+                                        -{discountPercent}%
+                                    </span>
                                 )}
                             </>
                         )}
@@ -442,6 +504,19 @@ export default function ProductDetail() {
                             ].join(" ")}
                         >
                             {outOfStock ? "Sin stock" : "Agregar al carrito"}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={toggleFavourite}
+                            aria-label={isFavourite ? "Quitar de favoritos" : "Agregar a favoritos"}
+                            className="rounded-lg p-3 ring-1 ring-zinc-300 text-zinc-700 hover:bg-zinc-50"
+                        >
+                            {isFavourite ? (
+                                <HeartSolid className="h-5 w-5 text-red-500" />
+                            ) : (
+                                <HeartIcon className="h-5 w-5" />
+                            )}
                         </button>
 
                         <div aria-live="polite" className="min-h-[1.25rem]">
@@ -540,11 +615,7 @@ export default function ProductDetail() {
                 </p>
             </div>
 
-            <RelatedProductsSection
-                excludeId={product.id}
-                category={category}
-                subcategory={subcategory}
-            />
+            <RelatedProductsSection products={related} />
         </section>
     );
 }

@@ -1,5 +1,5 @@
 // src/utils/getQueryScore.js
-import getMatchScore, { normalize } from "./getMatchScore.js";
+import getMatchScore, { normalize, tokenize } from "./getMatchScore.js";
 
 /**
  * Wrapper para mantener compat con código viejo.

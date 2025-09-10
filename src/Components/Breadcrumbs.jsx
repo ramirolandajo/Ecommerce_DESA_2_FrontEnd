@@ -1,9 +1,10 @@
 // src/Components/Breadcrumbs.jsx
+import React from 'react';
 import { Link } from "react-router-dom";
 
 export default function Breadcrumbs({ segments = [] }) {
     return (
-        <nav aria-label="Breadcrumb" className="mb-4">
+        <nav aria-label="Ruta de navegación" className="mb-4">
             <ol className="flex flex-wrap items-center gap-1 text-sm text-zinc-500">
                 {segments.map((seg, i) => {
                     const isLast = i === segments.length - 1;

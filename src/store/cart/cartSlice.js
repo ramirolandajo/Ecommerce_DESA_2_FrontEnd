@@ -1,4 +1,5 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import purchaseService from "../../api/purchase.js";
 
 const getInitialState = () => {
   if (typeof localStorage === "undefined") {
@@ -32,6 +33,17 @@ const calcTotals = (state) => {
 };
 
 const initialState = getInitialState();
+
+export const fetchCart = createAsyncThunk("cart/fetchCart", async () => {
+  return await purchaseService.fetchCart();
+});
+
+export const clearCartOnServer = createAsyncThunk(
+  "cart/clearCartOnServer",
+  async () => {
+    await purchaseService.clearCart();
+  },
+);
 
 const cartSlice = createSlice({
   name: "cart",
@@ -89,6 +101,14 @@ const cartSlice = createSlice({
       saveState(state);
     },
   },
+  extraReducers: (builder) => {
+    builder.addCase(fetchCart.fulfilled, (state, action) => {
+      const items = action.payload?.items ?? [];
+      state.items = items;
+      calcTotals(state);
+      saveState(state);
+    });
+  },
 });
 
 export const {
@@ -99,4 +119,11 @@ export const {
   incrementItem,
   decrementItem,
 } = cartSlice.actions;
+
+export const addItemIfLoggedIn = (item) => (dispatch, getState) => {
+  if (getState().user?.isLoggedIn) {
+    dispatch(addItem(item));
+  }
+};
+
 export default cartSlice.reducer;

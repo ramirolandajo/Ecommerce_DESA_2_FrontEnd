@@ -1,12 +1,29 @@
+import React from 'react';
 import { useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { tiles, categories } from "../data/Products.js";
+import { useSelector } from "react-redux";
 import GlassProductCard from "../Components/GlassProductCard.jsx";
 import FilterSidebar from "../Components/FilterSidebar.jsx";
 import ProductSkeleton from "../Components/ProductSkeleton.jsx";
 import { getQueryScore } from "../utils/getQueryScore.js";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { ChevronDownIcon, FunnelIcon } from "@heroicons/react/24/outline";
+
+function deriveCategories(items) {
+  const map = items.reduce((map, { categories, subcategory }) => {
+    const names = Array.isArray(categories)
+      ? categories
+          .map((c) => (typeof c === "string" ? c : c?.name))
+          .filter(Boolean)
+      : [];
+    names.forEach((name) => {
+      if (!map.has(name)) map.set(name, new Set());
+      if (subcategory) map.get(name).add(subcategory);
+    });
+    return map;
+  }, new Map());
+  return Array.from(map.entries()).map(([name, subs]) => ({ name, subs: Array.from(subs) }));
+}
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -22,11 +39,12 @@ export default function Shop() {
   const [max, setMax] = useState(initialMax);
   const [sort, setSort] = useState("relevance");
 
-  const [products, setProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { items: products, status, error } = useSelector((state) => state.products);
+  const [isLoading, setIsLoading] = useState(false);
+    const categories = useMemo(() => deriveCategories(products), [products]);
 
-  // Sidebar mobile
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+    // Sidebar mobile
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const sortLabels = {
     relevance: "Relevancia",
@@ -45,22 +63,14 @@ export default function Shop() {
     });
   }, [category, subcategory, setSearchParams]);
 
-  useEffect(() => {
-    const load = async () => {
-      setIsLoading(true);
-      // Simulación de fetch
-      await new Promise((r) => setTimeout(r, 500));
-      setProducts(tiles);
-      setIsLoading(false);
-    };
-    load();
-  }, []);
-
-  const filtered = useMemo(() => {
+    const filtered = useMemo(() => {
     const q = query.trim();
     if (!q) {
       return products.filter((t) => {
-        const matchesCat = category === "All" ? true : t.category === category;
+        const matchesCat =
+          category === "All"
+            ? true
+            : t.categories?.some((c) => (c?.name ?? c) === category);
         const matchesSub = subcategory ? t.subcategory === subcategory : true;
         const price = typeof t.price === "number" ? t.price : 0;
         const matchesMin = min === "" ? true : price >= Number(min);
@@ -72,7 +82,10 @@ export default function Shop() {
     return products
       .map((t) => ({ ...t, score: getQueryScore(t, q) }))
       .filter((t) => {
-        const matchesCat = category === "All" ? true : t.category === category;
+        const matchesCat =
+          category === "All"
+            ? true
+            : t.categories?.some((c) => (c?.name ?? c) === category);
         const matchesSub = subcategory ? t.subcategory === subcategory : true;
         const price = typeof t.price === "number" ? t.price : 0;
         const matchesMin = min === "" ? true : price >= Number(min);
@@ -101,6 +114,8 @@ export default function Shop() {
     return () => clearTimeout(t);
   }, [category, subcategory, min, max, sort, query]);
 
+  const showLoading = status === "loading" || isLoading;
+
   return (
     <div className="px-4 pb-12 pt-6 md:pt-8 md:grid md:grid-cols-[16rem_1fr] md:gap-8">
       <FilterSidebar
@@ -123,7 +138,7 @@ export default function Shop() {
       <section>
         {/* Header */}
         <div className="mb-6 flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold">Shop</h1>
+          <h1 className="text-2xl font-bold">Tienda</h1>
 
           {/* Desktop controls */}
           <div className="hidden md:block">
@@ -182,12 +197,14 @@ export default function Shop() {
           </div>
         </div>
 
-        {isLoading ? (
+        {showLoading ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <ProductSkeleton key={i} />
             ))}
           </div>
+        ) : status === "failed" ? (
+          <p className="text-sm text-red-600">{error}</p>
         ) : sorted.length === 0 ? (
           <p className="text-sm text-zinc-500">No hay productos para esta combinación.</p>
         ) : (

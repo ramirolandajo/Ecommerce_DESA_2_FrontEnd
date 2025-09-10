@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { motion as Motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { productUrl } from "../routes/paths";
-import { tiles } from "../data/Products";
-
-const slides = tiles.filter((p) => p.hero);
 
 export default function HeroShowcase() {
+    const { items: products } = useSelector((state) => state.products);
+    const slides = useMemo(() => products.filter((p) => p.hero), [products]);
+
     const [index, setIndex] = useState(0);
     const [paused, setPaused] = useState(false);
     const timerRef = useRef(null);
@@ -18,7 +19,9 @@ export default function HeroShowcase() {
         if (paused) return;
         timerRef.current = setInterval(next, 6000);
         return () => clearInterval(timerRef.current);
-    }, [paused]);
+    }, [paused, slides.length]);
+
+    if (slides.length === 0) return null;
 
     const medium = slides[index % slides.length];
     const large = slides[(index + 1) % slides.length];
@@ -62,8 +65,8 @@ export default function HeroShowcase() {
                         ))}
                     </div>
                     <div className="flex gap-3">
-                        <Ctrl onClick={prev} label="Prev" />
-                        <Ctrl onClick={next} label="Next" />
+                        <Ctrl onClick={prev} label="Anterior" />
+                        <Ctrl onClick={next} label="Siguiente" />
                     </div>
                 </div>
             </div>
@@ -81,8 +84,8 @@ function SlideCard({ slide, className = "", medium = false, large = false }) {
         >
             <figure className="absolute inset-0">
                 <img
-                    src={slide.media.src}
-                    alt={slide.media.alt}
+                    src={slide.mediaSrc?.[0] || ''}
+                    alt={slide.title}
                     className="h-full w-full object-cover opacity-50"
                     draggable={false}
                 />
@@ -112,7 +115,7 @@ function SlideCard({ slide, className = "", medium = false, large = false }) {
                     ))}
                 </h3>
 
-                {/* Descripción con tamaño distinto según card */}
+                {/* Descripci��n con tamaño distinto según card */}
                 <p
                     className={`mt-2 max-w-md ${
                         large

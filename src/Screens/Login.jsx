@@ -1,20 +1,36 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { login } from "../store/user/userSlice.js";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
-  const [_password, setPassword] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from;
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Aquí normalmente iría tu llamada a la API
-    const fakeUser = { email };
-    dispatch(login(fakeUser));
-    navigate("/");
+    setLoading(true);
+    setError(null);
+    try {
+      await dispatch(login({ email, password })).unwrap();
+      const postLoginRedirect = localStorage.getItem("postLoginRedirect");
+      if (postLoginRedirect) {
+        navigate(postLoginRedirect);
+        localStorage.removeItem("postLoginRedirect");
+      } else {
+        navigate(from || "/");
+      }
+    } catch (err) {
+      setError(err.message || "Error al iniciar sesión");
+    } finally {
+      setLoading(false);
+    }
   };
 
 
@@ -61,11 +77,15 @@ export default function Login() {
             />
           </div>
 
+          {error && (
+            <p className="text-center text-sm text-red-600">{error}</p>
+          )}
           <button
             type="submit"
-            className="w-full rounded-xl bg-blue-600 p-3 font-semibold text-white transition duration-200 hover:bg-blue-700"
+            disabled={loading}
+            className="w-full rounded-xl bg-blue-600 p-3 font-semibold text-white transition duration-200 hover:bg-blue-700 disabled:opacity-50"
           >
-            Entrar
+            {loading ? "Cargando..." : "Entrar"}
           </button>
         </form>
 

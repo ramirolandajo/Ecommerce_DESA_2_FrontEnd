@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
   removeItem,
@@ -25,7 +25,7 @@ export default function Cart() {
   );
 
   const money = (n) =>
-    new Intl.NumberFormat("en-US", {
+    new Intl.NumberFormat("es-ES", {
       style: "currency",
       currency: "USD",
       maximumFractionDigits: 0,
@@ -36,6 +36,12 @@ export default function Cart() {
     if (Number.isFinite(quantity) && quantity > 0) {
       dispatch(updateQuantity({ id, quantity }));
     }
+  };
+
+  const navigate = useNavigate();
+
+  const handleCheckout = () => {
+    navigate(PATHS.checkout);
   };
 
   if (items.length === 0) {
@@ -135,12 +141,14 @@ export default function Cart() {
             </span>
           </div>
 
-          <Link
-            to={PATHS.checkout}
+          <button
+            type="button"
+            data-testid="checkout-button"
             className="block w-full rounded-lg bg-black py-3 text-center font-medium text-white hover:bg-zinc-800"
+            onClick={handleCheckout}
           >
-            Checkout
-          </Link>
+            Finalizar compra
+          </button>
 
           <button
             type="button"

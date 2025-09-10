@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
 export default function FilterSidebar({
@@ -15,14 +15,14 @@ export default function FilterSidebar({
                                           onMax,
                                       }) {
     const allCategories = useMemo(
-        () => [{ name: "All", subs: [] }, ...(categories || [])],
+        () => [{ name: "Todas", subs: [] }, ...(categories || [])],
         [categories]
     );
     const current = allCategories.find((c) => c.name === category) || allCategories[0];
     const subcats = current?.subs ?? [];
 
     const reset = () => {
-        onCategory("All");
+        onCategory("Todas");
         onSubcategory("");
         onMin("");
         onMax("");

@@ -3,9 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, NavLink, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import CartDrawer from "./CartDrawer.jsx";
-import { tiles } from "../data/Products";
 import { getQueryScore } from "../utils/getQueryScore.js";
 import { logout } from "../store/user/userSlice.js";
+import { clearCart, clearCartOnServer } from "../store/cart/cartSlice.js";
 
 import {
   Disclosure,
@@ -24,8 +24,9 @@ import {
 } from "@heroicons/react/24/outline";
 
 const navigation = [
-  { name: "Home", href: "/" },
-  { name: "Shop", href: "/shop" },
+  { name: "Inicio", href: "/" },
+  { name: "Tienda", href: "/shop" },
+  { name: "Favoritos", href: "/favourites" },
 ];
 
 const cx = (...c) => c.filter(Boolean).join(" ");
@@ -63,14 +64,25 @@ export default function Navbar() {
   const [cartOpen, setCartOpen] = useState(false);
   const searchTimeout = useRef(null);
   const navigate = useNavigate();
-  const user = useSelector((state) => state.user);
-  const dispatch = useDispatch()
+  const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
+  const userInfo = useSelector((state) => state.user.userInfo);
+  const dispatch = useDispatch();
+  const { items: products } = useSelector((s) => s.products);
 
   const totalItems = useSelector((s) =>
     s.cart.items.reduce((acc, i) => acc + i.quantity, 0)
   );
 
   const toggleCart = () => setCartOpen((prev) => !prev);
+
+  const handleCartClick = () => {
+    if (!isLoggedIn) {
+      window.alert("Debes iniciar sesión para ver el carrito");
+      navigate("/login");
+      return;
+    }
+    toggleCart();
+  };
 
   const handleChange = (e) => {
     const value = e.target.value;
@@ -86,7 +98,7 @@ export default function Navbar() {
 
     setIsLoading(true);
     const q = value.toLowerCase();
-    const pool = Array.isArray(tiles) ? tiles.filter((t) => t.stock > 0) : [];
+    const pool = Array.isArray(products) ? products.filter((t) => t.stock > 0) : [];
 
     searchTimeout.current = setTimeout(() => {
       const filtered = pool
@@ -101,11 +113,16 @@ export default function Navbar() {
     }, 400);
   };
 
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate("/"); // Volver al login si cierra sesión
+  const handleLogout = async () => {
+    try {
+      await dispatch(logout()).unwrap();
+      await dispatch(clearCartOnServer());
+      dispatch(clearCart());
+      navigate("/");
+    } catch (error) {
+      console.error("Error al cerrar sesión", error);
+    }
   };
-
 
   useEffect(() => {
     return () => {
@@ -150,11 +167,11 @@ export default function Navbar() {
               {/* Burger (mobile) */}
               <div className="sm:hidden">
                 <DisclosureButton className="p-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 data-[state=open]:hidden">
-                  <span className="sr-only">Open main menu</span>
+                  <span className="sr-only">Abrir menú principal</span>
                   <Bars3Icon className="size-6" />
                 </DisclosureButton>
                 <DisclosureButton className="hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 data-[state=open]:block">
-                  <span className="sr-only">Close main menu</span>
+                  <span className="sr-only">Cerrar menú principal</span>
                   <XMarkIcon className="size-6" />
                 </DisclosureButton>
               </div>
@@ -168,33 +185,23 @@ export default function Navbar() {
               </Link>
 
               {/* Search (solo md+) */}
-              <form
-                onSubmit={handleSubmit}
-                className="hidden md:block flex-1 min-w-0"
-              >
-                <div
-                  className="relative md:max-w-sm lg:max-w-md xl:max-w-lg 2xl:max-w-2xl"
-                >
+              <form onSubmit={handleSubmit} className="hidden md:block flex-1 min-w-0">
+                <div className="relative md:max-w-sm lg:max-w-md xl:max-w-lg 2xl:max-w-2xl">
                   <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
                   <input
                     type="search"
                     value={query}
                     onChange={handleChange}
-                    placeholder="Search"
-                    className="
-                      w-full min-w-0
-                      md:max-w-sm lg:max-w-md xl:max-w-lg 2xl:max-w-2xl
-                      rounded-2xl border border-gray-200 bg-gray-100
-                      pl-10 pr-3 py-2.5 text-sm text-gray-900 placeholder-gray-400
-                      focus:outline-none focus:ring-2 focus:ring-gray-900
-                    "
+                    placeholder="Buscar"
+                    aria-label="Buscar"
+                    className="w-full min-w-0 md:max-w-sm lg:max-w-md xl:max-w-lg 2xl:max-w-2xl rounded-2xl border border-gray-200 bg-gray-100 pl-10 pr-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900"
                   />
                   {query && (
                     <button
                       type="button"
                       onClick={handleClear}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
-                      aria-label="Clear search"
+                      aria-label="Limpiar búsqueda"
                     >
                       <XMarkIcon className="size-4" />
                     </button>
@@ -239,8 +246,8 @@ export default function Navbar() {
             <div className="flex items-center justify-end gap-4 md:gap-6 lg:gap-8">
               <button
                 className="relative p-2 rounded-full text-gray-700 hover:text-black focus:outline-none focus:ring-2 focus:ring-gray-900"
-                aria-label="Cart"
-                onClick={toggleCart}
+                aria-label="Carrito"
+                onClick={handleCartClick}
               >
                 <ShoppingCartIcon className="size-6" />
                 {totalItems > 0 && (
@@ -249,48 +256,57 @@ export default function Navbar() {
                   </span>
                 )}
               </button>
-              {/*TODO: Crear un botón que diga Ingresar si el usuario no está logueado, caso contrario renderizar el Menu*/}
-              {user.isLoggedIn ? (
-                <Menu as="div" className="relative">
-                  <MenuButton className="flex rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
-                    <img
-                      className="h-8 w-8 rounded-full"
-                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                      alt="User"
-                    />
-                  </MenuButton>
-                  <MenuItems
-                    transition
-                    className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none
-                             data-[closed]:scale-95 data-[closed]:opacity-0
-                             data-[enter]:duration-100 data-[enter]:ease-out data-[leave]:duration-75 data-[leave]:ease-in"
-                  >
-                    <MenuItem>
-                      <a className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        Your profile
-                      </a>
-                    </MenuItem>
-                    <MenuItem>
-                      <a className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        Settings
-                      </a>
-                    </MenuItem>
-                    <MenuItem>
-                      <button className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100" onClick={handleLogout}>
-                        Sign out
-                      </button>
-                    </MenuItem>
-                  </MenuItems>
-                </Menu>
-              ) : (
-                <Link
-                  to="/login"
-                  className="font-bold  tracking-tight text-gray-800"
-                >
-                  Ingresa
-                </Link>
-              )
-              }
+                {isLoggedIn ? (
+                  <Menu as="div" className="relative">
+                    <MenuButton className="flex rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
+                      {userInfo?.avatar ? (
+                        <img
+                          className="h-8 w-8 rounded-full"
+                          src={userInfo.avatar}
+                          alt={userInfo?.name || "Usuario"}
+                        />
+                      ) : (
+                        <span className="h-8 w-8 flex items-center justify-center rounded-full bg-gray-200 text-sm font-medium text-gray-700">
+                          {userInfo?.name ? userInfo.name[0] : "U"}
+                        </span>
+                      )}
+                    </MenuButton>
+                    <MenuItems
+                      transition
+                      className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none
+                               data-[closed]:scale-95 data-[closed]:opacity-0
+                               data-[enter]:duration-100 data-[enter]:ease-out data-[leave]:duration-75 data-[leave]:ease-in"
+                    >
+                      {userInfo?.name && (
+                        <MenuItem>
+                          <span className="block px-4 py-2 text-sm text-gray-700">
+                            {userInfo.name}
+                          </span>
+                        </MenuItem>
+                      )}
+                      <MenuItem>
+                        <button
+                          className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={handleLogout}
+                        >
+                          Cerrar sesión
+                        </button>
+                      </MenuItem>
+                      <MenuItem>
+                        <Link
+                          to="/user-purchases"
+                          className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Mis compras
+                        </Link>
+                      </MenuItem>
+                    </MenuItems>
+                  </Menu>
+                ) : (
+                  <Link to="/login" className="font-bold  tracking-tight text-gray-800">
+                    Ingresa
+                  </Link>
+                )}
             </div>
           </div>
         </div>
@@ -326,7 +342,8 @@ export default function Navbar() {
                     type="search"
                     value={query}
                     onChange={handleChange}
-                    placeholder="Search"
+                    placeholder="Buscar"
+                    aria-label="Buscar"
                     className="w-full rounded-xl border border-gray-200 bg-gray-100 pl-10 pr-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-900"
                   />
                   {query && (
@@ -334,7 +351,7 @@ export default function Navbar() {
                       type="button"
                       onClick={handleClear}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
-                      aria-label="Clear search"
+                      aria-label="Limpiar búsqueda"
                     >
                       <XMarkIcon className="size-4" />
                     </button>

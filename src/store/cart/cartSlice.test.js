@@ -6,7 +6,9 @@ import cartReducer, {
   clearCart,
   incrementItem,
   decrementItem,
+  addItemIfLoggedIn,
 } from "./cartSlice";
+import userReducer from "../user/userSlice";
 import { configureStore } from "@reduxjs/toolkit";
 
 describe("cartSlice", () => {
@@ -122,14 +124,26 @@ describe("cartSlice integration", () => {
     };
   });
 
-  it("allows adding, adjusting and removing items via store", () => {
-    const store = configureStore({ reducer: { cart: cartReducer } });
-    store.dispatch(addItem({ id: 1, title: "Test", price: 5 }));
+  it("allows adding, adjusting and removing items via store when logged in", () => {
+    const store = configureStore({
+      reducer: { cart: cartReducer, user: userReducer },
+      preloadedState: { user: { isLoggedIn: true } },
+    });
+    store.dispatch(addItemIfLoggedIn({ id: 1, title: "Test", price: 5 }));
     store.dispatch(incrementItem(1));
     expect(store.getState().cart.totalAmount).toBe(10);
     store.dispatch(decrementItem(1));
     expect(store.getState().cart.totalAmount).toBe(5);
     store.dispatch(removeItem(1));
+    expect(store.getState().cart.items).toHaveLength(0);
+  });
+
+  it("prevents adding items when not logged in", () => {
+    const store = configureStore({
+      reducer: { cart: cartReducer, user: userReducer },
+      preloadedState: { user: { isLoggedIn: false } },
+    });
+    store.dispatch(addItemIfLoggedIn({ id: 1, title: "Test", price: 5 }));
     expect(store.getState().cart.items).toHaveLength(0);
   });
 });

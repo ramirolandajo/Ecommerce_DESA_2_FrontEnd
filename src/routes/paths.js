@@ -5,6 +5,7 @@ export const PATHS = {
   product: "/producto/:id",
   cart: "/cart",
   checkout: "/checkout",
+  favourites: "/favourites",
   notFound: "*",
 };
 

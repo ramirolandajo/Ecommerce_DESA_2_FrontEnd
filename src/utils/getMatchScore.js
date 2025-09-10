@@ -175,7 +175,12 @@ export function getMatchScore(item, q) {
 
   const title = normalize(item.title ?? "");
   const brand = normalize(item.brand ?? "");
-  const category = normalize(item.category ?? "");
+  const categoryNames = Array.isArray(item?.categories)
+    ? item.categories
+        .map((c) => (typeof c === "string" ? c : c?.name))
+        .filter(Boolean)
+    : [];
+  const category = normalize(categoryNames.join(" "));
   const meta = `${brand} ${category}`.trim();
 
   if (title === query) return SCORES.exactTitle;

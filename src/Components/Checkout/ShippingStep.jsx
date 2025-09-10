@@ -15,23 +15,23 @@ export default function ShippingStep({ shipping, setShipping }) {
     const options = [
         {
             id: "regular",
-            title: "Free",
-            subtitle: "Regular shipment",
+            title: "Gratis",
+            subtitle: "Envío regular",
             note: fmt(addDays(today, 7)),
             price: 0,
         },
         {
             id: "express",
             title: "$8.50",
-            subtitle: "Get your delivery as soon as possible",
+            subtitle: "Recibe tu pedido lo antes posible",
             note: fmt(addDays(today, 2)),
             price: 8.5,
         },
         {
             id: "scheduled",
-            title: "Schedule",
-            subtitle: "Pick a date when you want to get your delivery",
-            note: schedule ? schedule : "Select Date",
+            title: "Programar",
+            subtitle: "Elige una fecha para recibir tu pedido",
+            note: schedule ? schedule : "Seleccionar fecha",
             price: 0,
         },
     ];
