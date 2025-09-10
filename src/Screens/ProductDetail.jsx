@@ -19,13 +19,67 @@ export default function ProductDetail() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    // Estado UI
-    const [qty, setQty] = useState(1);
-    const [added, setAdded] = useState(false);
-    const qtyId = useId();
-
     // Match robusto por si el id de tiles es number
     const product = tiles.find((p) => String(p.id) === String(id));
+
+    // Estado UI - Se declaran aquí para evitar reglas de hooks
+    const [qty, setQty] = useState(1);
+    const [added, setAdded] = useState(false);
+    const [activeIndex, setActiveIndex] = useState(0);
+    const [isZoomed, setIsZoomed] = useState(false);
+    const [bgPos, setBgPos] = useState("50% 50%");
+    const [touching, setTouching] = useState(false);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const qtyId = useId();
+
+    // Todos los useMemo y useCallback se declaran aquí para evitar hook violations
+    const segments = useMemo(() => {
+        if (!product) return [];
+        const { category, subcategory, title } = product;
+        const segs = [];
+        if (category) {
+            segs.push({
+                label: category,
+                to: `${PATHS.shop}?category=${encodeURIComponent(category)}`,
+            });
+            if (subcategory) {
+                segs.push({
+                    label: subcategory,
+                    to: `${PATHS.shop}?category=${encodeURIComponent(
+                        category
+                    )}&subcategory=${encodeURIComponent(subcategory)}`,
+                });
+            }
+        }
+        segs.push({ label: title });
+        return segs;
+    }, [product]);
+
+    const formatter = useMemo(() => {
+        if (!product) return null;
+        return new Intl.NumberFormat("es-AR", {
+            style: "currency",
+            currency: product.currency || "USD",
+            maximumFractionDigits: 0,
+        });
+    }, [product]);
+
+    const discountInfo = useMemo(() => {
+        if (!product) return { discountPercent: 0, savings: 0 };
+        const { price, oldPrice } = product;
+        const hasDiscount = oldPrice && oldPrice > price;
+        if (!hasDiscount) return { discountPercent: 0, savings: 0 };
+        const diff = oldPrice - price;
+        const pct = Math.round((diff / oldPrice) * 100);
+        return { discountPercent: pct, savings: diff };
+    }, [product]);
+
+    const gallery = useMemo(() => {
+        if (!product?.media) return [];
+        return Array.isArray(product.media) ? product.media : [product.media];
+    }, [product]);
+
+    const getSrc = useCallback((m) => (typeof m === "string" ? m : m?.src || m?.url || ""), []);
 
     if (!product) {
         return (
@@ -44,33 +98,11 @@ export default function ProductDetail() {
         description,
         price,
         oldPrice,
-        currency = "USD",
-        media,
         stock: rawStock,
         freeShipping, // opcional en tus tiles
         category,
         subcategory,
     } = product;
-
-    const segments = useMemo(() => {
-        const segs = [];
-        if (category) {
-            segs.push({
-                label: category,
-                to: `${PATHS.shop}?category=${encodeURIComponent(category)}`,
-            });
-            if (subcategory) {
-                segs.push({
-                    label: subcategory,
-                    to: `${PATHS.shop}?category=${encodeURIComponent(
-                        category
-                    )}&subcategory=${encodeURIComponent(subcategory)}`,
-                });
-            }
-        }
-        segs.push({ label: title });
-        return segs;
-    }, [category, subcategory, title]);
 
     // Stock y validaciones
     const stock = Number.isFinite(rawStock) ? rawStock : Infinity;
@@ -79,44 +111,20 @@ export default function ProductDetail() {
     const isQtyValid = qty >= 1 && qty <= stock;
 
     // Formateador monetario memoizado
-    const formatter = useMemo(
-        () =>
-            new Intl.NumberFormat("es-AR", {
-                style: "currency",
-                currency,
-                maximumFractionDigits: 0,
-            }),
-        [currency]
-    );
-    const money = (n) => formatter.format(n);
+    const money = (n) => formatter?.format(n) || n;
 
     const hasDiscount =
         typeof oldPrice === "number" && typeof price === "number" && oldPrice > price;
-
-    const { discountPercent, savings } = useMemo(() => {
-        if (!hasDiscount) return { discountPercent: null, savings: null };
-        const diff = oldPrice - price;
-        const pct = Math.round((diff / oldPrice) * 100);
-        return { discountPercent: pct, savings: diff };
-    }, [hasDiscount, oldPrice, price]);
+    
+    const { discountPercent, savings } = discountInfo;
 
     // Galería
-    const gallery = useMemo(() => {
-        if (!media) return [];
-        return Array.isArray(media) ? media : [media];
-    }, [media]);
-
-    const [activeIndex, setActiveIndex] = useState(0);
     const activeImage = gallery[activeIndex];
 
     // Helper de URL
-    const getSrc = useCallback((m) => (typeof m === "string" ? m : m?.src || m?.url || ""), []);
     const activeSrc = getSrc(activeImage);
 
     // Zoom hover/touch
-    const [isZoomed, setIsZoomed] = useState(false);
-    const [bgPos, setBgPos] = useState("50% 50%");
-    const [touching, setTouching] = useState(false);
 
     const updateBgPos = (clientX, clientY, target) => {
         const rect = target.getBoundingClientRect();
@@ -145,7 +153,6 @@ export default function ProductDetail() {
     };
 
     // Lightbox
-    const [lightboxOpen, setLightboxOpen] = useState(false);
     const openLightbox = () => setLightboxOpen(true);
     const closeLightbox = () => setLightboxOpen(false);
     const goPrev = (e) => {
