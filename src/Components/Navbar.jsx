@@ -181,7 +181,7 @@ export default function Navbar() {
                 to="/"
                 className="shrink-0 mr-4 md:mr-8 font-black text-2xl tracking-tight text-gray-900"
               >
-                cyber
+                CompuMundoHMR
               </Link>
 
               {/* Search (solo md+) */}

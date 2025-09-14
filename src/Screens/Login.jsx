@@ -41,7 +41,7 @@ export default function Login() {
           Iniciar Sesión
         </h2>
         <p className="mb-8 text-center text-gray-500">
-          Bienvenido a Cyber
+          Bienvenido a CompuMundoHMR
         </p>
 
         <form className="space-y-5" onSubmit={handleLogin}>
