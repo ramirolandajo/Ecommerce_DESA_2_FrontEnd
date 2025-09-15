@@ -25,9 +25,9 @@ export default function Cart() {
   );
 
   const money = (n) =>
-    new Intl.NumberFormat("es-ES", {
+    new Intl.NumberFormat("es-AR", {
       style: "currency",
-      currency: "USD",
+      currency: "ARS",
       maximumFractionDigits: 0,
     }).format(Number(n) || 0);
 
@@ -162,4 +162,3 @@ export default function Cart() {
     </section>
   );
 }
-

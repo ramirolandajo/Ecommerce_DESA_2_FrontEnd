@@ -47,10 +47,13 @@ export default function ProductTilesSection() {
       "Computers",
       "Gaming",
     ];
-    const result = Array.from(set);
-    return result
-      .sort((a, b) => order.indexOf(a) - order.indexOf(b))
-      .map((name) => ({ key: name, label: CATEGORY_LABELS[name] ?? name }));
+    const allCategories = Array.from(set);
+    // Separar conocidas y desconocidas
+    const known = order.filter((cat) => allCategories.includes(cat));
+    const unknown = allCategories.filter((cat) => !order.includes(cat) && cat !== "All").sort();
+    // Unir: primero All, luego conocidas, luego desconocidas
+    const result = ["All", ...known.filter((c) => c !== "All"), ...unknown];
+    return result.map((name) => ({ key: name, label: CATEGORY_LABELS[name] ?? name }));
   }, [products]);
 
   const filtered = useMemo(() => {

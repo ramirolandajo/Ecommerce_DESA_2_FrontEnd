@@ -46,7 +46,7 @@ export default function ProductDetail() {
         price,
         priceUnit,
         discount,
-        currency = "USD",
+        currency = "ARS",
         mediaSrc = [],
         stock: rawStock,
         freeShipping,

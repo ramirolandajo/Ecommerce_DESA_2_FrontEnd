@@ -1,17 +1,22 @@
 import axios from "axios";
 
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || "/api",
+    baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080",
 });
 
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem("token");
-    console.log("[axios interceptor] token:", token);
+    const publicRoutes = ["/login", "/register", "/verify-email"];
+    const currentPath = window.location.pathname;
+    if (!token && !publicRoutes.includes(currentPath)) {
+        window.location.href = "/login";
+        return Promise.reject("No token, redirigiendo al login");
+    }
     if (token) {
         config.headers = config.headers || {};
         config.headers.Authorization = `Bearer ${token}`;
+        console.log("[axios interceptor] headers:", config.headers);
     }
-    console.log("[axios interceptor] headers:", config.headers);
     return config;
 });
 

@@ -27,11 +27,17 @@ function deriveCategories(items) {
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialCat = searchParams.get("category") ?? "";
+  const catParam = searchParams.get("category");
+  const initialCat = !catParam || catParam === "Todas" ? "All" : catParam;
   const query = searchParams.get("query")?.toLowerCase() || "";
-  const initialMin = searchParams.get("min") ?? "";
-  const initialMax = searchParams.get("max") ?? "";
-  const initialSub = searchParams.get("subcategory") ?? "";
+  const rawMin = searchParams.get("min");
+  const rawMax = searchParams.get("max");
+  const subParam = searchParams.get("subcategory");
+
+  // Si la categoría es "All" (o ausente), no heredar subcategory de la URL
+  const initialSub = initialCat === "All" ? "" : (subParam ?? "");
+  const initialMin = rawMin ?? "";
+  const initialMax = rawMax ?? "";
 
   const [category, setCategory] = useState(initialCat);
   const [subcategory, setSubcategory] = useState(initialSub);
@@ -41,10 +47,8 @@ export default function Shop() {
 
   const { items: products, status, error } = useSelector((state) => state.products);
   const [isLoading, setIsLoading] = useState(false);
-    const categories = useMemo(() => deriveCategories(products), [products]);
-
-    // Sidebar mobile
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+  const categories = useMemo(() => deriveCategories(products), [products]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const sortLabels = {
     relevance: "Relevancia",
@@ -52,11 +56,19 @@ export default function Shop() {
     "price-desc": "Precio: mayor a menor",
   };
 
+  // Sanear estado inicial de precios si vienen negativos por URL
+  useEffect(() => {
+    if (min !== "" && Number(min) < 0) setMin("0");
+    if (max !== "" && Number(max) < 0) setMax("0");
+    // Solo al montar
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     setSearchParams((prev) => {
       const params = new URLSearchParams(prev);
       // category/subcategory
-      if (category === "All") params.delete("category");
+      if (category === "All" || category === "") params.delete("category");
       else params.set("category", category);
       if (subcategory) params.set("subcategory", subcategory);
       else params.delete("subcategory");
@@ -95,10 +107,12 @@ export default function Shop() {
       return gteMin && lteMax;
     };
 
+    const isAll = category === "All" || category === "";
+
     if (!q) {
       return products.filter((t) => {
         const matchesCat =
-          category === "All"
+          isAll
             ? true
             : t.categories?.some((c) => (c?.name ?? c) === category);
         const matchesSub = subcategory ? t.subcategory === subcategory : true;
@@ -110,7 +124,7 @@ export default function Shop() {
       .map((t) => ({ ...t, score: getQueryScore(t, q) }))
       .filter((t) => {
         const matchesCat =
-          category === "All"
+          isAll
             ? true
             : t.categories?.some((c) => (c?.name ?? c) === category);
         const matchesSub = subcategory ? t.subcategory === subcategory : true;
@@ -138,7 +152,8 @@ export default function Shop() {
     return () => clearTimeout(t);
   }, [category, subcategory, min, max, sort, query]);
 
-  const showLoading = status === "loading" || isLoading;
+  // Mostrar loader también en estado idle (antes de que el hook dispare la carga)
+  const showLoading = status === "loading" || status === "idle" || isLoading;
 
   return (
     <div className="px-4 pb-12 pt-6 md:pt-8 md:grid md:grid-cols-[16rem_1fr] md:gap-8">
