@@ -10,7 +10,7 @@ export default function Footer() {
                             href="#"
                             className="shrink-0 mr-4 md:mr-8 font-black text-3xl tracking-tight text-white"
                         >
-                            cyber
+                            CompuMundoHMR
                         </a>
 
                         <p className="mt-6 max-w-xl text-gray-400 leading-relaxed break-words">
@@ -24,7 +24,7 @@ export default function Footer() {
 
                 {/* Mini‑footer */}
                 <div className="mt-12 border-t border-white/10 pt-6 text-sm text-gray-500">
-                    © {new Date().getFullYear()} cyber. Todos los derechos reservados.
+                    © {new Date().getFullYear()} CompuMundoHMR. Todos los derechos reservados.
                 </div>
             </div>
         </footer>

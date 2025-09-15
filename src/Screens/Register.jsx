@@ -35,7 +35,7 @@ export default function Register() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-100 to-gray-300">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
         <h2 className="mb-6 text-center text-3xl font-bold">Crear Cuenta</h2>
-        <p className="mb-8 text-center text-gray-500">Únete a Cyber</p>
+        <p className="mb-8 text-center text-gray-500">Únete a CompuMundoHMR</p>
 
         <form className="space-y-5" onSubmit={handleRegister}>
           <div>

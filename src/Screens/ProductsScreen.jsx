@@ -10,9 +10,9 @@ import {
   createBrand,
   deleteBrand
 } from "../store/abm/abmSlice.js";
-import ProductForm from "../components/Abm/ProductForm.jsx";
-import ProductList from "../components/Abm/ProductList.jsx";
-import ProductFilters from "../components/Abm/ProductFilters.jsx";
+import ProductForm from "../Components/Abm/ProductForm.jsx";
+import ProductList from "../Components/Abm/ProductList.jsx";
+import ProductFilters from "../Components/Abm/ProductFilters.jsx";
 import CategoryManagementModal from "../Components/Abm/CategoryManagementModal.jsx";
 import BrandManagementModal from "../Components/Abm/BrandManagementModal.jsx";
 
