@@ -27,7 +27,7 @@ function deriveCategories(items) {
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialCat = searchParams.get("category") ?? "All";
+  const initialCat = searchParams.get("category") ?? "";
   const query = searchParams.get("query")?.toLowerCase() || "";
   const initialMin = searchParams.get("min") ?? "";
   const initialMax = searchParams.get("max") ?? "";
@@ -55,6 +55,7 @@ export default function Shop() {
   useEffect(() => {
     setSearchParams((prev) => {
       const params = new URLSearchParams(prev);
+      // category/subcategory
       if (category === "All") params.delete("category");
       else params.set("category", category);
       if (subcategory) params.set("subcategory", subcategory);
@@ -63,8 +64,37 @@ export default function Shop() {
     });
   }, [category, subcategory, setSearchParams]);
 
+  // Sincronizar min/max con URL y evitar negativos en la URL
+  useEffect(() => {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      const minNum = min === "" ? "" : Math.max(0, Number(min));
+      const maxNum = max === "" ? "" : Math.max(0, Number(max));
+
+      if (min === "" || Number.isNaN(Number(min)) || minNum === "") params.delete("min");
+      else params.set("min", String(minNum));
+
+      if (max === "" || Number.isNaN(Number(max)) || maxNum === "") params.delete("max");
+      else params.set("max", String(maxNum));
+
+      return params;
+    });
+  }, [min, max, setSearchParams]);
+
     const filtered = useMemo(() => {
     const q = query.trim();
+
+    // Normalización de min/max para evitar negativos y NaN
+    const minNum = min === "" ? null : Math.max(0, Number(min));
+    const maxNum = max === "" ? null : Math.max(0, Number(max));
+
+    const withinRange = (price) => {
+      const p = typeof price === "number" ? price : 0;
+      const gteMin = minNum == null ? true : p >= minNum;
+      const lteMax = maxNum == null ? true : p <= maxNum;
+      return gteMin && lteMax;
+    };
+
     if (!q) {
       return products.filter((t) => {
         const matchesCat =
@@ -72,10 +102,7 @@ export default function Shop() {
             ? true
             : t.categories?.some((c) => (c?.name ?? c) === category);
         const matchesSub = subcategory ? t.subcategory === subcategory : true;
-        const price = typeof t.price === "number" ? t.price : 0;
-        const matchesMin = min === "" ? true : price >= Number(min);
-        const matchesMax = max === "" ? true : price <= Number(max);
-        return matchesCat && matchesSub && matchesMin && matchesMax;
+        return matchesCat && matchesSub && withinRange(t.price);
       });
     }
 
@@ -87,10 +114,7 @@ export default function Shop() {
             ? true
             : t.categories?.some((c) => (c?.name ?? c) === category);
         const matchesSub = subcategory ? t.subcategory === subcategory : true;
-        const price = typeof t.price === "number" ? t.price : 0;
-        const matchesMin = min === "" ? true : price >= Number(min);
-        const matchesMax = max === "" ? true : price <= Number(max);
-        return matchesCat && matchesSub && matchesMin && matchesMax && t.score > 0;
+        return matchesCat && matchesSub && withinRange(t.price) && t.score > 0;
       });
   }, [products, category, subcategory, min, max, query]);
 
