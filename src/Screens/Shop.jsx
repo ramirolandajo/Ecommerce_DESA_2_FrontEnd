@@ -93,44 +93,34 @@ export default function Shop() {
     });
   }, [min, max, setSearchParams]);
 
-    const filtered = useMemo(() => {
+  // Filtrado mejorado: solo filtrar si los productos están cargados
+  const filtered = useMemo(() => {
+    if (status !== "succeeded") return [];
     const q = query.trim();
-
-    // Normalización de min/max para evitar negativos y NaN
     const minNum = min === "" ? null : Math.max(0, Number(min));
     const maxNum = max === "" ? null : Math.max(0, Number(max));
-
     const withinRange = (price) => {
       const p = typeof price === "number" ? price : 0;
       const gteMin = minNum == null ? true : p >= minNum;
       const lteMax = maxNum == null ? true : p <= maxNum;
       return gteMin && lteMax;
     };
-
     const isAll = category === "All" || category === "";
-
     if (!q) {
       return products.filter((t) => {
-        const matchesCat =
-          isAll
-            ? true
-            : t.categories?.some((c) => (c?.name ?? c) === category);
+        const matchesCat = isAll ? true : t.categories?.some((c) => (c?.name ?? c) === category);
         const matchesSub = subcategory ? t.subcategory === subcategory : true;
         return matchesCat && matchesSub && withinRange(t.price);
       });
     }
-
     return products
       .map((t) => ({ ...t, score: getQueryScore(t, q) }))
       .filter((t) => {
-        const matchesCat =
-          isAll
-            ? true
-            : t.categories?.some((c) => (c?.name ?? c) === category);
+        const matchesCat = isAll ? true : t.categories?.some((c) => (c?.name ?? c) === category);
         const matchesSub = subcategory ? t.subcategory === subcategory : true;
         return matchesCat && matchesSub && withinRange(t.price) && t.score > 0;
       });
-  }, [products, category, subcategory, min, max, query]);
+  }, [products, category, subcategory, min, max, query, status]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
