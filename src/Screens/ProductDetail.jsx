@@ -202,6 +202,7 @@ export default function ProductDetail() {
                     title,
                     price: finalPrice,
                     quantity: qty,
+                    image: Array.isArray(product.mediaSrc) ? product.mediaSrc[0] : "",
                 })
             );
             setAdded(true);
@@ -382,6 +383,7 @@ export default function ProductDetail() {
                                             decoding="async"
                                             fetchPriority="high"
                                         />
+
                                     )}
 
                                     {/* Botón de pantalla completa flotante */}

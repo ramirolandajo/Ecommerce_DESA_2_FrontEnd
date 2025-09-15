@@ -122,7 +122,9 @@ export const {
 
 export const addItemIfLoggedIn = (item) => (dispatch, getState) => {
   if (getState().user?.isLoggedIn) {
-    dispatch(addItem(item));
+    // Asegurar que el item tenga imagen
+    const image = item.image || item.mediaSrc?.[0] || "https://via.placeholder.com/150?text=No+Image";
+    dispatch(addItem({ ...item, image }));
   }
 };
 

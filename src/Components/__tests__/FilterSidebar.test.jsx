@@ -29,7 +29,7 @@ describe('FilterSidebar', () => {
     );
     expect(screen.getByLabelText('Categoría')).toBeInTheDocument();
     await userEvent.click(screen.getByText('Limpiar filtros'));
-    expect(onCategory).toHaveBeenCalledWith('');
+    expect(onCategory).toHaveBeenCalledWith('All'); // antes era ''
     expect(onSubcategory).toHaveBeenCalledWith('');
     expect(onMin).toHaveBeenCalledWith('');
     expect(onMax).toHaveBeenCalledWith('');
@@ -56,4 +56,3 @@ describe('FilterSidebar', () => {
     expect(onClose).toHaveBeenCalled();
   });
 });
-
