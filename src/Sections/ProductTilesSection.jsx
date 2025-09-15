@@ -68,7 +68,7 @@ export default function ProductTilesSection() {
   }, [products, activeTab]);
 
   return (
-    <section className="relative py-10 sm:py-12 bg-white">
+    <section className="relative py-10 sm:py-12 bg-white" data-testid="product-tiles-section">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Browse by Category */}
         <div className="mb-6 sm:mb-8 text-center">

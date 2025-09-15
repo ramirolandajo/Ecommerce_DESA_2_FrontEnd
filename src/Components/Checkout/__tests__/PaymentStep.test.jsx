@@ -1,18 +1,17 @@
-import React from "react";
-import { describe, it, expect, vi } from "vitest";
+import React, { useState } from "react";
+import { describe, it, expect } from "vitest";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PaymentStep from "../PaymentStep.jsx";
 
-function renderPaymentStep() {
+function Wrapper() {
+  const [card, setCard] = useState({ number: "", name: "", expiry: "", cvv: "" });
   const store = configureStore({
     reducer: { products: () => ({ items: [], status: "succeeded" }) },
   });
-  const card = { number: "", name: "", expiry: "", cvv: "" };
-  const setCard = vi.fn();
-  return render(
+  return (
     <Provider store={store}>
       <PaymentStep
         items={[]}
@@ -28,7 +27,7 @@ function renderPaymentStep() {
 
 describe("PaymentStep", () => {
   it("advances through card fields and validates", async () => {
-    renderPaymentStep();
+    render(<Wrapper />);
     const number = screen.getByPlaceholderText("•••• •••• •••• ••••");
     await userEvent.type(number, "4111 1111 1111 1111");
 

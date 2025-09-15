@@ -1,121 +1,93 @@
-import React from "react";
-import { describe, it, expect, vi } from "vitest";
-import { act } from "react";
+import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
-globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-import { createRoot } from "react-dom/client";
-import AddressStep from "../AddressStep.jsx";
-
-vi.mock("../../../api/address.js", () => ({
-  getAddresses: vi.fn(),
-  addAddress: vi.fn(),
-  updateAddress: vi.fn(),
-  deleteAddress: vi.fn(),
+vi.mock('../../../api/address.js', () => ({
+  getAddresses: vi.fn(async () => ([
+    { id: 1, description: 'Main', tag: 'home' },
+    { id: 2, description: ['Line 1', 'Line 2'], tag: 'office' },
+  ])),
+  addAddress: vi.fn(async ({ description }) => ({ id: 3, description, tag: 'new' })),
+  updateAddress: vi.fn(async (id, { description }) => ({ id, description, tag: 'upd' })),
+  deleteAddress: vi.fn(async (id) => ({})),
 }));
 
-import {
-  getAddresses,
-  addAddress,
-  deleteAddress,
-} from "../../../api/address.js";
+import { getAddresses, addAddress, updateAddress, deleteAddress } from '../../../api/address.js';
+import AddressStep from '../AddressStep.jsx';
 
-function render(ui) {
-  const container = document.createElement("div");
-  document.body.appendChild(container);
-  const root = createRoot(container);
-  act(() => {
-    root.render(ui);
-  });
-  return { container, root };
+function setup() {
+  const setAddress = vi.fn();
+  const utils = render(<AddressStep address={''} setAddress={setAddress} />);
+  return { setAddress, container: utils.container };
 }
 
-describe("AddressStep", () => {
-  it("selects, adds and removes addresses", async () => {
-    const initial = [
-      {
-        id: "home",
-        tag: "HOME",
-        description: [
-          "2118 Thornridge Cir, Syracuse, Connecticut 35624",
-          "(209) 555-0104",
-        ],
-      },
-      {
-        id: "office",
-        tag: "OFFICE",
-        description: "2715 Ash Dr. San Jose, South Dakota 83475",
-      },
-    ];
-    getAddresses.mockResolvedValue(initial);
-    addAddress.mockImplementation(async (addr) => ({ id: "new", ...addr }));
-    deleteAddress.mockResolvedValue({});
+describe('AddressStep', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    function Wrapper() {
-      const [address, setAddress] = React.useState("");
-      return <AddressStep address={address} setAddress={setAddress} />;
-    }
+  it('loads and adapts addresses on mount', async () => {
+    setup();
+    expect(getAddresses).toHaveBeenCalled();
+    await waitFor(() => expect(screen.getAllByRole('radio')).toHaveLength(2));
+    // Titles present (tags rendered as small badge)
+    expect(screen.getAllByText(/home|office/i).length).toBeGreaterThan(0);
+  });
 
-    const { container } = render(<Wrapper />);
-    await act(async () => {});
+  it('creates a new address from form and calls setAddress', async () => {
+    const { setAddress, container } = setup();
 
-    const getButtonByText = (text) =>
-      Array.from(container.querySelectorAll("button")).find((b) =>
-        b.textContent.includes(text)
-      );
+    // Open form
+    await userEvent.click(screen.getByRole('button', { name: /agregar nueva dirección/i }));
 
-    const radios = container.querySelectorAll('input[name="address"]');
-    act(() => {
-      radios[0].click();
-    });
-    expect(radios[0].checked).toBe(true);
-
-    const addBtn = getButtonByText("Agregar Nueva Dirección");
-    await act(async () => {
-      addBtn.click();
-    });
-
+    // Fill required fields via name selectors
     const provincia = container.querySelector('select[name="provincia"]');
     const ciudad = container.querySelector('input[name="ciudad"]');
     const cp = container.querySelector('input[name="cp"]');
     const calle = container.querySelector('input[name="calle"]');
     const numero = container.querySelector('input[name="numero"]');
 
-    await act(async () => {
-      provincia.value = "Buenos Aires";
-      provincia.dispatchEvent(new Event("change", { bubbles: true }));
-      ciudad.value = "Ciudad";
-      ciudad.dispatchEvent(new Event("input", { bubbles: true }));
-      cp.value = "1234";
-      cp.dispatchEvent(new Event("input", { bubbles: true }));
-      calle.value = "Calle";
-      calle.dispatchEvent(new Event("input", { bubbles: true }));
-      numero.value = "123";
-      numero.dispatchEvent(new Event("input", { bubbles: true }));
-    });
+    await userEvent.selectOptions(provincia, 'Buenos Aires');
+    await userEvent.type(ciudad, 'La Plata');
+    await userEvent.type(cp, '1900');
+    await userEvent.type(calle, 'Calle 1');
+    await userEvent.type(numero, '123');
 
-    const saveBtn = getButtonByText("Guardar dirección");
-    await act(async () => {
-      saveBtn.click();
-    });
-    await act(async () => {});
+    await userEvent.click(screen.getByRole('button', { name: /guardar dirección/i }));
 
-    expect(addAddress).toHaveBeenCalledTimes(1);
-    const calledWith = addAddress.mock.calls[0][0];
-    expect(typeof calledWith.description).toBe("string");
+    await waitFor(() => expect(addAddress).toHaveBeenCalled());
+    expect(setAddress).toHaveBeenCalledWith(3);
+  });
 
-    const radiosAfter = container.querySelectorAll('input[name="address"]');
-    expect(radiosAfter.length).toBe(initial.length + 1);
-    expect(radiosAfter[radiosAfter.length - 1].checked).toBe(true);
+  it('edits an existing address and updates the list', async () => {
+    const { container } = setup();
 
-    const labelsAfter = container.querySelectorAll("label");
-    const newLabel = labelsAfter[labelsAfter.length - 1];
-    const removeBtn = newLabel.querySelector('button[title="Eliminar"]');
-    await act(async () => {
-      removeBtn.click();
-    });
+    await waitFor(() => expect(screen.getAllByRole('radio')).toHaveLength(2));
 
-    const radiosFinal = container.querySelectorAll('input[name="address"]');
-    expect(radiosFinal.length).toBe(initial.length);
+    // Click first edit (button title="Editar")
+    const editButtons = screen.getAllByTitle(/editar/i);
+    await userEvent.click(editButtons[0]);
+
+    // Change city
+    const city = container.querySelector('input[name="ciudad"]');
+    await userEvent.clear(city);
+    await userEvent.type(city, 'Nueva Ciudad');
+
+    await userEvent.click(screen.getByRole('button', { name: /guardar cambios/i }));
+
+    await waitFor(() => expect(updateAddress).toHaveBeenCalled());
+  });
+
+  it('deletes an address and removes it from the list', async () => {
+    setup();
+
+    await waitFor(() => expect(screen.getAllByRole('radio')).toHaveLength(2));
+
+    // Click first delete (button title="Eliminar")
+    const delButtons = screen.getAllByTitle(/eliminar/i);
+    await userEvent.click(delButtons[0]);
+
+    await waitFor(() => expect(deleteAddress).toHaveBeenCalled());
   });
 });
-

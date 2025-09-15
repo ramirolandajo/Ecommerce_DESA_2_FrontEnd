@@ -25,7 +25,9 @@ describe('Breadcrumbs', () => {
         <Breadcrumbs segments={segments} />
       </MemoryRouter>
     );
-    await userEvent.click(screen.getByRole('link', { name: 'Home' }));
-    expect(window.location.pathname).toBe('/home');
+    const link = screen.getByRole('link', { name: 'Home' });
+    expect(link).toHaveAttribute('href', '/home');
+    // simular click no cambia window.location con MemoryRouter, pero el Link apunta correctamente
+    await userEvent.click(link);
   });
 });

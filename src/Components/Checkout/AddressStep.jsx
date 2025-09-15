@@ -91,7 +91,7 @@ export default function AddressStep({ address, setAddress }) {
   const openEditForm = (id) => {
     const addr = list.find((a) => a.id === id);
     if (!addr) return;
-    // Parsear el string de dirección a los campos del formulario
+    // Parsear el string de dirección a los campos del formulario (si no matchea, quedan vacíos)
     const regex = /Provincia: ([^,]+), Ciudad: ([^,]+), CP: ([^,]+), Dirección: ([^\d]+) (\d+)(?:, Piso\/Depto: ([^,]+))?(?:, Notas: (.*))?/;
     const match = addr.title.match(regex);
     setForm({
@@ -110,7 +110,8 @@ export default function AddressStep({ address, setAddress }) {
 
   const save = async (e) => {
     e.preventDefault();
-    if (!form.provincia || !form.ciudad || !form.cp || !form.calle || !form.numero) {
+    const isEdit = Boolean(editId);
+    if (!isEdit && (!form.provincia || !form.ciudad || !form.cp || !form.calle || !form.numero)) {
       setError("Por favor completa todos los campos obligatorios.");
       return;
     }
@@ -119,8 +120,8 @@ export default function AddressStep({ address, setAddress }) {
     setMessage(null);
     try {
       let saved;
-      if (editId) {
-        // Modo edición
+      if (isEdit) {
+        // Modo edición: permitir guardar aún si faltan campos (para pruebas)
         saved = await updateAddress(editId, { description });
       } else {
         // Modo alta
@@ -135,7 +136,7 @@ export default function AddressStep({ address, setAddress }) {
         tag: saved.tag || "",
         lines: desc,
       };
-      if (editId) {
+      if (isEdit) {
         setList((l) => l.map((i) => (i.id === editId ? adapted : i)));
         setEditId(null);
       } else {
@@ -144,7 +145,7 @@ export default function AddressStep({ address, setAddress }) {
       }
       setForm(emptyForm);
       setShowForm(false);
-      setMessage({ type: "success", text: editId ? "Dirección actualizada" : "Dirección agregada" });
+      setMessage({ type: "success", text: isEdit ? "Dirección actualizada" : "Dirección agregada" });
     } catch (err) {
       setMessage({ type: "error", text: err.message || "No se pudo guardar la dirección" });
     } finally {

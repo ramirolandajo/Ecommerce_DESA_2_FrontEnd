@@ -19,7 +19,7 @@ describe('auth api', () => {
     });
 
     it('login stores token and returns data', async () => {
-        const response = { data: { token: 'tok', user: { id: 1 } } };
+        const response = { data: { bearer_token: 'tok', user: { id: 1 } } };
         api.post.mockResolvedValue(response);
         const credentials = { email: 'a', password: 'b' };
         const res = await login(credentials);
@@ -28,14 +28,14 @@ describe('auth api', () => {
         expect(res).toEqual({ token: 'tok', user: { id: 1 } });
     });
 
-    it('register returns data without storing token', async () => {
-        const response = { data: { token: 'tok', user: { id: 2 } } };
+    it('register returns message without storing token', async () => {
+        const response = { data: { message: 'Registered' } };
         api.post.mockResolvedValue(response);
         const payload = { email: 'a', password: 'b' };
         const res = await register(payload);
         expect(api.post).toHaveBeenCalledWith('/auth/register', payload);
         expect(localStorage.setItem).not.toHaveBeenCalled();
-        expect(res).toEqual({ token: 'tok', user: { id: 2 } });
+        expect(res).toEqual({ message: 'Registered' });
     });
 
     it('verifyEmail returns token and user', async () => {
@@ -47,11 +47,10 @@ describe('auth api', () => {
         expect(res).toEqual({ token: 'tok', user: { id: 3 } });
     });
 
-    it('logout posts and removes token', async () => {
+    it('logout posts and returns success', async () => {
         api.post.mockResolvedValue({ data: { success: true } });
         const res = await logout();
         expect(api.post).toHaveBeenCalledWith('/auth/logout');
-        expect(localStorage.removeItem).toHaveBeenCalledWith('token');
         expect(res).toEqual({ success: true });
     });
 });

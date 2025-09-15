@@ -32,7 +32,7 @@ describe('HeroShowcase', () => {
       </Provider>
     );
     expect(screen.getByText('Slide 1')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
     expect(screen.getByText('Slide 2')).toBeInTheDocument();
   });
 });
