@@ -24,7 +24,7 @@ export default function Footer() {
 
                 {/* Mini‑footer */}
                 <div className="mt-12 border-t border-white/10 pt-6 text-sm text-gray-500">
-                    © {new Date().getFullYear()} CompuMundoHMR. Todos los derechos reservados. Test web
+                    © {new Date().getFullYear()} CompuMundoHMR. Todos los derechos reservados.
                 </div>
             </div>
         </footer>
