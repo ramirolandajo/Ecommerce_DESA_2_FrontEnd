@@ -16,6 +16,7 @@ export const getFavouriteProducts = async () => {
 };
 
 export const addFavouriteProduct = async (productCode) => {
+  console.log("el codigo del producto es", productCode, "y el token es", localStorage.getItem("token"));
   const res = await api.post(
     `/products/favourite/${productCode}`,
     {},

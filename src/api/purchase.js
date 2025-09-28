@@ -1,4 +1,4 @@
-import { api } from "./axios";
+import { api } from "./axios.js";
 
 const purchaseService = {
   createCart: async (items) => {
@@ -23,7 +23,8 @@ const purchaseService = {
     return res.data;
   },
   confirmPurchase: async (id, addressId) => {
-    const res = await api.post(`/purchase/${id}/confirm/${addressId}`);
+    const path = addressId != null ? `/purchase/${id}/confirm/${addressId}` : `/purchase/${id}/confirm`;
+    const res = await api.post(path);
     return res.data;
   },
   cancelPurchase: async (id) => {

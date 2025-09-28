@@ -17,7 +17,7 @@ describe('FilterSidebar', () => {
         open={true}
         onClose={vi.fn()}
         categories={categories}
-        category="Todas"
+        category=""
         subcategory=""
         min=""
         max=""
@@ -29,7 +29,7 @@ describe('FilterSidebar', () => {
     );
     expect(screen.getByLabelText('Categoría')).toBeInTheDocument();
     await userEvent.click(screen.getByText('Limpiar filtros'));
-    expect(onCategory).toHaveBeenCalledWith('Todas');
+    expect(onCategory).toHaveBeenCalledWith('All'); // antes era ''
     expect(onSubcategory).toHaveBeenCalledWith('');
     expect(onMin).toHaveBeenCalledWith('');
     expect(onMax).toHaveBeenCalledWith('');
@@ -42,7 +42,7 @@ describe('FilterSidebar', () => {
         open={true}
         onClose={onClose}
         categories={categories}
-        category="Todas"
+        category=""
         subcategory=""
         min=""
         max=""

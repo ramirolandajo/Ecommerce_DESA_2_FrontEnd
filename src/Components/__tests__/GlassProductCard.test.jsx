@@ -19,6 +19,7 @@ vi.mock('../../api/favourites.js', () => ({
 describe('GlassProductCard', () => {
   const baseItem = {
     id: 1,
+    productCode: 1,
     title: 'Test',
     price: 100,
     mediaSrc: [],
@@ -30,6 +31,7 @@ describe('GlassProductCard', () => {
       reducer: {
         favourites: favouritesReducer,
         user: () => ({ isLoggedIn: true }),
+        products: () => ({ items: [{ id: 1, productCode: 1, title: 'Test', stock: 5 }] }),
       },
       preloadedState,
     });
@@ -67,5 +69,7 @@ describe('GlassProductCard', () => {
     const button = screen.getByLabelText('Agregar a favoritos');
     fireEvent.click(button);
     await waitFor(() => expect(store.getState().favourites.items).toHaveLength(1));
+    // sanity: the stored favourite should match our product
+    expect(store.getState().favourites.items[0]).toMatchObject({ id: 1, productCode: 1 });
   });
 });

@@ -76,11 +76,11 @@ describe('Navbar', () => {
       </Provider>
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /user/i }));
-    await userEvent.click(screen.getByRole('button', { name: /cerrar sesión/i }));
+    // El botón del menú de usuario muestra inicialmente "U"
+    await userEvent.click(screen.getByRole('button', { name: 'U' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: /cerrar sesi/i }));
     await waitFor(() => expect(store.getState().user.isLoggedIn).toBe(false));
     expect(apiLogout).toHaveBeenCalled();
     expect(localStorage.removeItem).toHaveBeenCalledWith('token');
   });
 });
-

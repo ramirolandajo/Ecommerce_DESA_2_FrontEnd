@@ -36,9 +36,9 @@ export default function CartDrawer({ open, onClose }) {
     );
 
     const money = (n) =>
-        new Intl.NumberFormat("es-ES", {
+        new Intl.NumberFormat("es-AR", {
             style: "currency",
-            currency: "USD",
+            currency: "ARS",
             maximumFractionDigits: 0,
         }).format(Number(n) || 0);
 
@@ -110,6 +110,7 @@ export default function CartDrawer({ open, onClose }) {
                                         {/* Lista */}
                                         <ul className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
                                             {items.map((item) => {
+                                                console.log('CartDrawer item:', item);
                                                 const qty = Number(item.quantity ?? 1);
                                                 const unit = Number(item.price ?? 0);
                                                 const line = unit * qty;

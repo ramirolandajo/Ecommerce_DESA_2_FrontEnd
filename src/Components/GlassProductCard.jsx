@@ -17,7 +17,7 @@ export default function GlassProductCard({ item }) {
         price,
         priceUnit,
         discount,
-        currency = "USD",
+        currency = "ARS",
         cta = { href: "#" },
         mediaSrc = [],
         stock = 0,

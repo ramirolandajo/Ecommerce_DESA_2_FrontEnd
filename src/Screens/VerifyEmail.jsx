@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { verifyEmail } from "../store/user/userSlice.js";
 
 export default function VerifyEmail() {
   const { state } = useLocation();
+  const navigate = useNavigate();
   const initialEmail = state?.email || "";
   const [email, setEmail] = useState(initialEmail);
   const [token, setToken] = useState("");
@@ -18,6 +19,9 @@ export default function VerifyEmail() {
     if (result.type === "user/verifyEmail/fulfilled") {
       setIsSuccess(true);
       setMessage("¡Verificación exitosa!");
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500); // Redirige después de 1.5 segundos
     } else {
       setIsSuccess(false);
       setMessage("La verificación falló.");
@@ -76,4 +80,3 @@ export default function VerifyEmail() {
     </div>
   );
 }
-

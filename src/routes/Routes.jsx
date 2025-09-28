@@ -2,12 +2,7 @@ import { lazy } from "react";
 import { useRoutes } from "react-router-dom";
 import Layout from "./Layout";
 import RequireAuth from "./RequireAuth.jsx";
-import ProductsScreen from "../Screens/ProductsScreen.jsx";
-import ProductList from "../Components/Abm/ProductList.jsx";
-import ProductForm from "../Components/Abm/ProductForm.jsx";
-import ProductFilters from "../Components/Abm/ProductFilters.jsx";
 
-// Ajustá estos paths/casing según tu estructura real de carpetas:
 const Home = lazy(() => import("../Screens/Home.jsx"));
 const Shop = lazy(() => import("../Screens/Shop.jsx"));
 const ProductDetail = lazy(() => import("../Screens/ProductDetail.jsx"));
@@ -33,15 +28,6 @@ export default function AppRoutes() {
     { path: "/login", element: <Login /> },
     { path: "/register", element: <Register /> },
     { path: "/verify-email", element: <VerifyEmail /> },
-    {
-      path: '/abm', element: <ProductsScreen />,
-      children: [
-        { path: 'list', element: <ProductList products={[]} onEdit={() => {}} onDelete={() => {}} onAdjustStock={() => {}} /> },
-        { path: 'create', element: <ProductForm onSave={() => {}} editingProduct={null} onCancel={() => {}} /> },
-        { path: 'edit/:id', element: <ProductForm onSave={() => {}} editingProduct={null} onCancel={() => {}} /> },
-        { path: 'filters', element: <ProductFilters /> },
-      ]
-    },
     {
       element: <Layout />,
       children: [
@@ -92,7 +78,6 @@ export default function AppRoutes() {
           )
         },
         { path: "*", element: <NotFound /> },
-
       ],
     },
   ]);

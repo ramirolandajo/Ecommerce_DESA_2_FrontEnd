@@ -47,10 +47,13 @@ export default function ProductTilesSection() {
       "Computers",
       "Gaming",
     ];
-    const result = Array.from(set);
-    return result
-      .sort((a, b) => order.indexOf(a) - order.indexOf(b))
-      .map((name) => ({ key: name, label: CATEGORY_LABELS[name] ?? name }));
+    const allCategories = Array.from(set);
+    // Separar conocidas y desconocidas
+    const known = order.filter((cat) => allCategories.includes(cat));
+    const unknown = allCategories.filter((cat) => !order.includes(cat) && cat !== "All").sort();
+    // Unir: primero All, luego conocidas, luego desconocidas
+    const result = ["All", ...known.filter((c) => c !== "All"), ...unknown];
+    return result.map((name) => ({ key: name, label: CATEGORY_LABELS[name] ?? name }));
   }, [products]);
 
   const filtered = useMemo(() => {
@@ -68,7 +71,7 @@ export default function ProductTilesSection() {
   }, [products, activeTab]);
 
   return (
-    <section className="relative py-10 sm:py-12 bg-white">
+    <section className="relative py-10 sm:py-12 bg-white" data-testid="product-tiles-section">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Browse by Category */}
         <div className="mb-6 sm:mb-8 text-center">

@@ -73,9 +73,11 @@ const purchaseSlice = createSlice({
         state.id = action.payload.id;
         state.reservationTimestamp = action.payload.reservationTime;
         state.status = action.payload.status;
-        state.timeLeft = Math.floor(
+        let calculatedTime = Math.floor(
           (new Date(action.payload.reservationTime) - Date.now()) / 1000,
         );
+        // Si el tiempo calculado es menor o igual a cero, asignar 120 segundos por defecto
+        state.timeLeft = calculatedTime > 0 ? calculatedTime : 120;
         console.log("createCart.fulfilled", action.payload);
       })
       .addCase(confirmPurchase.fulfilled, () => {

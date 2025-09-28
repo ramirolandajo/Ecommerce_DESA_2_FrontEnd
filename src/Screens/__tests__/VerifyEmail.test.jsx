@@ -10,6 +10,7 @@ vi.mock('react-redux', () => {
 vi.mock('react-router-dom', () => {
   return {
     useLocation: vi.fn(() => ({ state: null })),
+    useNavigate: vi.fn(() => vi.fn()), // mock agregado
   };
 });
 

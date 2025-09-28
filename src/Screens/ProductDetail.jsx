@@ -25,9 +25,8 @@ export default function ProductDetail() {
     const dispatch = useDispatch();
     const { current: product, status, error, related } = useSelector((state) => state.products);
     const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
-    const isFavourite = useSelector((s) =>
-        s.favourites.items.some((p) => String(p.id) === String(id))
-    );
+    const favItems = useSelector((s) => s.favourites?.items ?? []);
+    const isFavourite = favItems.some((p) => String(p?.id) === String(id) || String(p?.productCode) === String(id));
 
     // Estado UI
     const [qty, setQty] = useState(1);
@@ -47,7 +46,7 @@ export default function ProductDetail() {
         price,
         priceUnit,
         discount,
-        currency = "USD",
+        currency = "ARS",
         mediaSrc = [],
         stock: rawStock,
         freeShipping,
@@ -203,6 +202,7 @@ export default function ProductDetail() {
                     title,
                     price: finalPrice,
                     quantity: qty,
+                    image: Array.isArray(product.mediaSrc) ? product.mediaSrc[0] : "",
                 })
             );
             setAdded(true);
@@ -216,7 +216,9 @@ export default function ProductDetail() {
     };
 
     const toggleFavourite = () => {
-        dispatch(isFavourite ? removeFavourite(product.productCode) : addFavourite(product.productCode));
+        const code = product?.productCode ?? product?.id;
+        if (!code) return;
+        dispatch(isFavourite ? removeFavourite(code) : addFavourite(code));
     };
 
     // --- Returns condicionales después de los hooks ---
@@ -381,6 +383,7 @@ export default function ProductDetail() {
                                             decoding="async"
                                             fetchPriority="high"
                                         />
+
                                     )}
 
                                     {/* Botón de pantalla completa flotante */}

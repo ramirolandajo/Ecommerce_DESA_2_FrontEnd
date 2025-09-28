@@ -22,16 +22,16 @@ describe('Register screen', () => {
 
   it('renders link to login', () => {
     render(<Register />);
-    expect(screen.getByRole('link', { name: /login/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /inicia sesi/i })).toBeInTheDocument();
   });
 
   it('redirects to verify-email with email state on success', async () => {
     render(<Register />);
     await userEvent.type(screen.getByLabelText(/nombre/i), 'User');
     await userEvent.type(screen.getByLabelText(/correo/i), 'user@example.com');
-    await userEvent.type(screen.getByLabelText(/contraseña/i), 'pass1234');
+    await userEvent.type(screen.getByLabelText(/^contraseña$/i), 'pass1234');
     await userEvent.type(screen.getByLabelText(/confirmar contraseña/i), 'pass1234');
-    await userEvent.click(screen.getByRole('button', { name: /registrarse/i }));
+    await userEvent.click(screen.getByRole('button', { name: /registrarme/i }));
     expect(dispatch).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith('/verify-email', { state: { email: 'user@example.com' } });
   });

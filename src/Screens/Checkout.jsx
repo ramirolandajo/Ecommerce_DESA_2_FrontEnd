@@ -48,9 +48,9 @@ export default function Checkout() {
   }, [timeLeft]);
 
   const money = (n) =>
-    new Intl.NumberFormat("es-ES", {
+    new Intl.NumberFormat("es-AR", {
       style: "currency",
-      currency: "USD",
+      currency: "ARS",
       maximumFractionDigits: 0,
     }).format(n ?? 0);
 
