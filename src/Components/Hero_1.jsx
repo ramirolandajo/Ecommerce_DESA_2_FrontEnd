@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { motion as Motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -13,14 +13,14 @@ export default function HeroShowcase() {
     const [paused, setPaused] = useState(false);
     const timerRef = useRef(null);
 
-    const next = () => setIndex((i) => (i + 1) % slides.length);
-    const prev = () => setIndex((i) => (i - 1 + slides.length) % slides.length);
+    const next = useCallback(() => setIndex((i) => (i + 1) % slides.length), [slides.length]);
+    const prev = useCallback(() => setIndex((i) => (i - 1 + slides.length) % slides.length), [slides.length]);
 
     useEffect(() => {
         if (paused) return;
         timerRef.current = setInterval(next, 6000);
         return () => clearInterval(timerRef.current);
-    }, [paused, slides.length]);
+    }, [paused, next]);
 
     if (!slides || slides.length === 0) return null;
 

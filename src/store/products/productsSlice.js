@@ -35,7 +35,7 @@ function normalizeWithCategories(rawProducts, categories = []) {
       }
     }
 
-    const { categoryId, categoryIds, categories: _cats, ...rest } = p;
+    const { categoryId: _categoryId, categoryIds: _categoryIds, categories: _cats, ...rest } = p;
     // compat: expone category = primera categoría
     const primary = categoriesList[0];
     return { ...rest, categories: categoriesList, category: primary };

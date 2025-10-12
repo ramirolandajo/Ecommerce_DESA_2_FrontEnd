@@ -7,7 +7,9 @@ export const PATHS = {
   checkout: "/checkout",
   favourites: "/favourites",
   notFound: "*",
+  reviewByCode: "/review/:productCode",
 };
 
 // helper para construir la URL de detalle
 export const productUrl = (id) => `/producto/${id}`;
+export const reviewByCodeUrl = (productCode) => `/review/${productCode}`;
