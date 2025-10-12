@@ -1,13 +1,15 @@
 import React from 'react';
 import { useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import GlassProductCard from "../Components/GlassProductCard.jsx";
 import FilterSidebar from "../Components/FilterSidebar.jsx";
 import ProductSkeleton from "../Components/ProductSkeleton.jsx";
 import { getQueryScore } from "../utils/getQueryScore.js";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
-import { ChevronDownIcon, FunnelIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, FunnelIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { fetchProducts } from "../store/products/productsSlice";
+import { useRef } from "react";
 
 function deriveCategories(items) {
   const map = items.reduce((map, { categories, subcategory }) => {
@@ -46,9 +48,14 @@ export default function Shop() {
   const [sort, setSort] = useState("relevance");
 
   const { items: products, status, error } = useSelector((state) => state.products);
+  const dispatch = useDispatch();
+  const pagination = useSelector(state => state.products.pagination);
   const [isLoading, setIsLoading] = useState(false);
   const categories = useMemo(() => deriveCategories(products), [products]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const endRef = useRef(null);
+  const observerRef = useRef(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const sortLabels = {
     relevance: "Relevancia",
@@ -145,6 +152,17 @@ export default function Shop() {
   // Mostrar loader también en estado idle (antes de que el hook dispare la carga)
   const showLoading = status === "loading" || status === "idle" || isLoading;
 
+  const hasMore = pagination.page + 1 < pagination.totalPages;
+
+  const fetchMoreData = () => {
+    if (!isLoadingMore && hasMore) {
+      setIsLoadingMore(true);
+      dispatch(fetchProducts({ page: pagination.page + 1, size: pagination.size })).finally(() => {
+        setIsLoadingMore(false);
+      });
+    }
+  };
+
   return (
     <div className="px-4 pb-12 pt-6 md:pt-8 md:grid md:grid-cols-[16rem_1fr] md:gap-8">
       <FilterSidebar
@@ -237,11 +255,48 @@ export default function Shop() {
         ) : sorted.length === 0 ? (
           <p className="text-sm text-zinc-500">No hay productos para esta combinación.</p>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {sorted.map((item) => (
-              <GlassProductCard key={item.id} item={item} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {sorted.map((item) => (
+                <GlassProductCard key={item.id} item={item} />
+              ))}
+            </div>
+            {/* Paginador */}
+            {pagination.totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8">
+                <button
+                  onClick={() => dispatch(fetchProducts({ page: Math.max(0, pagination.page - 1), size: pagination.size }))}
+                  disabled={pagination.page === 0 || status === "loading"}
+                  className="p-2 rounded border border-zinc-300 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-50"
+                  aria-label="Página anterior"
+                >
+                  <ChevronLeftIcon className="h-4 w-4" />
+                </button>
+                {Array.from({ length: pagination.totalPages }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => dispatch(fetchProducts({ page: i, size: pagination.size }))}
+                    disabled={status === "loading"}
+                    className={`px-3 py-2 rounded border ${
+                      pagination.page === i
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "border-zinc-300 bg-white hover:bg-zinc-50"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  onClick={() => dispatch(fetchProducts({ page: Math.min(pagination.totalPages - 1, pagination.page + 1), size: pagination.size }))}
+                  disabled={pagination.page === pagination.totalPages - 1 || status === "loading"}
+                  className="p-2 rounded border border-zinc-300 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-50"
+                  aria-label="Página siguiente"
+                >
+                  <ChevronRightIcon className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

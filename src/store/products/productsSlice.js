@@ -44,35 +44,106 @@ function normalizeWithCategories(rawProducts, categories = []) {
   return Array.isArray(rawProducts) ? rawProducts.map(toNorm) : toNorm(rawProducts);
 }
 
+// --- Estado ---
+const initialState = {
+  items: [],
+  current: null,
+  related: [],
+  status: "idle", // idle | loading | succeeded | failed
+  error: null,
+  pagination: {
+    page: 0,
+    size: 24, // Cambiado a 24 por página
+    totalPages: 1,
+    totalElements: 0,
+    numberOfElements: 0,
+    first: true,
+    last: true,
+  },
+};
+
 // --- Thunks ---
 // A) Lista completa con categorías fusionadas (preferido por la app)
 export const fetchProductsWithCategories = createAsyncThunk(
   "products/fetchAllWithCategories",
-  async () => {
-    const rawProducts = await getJSON("/products");
-    console.log("rawProducts", rawProducts);
+  async (params = {}) => {
+    const { page = 0, size = 24 } = params; // Cambiado default a 24
+    let rawResponse = await getJSON(`/products?page=${page}&size=${size}`);
+    let rawProducts = rawResponse;
+    // Aseguramos que sea un array
+    if (!Array.isArray(rawProducts)) {
+      if (rawProducts && Array.isArray(rawProducts.content)) {
+        rawProducts = rawProducts.content;
+      } else if (rawProducts && Array.isArray(rawProducts.products)) {
+        rawProducts = rawProducts.products;
+      } else {
+        console.error("La respuesta de /products no es un array ni contiene 'content' ni 'products'.", rawProducts);
+        rawProducts = [];
+      }
+    }
     const needsCats = !rawProducts.every(
       (p) => Array.isArray(p.categories) && p.categories.every((c) => c && typeof c === "object")
     );
+    let normalized;
     if (needsCats) {
       const categories = await getJSON("/categories");
-      return normalizeWithCategories(rawProducts, categories);
+      normalized = normalizeWithCategories(rawProducts, categories);
+    } else {
+      normalized = normalizeWithCategories(rawProducts);
     }
-    return normalizeWithCategories(rawProducts);
+    return {
+      items: normalized,
+      pagination: {
+        page: rawResponse.pageable?.pageNumber ?? 0,
+        size: rawResponse.pageable?.pageSize ?? normalized.length,
+        totalPages: rawResponse.totalPages ?? 1,
+        totalElements: rawResponse.totalElements ?? normalized.length,
+        numberOfElements: rawResponse.numberOfElements ?? normalized.length,
+        first: rawResponse.first ?? true,
+        last: rawResponse.last ?? true,
+      },
+    };
   }
 );
 
 // B) Lista “simple” (backcompat). Igual normalizamos para no romper componentes.
-export const fetchProducts = createAsyncThunk("products/fetchAll", async () => {
-  const rawProducts = await getJSON("/products");
+export const fetchProducts = createAsyncThunk("products/fetchAll", async (params = {}) => {
+  const { page = 0, size = 24 } = params; // Cambiado default a 24
+  let rawResponse = await getJSON(`/products?page=${page}&size=${size}`);
+  let rawProducts = rawResponse;
+  // Aseguramos que sea un array
+  if (!Array.isArray(rawProducts)) {
+    if (rawProducts && Array.isArray(rawProducts.content)) {
+      rawProducts = rawProducts.content;
+    } else if (rawProducts && Array.isArray(rawProducts.products)) {
+      rawProducts = rawProducts.products;
+    } else {
+      console.error("La respuesta de /products no es un array ni contiene 'content' ni 'products'.", rawProducts);
+      rawProducts = [];
+    }
+  }
   const needsCats = !rawProducts.every(
     (p) => Array.isArray(p.categories) && p.categories.every((c) => c && typeof c === "object")
   );
+  let normalized;
   if (needsCats) {
     const categories = await getJSON("/categories");
-    return normalizeWithCategories(rawProducts, categories);
+    normalized = normalizeWithCategories(rawProducts, categories);
+  } else {
+    normalized = normalizeWithCategories(rawProducts);
   }
-  return normalizeWithCategories(rawProducts);
+  return {
+    items: normalized,
+    pagination: {
+      page: rawResponse.pageable?.pageNumber ?? 0,
+      size: rawResponse.pageable?.pageSize ?? normalized.length,
+      totalPages: rawResponse.totalPages ?? 1,
+      totalElements: rawResponse.totalElements ?? normalized.length,
+      numberOfElements: rawResponse.numberOfElements ?? normalized.length,
+      first: rawResponse.first ?? true,
+      last: rawResponse.last ?? true,
+    },
+  };
 });
 
 // C) Uno por id con productos relacionados
@@ -91,15 +162,6 @@ export const fetchProduct = createAsyncThunk("products/fetchOne", async (id) => 
   return { product, relatedProducts: related };
 });
 
-// --- Estado ---
-const initialState = {
-  items: [],
-  current: null,
-  related: [],
-  status: "idle", // idle | loading | succeeded | failed
-  error: null,
-};
-
 // --- Slice ---
 const productsSlice = createSlice({
   name: "products",
@@ -107,7 +169,8 @@ const productsSlice = createSlice({
   reducers: {
     // Permite hidratar manualmente (tests/SSR)
     setProducts: (state, action) => {
-      state.items = action.payload ?? [];
+      state.items = action.payload?.items ?? [];
+      state.pagination = action.payload?.pagination ?? initialState.pagination;
     },
   },
   extraReducers: (builder) => {
@@ -119,7 +182,8 @@ const productsSlice = createSlice({
       })
       .addCase(fetchProductsWithCategories.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.items = action.payload;
+        state.items = action.payload.items; // Siempre reemplaza
+        state.pagination = action.payload.pagination;
       })
       .addCase(fetchProductsWithCategories.rejected, (state, action) => {
         state.status = "failed";
@@ -133,7 +197,8 @@ const productsSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.items = action.payload;
+        state.items = action.payload.items; // Siempre reemplaza
+        state.pagination = action.payload.pagination;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.status = "failed";
