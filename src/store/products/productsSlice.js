@@ -60,6 +60,7 @@ const initialState = {
     first: true,
     last: true,
   },
+  home: undefined, // Estado para datos de la pantalla principal
 };
 
 // --- Thunks ---
@@ -162,6 +163,40 @@ export const fetchProduct = createAsyncThunk("products/fetchOne", async (id) => 
   return { product, relatedProducts: related };
 });
 
+// D) Nuevos thunks para la pantalla principal
+// Añadir soporte para /homescreen: thunk que devuelve { hero: [...], items: [...] }
+export const fetchHomeProducts = createAsyncThunk(
+  "products/fetchHome",
+  async () => {
+    const raw = await getJSON("/homescreen");
+
+    // Aceptar varias formas de respuesta: { hero, products } | { hero, tiles } | array (items)
+    const heroRaw = Array.isArray(raw?.hero) ? raw.hero : Array.isArray(raw?.slides) ? raw.slides : [];
+    let itemsRaw = [];
+
+    if (Array.isArray(raw?.products)) itemsRaw = raw.products;
+    else if (Array.isArray(raw?.tiles)) itemsRaw = raw.tiles;
+    else if (Array.isArray(raw?.items)) itemsRaw = raw.items;
+    else if (Array.isArray(raw)) itemsRaw = raw;
+
+    // Normalizar categorías de forma consistente: si alguno de los productos no tiene categorias embebidas, obtener /categories
+    const allToCheck = [...heroRaw, ...itemsRaw];
+    const needsCats = !allToCheck.every(
+      (p) => Array.isArray(p.categories) && p.categories.every((c) => c && typeof c === "object")
+    );
+
+    let categories = [];
+    if (needsCats) {
+      categories = await getJSON("/categories");
+    }
+
+    const normalizedHero = normalizeWithCategories(heroRaw, categories);
+    const normalizedItems = normalizeWithCategories(itemsRaw, categories);
+
+    return { hero: normalizedHero, items: normalizedItems };
+  }
+);
+
 // --- Slice ---
 const productsSlice = createSlice({
   name: "products",
@@ -219,6 +254,25 @@ const productsSlice = createSlice({
       .addCase(fetchProduct.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error?.message || "Error al cargar el producto";
+      })
+
+      // fetchHomeProducts (nuevo endpoint optimizado para pantalla principal)
+      .addCase(fetchHomeProducts.pending, (state) => {
+        // inicializar sub-estado home si no existe
+        state.home = state.home ?? { items: [], hero: [], status: "idle", error: null };
+        state.home.status = "loading";
+        state.home.error = null;
+      })
+      .addCase(fetchHomeProducts.fulfilled, (state, action) => {
+        state.home = state.home ?? { items: [], hero: [], status: "idle", error: null };
+        state.home.status = "succeeded";
+        state.home.items = action.payload.items;
+        state.home.hero = action.payload.hero;
+      })
+      .addCase(fetchHomeProducts.rejected, (state, action) => {
+        state.home = state.home ?? { items: [], hero: [], status: "idle", error: null };
+        state.home.status = "failed";
+        state.home.error = action.error?.message || "Error al cargar home";
       });
   },
 });
@@ -233,3 +287,9 @@ export const selectProductById = (id) =>
   createSelector(selectAllProducts, (items) => items.find((p) => String(p.id) === String(id)) || null);
 
 export const selectRelatedProducts = (state) => state.products.related;
+
+// --- Selectores del home ---
+export const selectHomeProducts = (state) => state.products.home?.items ?? state.products.items;
+export const selectHomeHero = (state) => state.products.home?.hero ?? (state.products.items || []).filter((p) => p.hero);
+export const selectHomeStatus = (state) => state.products.home?.status ?? state.products.status;
+

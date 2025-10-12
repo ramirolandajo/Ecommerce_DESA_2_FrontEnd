@@ -3,10 +3,11 @@ import { motion as Motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { productUrl } from "../routes/paths";
+import { selectHomeHero } from "../store/products/productsSlice.js";
 
 export default function HeroShowcase() {
-    const { items: products } = useSelector((state) => state.products);
-    const slides = useMemo(() => products.filter((p) => p.hero), [products]);
+    // Obtener slides ya filtrados desde el selector del store (pueden venir del endpoint /homescreen)
+    const slides = useSelector(selectHomeHero) || [];
 
     const [index, setIndex] = useState(0);
     const [paused, setPaused] = useState(false);
@@ -21,7 +22,7 @@ export default function HeroShowcase() {
         return () => clearInterval(timerRef.current);
     }, [paused, slides.length]);
 
-    if (slides.length === 0) return null;
+    if (!slides || slides.length === 0) return null;
 
     const medium = slides[index % slides.length];
     const large = slides[(index + 1) % slides.length];
@@ -75,17 +76,17 @@ export default function HeroShowcase() {
 }
 
 function SlideCard({ slide, className = "", medium = false, large = false }) {
-    const lines = useMemo(() => slide.title.split("\n"), [slide.title]);
+    const lines = useMemo(() => (slide?.title || "").split("\n"), [slide?.title]);
 
     return (
         <Motion.article
-            layoutId={slide.id}
+            layoutId={String(slide?.id)}
             className={`relative overflow-hidden rounded-3xl border border-slate-700/40 bg-slate-900 ${className}`}
         >
             <figure className="absolute inset-0">
                 <img
-                    src={slide.mediaSrc?.[0] || ''}
-                    alt={slide.title}
+                    src={slide?.mediaSrc?.[0] || ''}
+                    alt={slide?.title}
                     className="h-full w-full object-cover opacity-50"
                     draggable={false}
                 />
@@ -115,7 +116,7 @@ function SlideCard({ slide, className = "", medium = false, large = false }) {
                     ))}
                 </h3>
 
-                {/* Descripci��n con tamaño distinto según card */}
+                {/* Descripción con tamaño distinto según card */}
                 <p
                     className={`mt-2 max-w-md ${
                         large
@@ -125,12 +126,12 @@ function SlideCard({ slide, className = "", medium = false, large = false }) {
                                 : "text-[11px] sm:text-xs"
                     } text-slate-200/80`}
                 >
-                    {slide.description}
+                    {slide?.description}
                 </p>
 
                 {/* CTA */}
                 <Link
-                    to={productUrl(slide.id)}
+                    to={productUrl(slide?.id)}
                     className={`mt-3 inline-flex items-center justify-center rounded-xl border border-slate-600/50 bg-slate-700/40 ${
                         large
                             ? "px-5 py-2.5 text-sm"
@@ -139,7 +140,7 @@ function SlideCard({ slide, className = "", medium = false, large = false }) {
                                 : "px-3 py-1.5 text-[11px]"
                     } font-medium backdrop-blur hover:bg-slate-700/60 text-slate-100`}
                 >
-                    {slide.cta?.label ?? "Comprar"}
+                    {slide?.cta?.label ?? "Comprar"}
                 </Link>
             </div>
         </Motion.article>
