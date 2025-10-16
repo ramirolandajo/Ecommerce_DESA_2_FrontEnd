@@ -75,8 +75,9 @@ export default function GlassProductCard({ item }) {
             aria-disabled={outOfStock ? "true" : undefined}
             className={[
                 "group relative block overflow-hidden rounded-2xl p-5 sm:p-6 h-full",
-                "bg-white border border-zinc-200 shadow-md",
-                "transition hover:-translate-y-[2px] hover:shadow-lg",
+                // Elevación y micro-interacciones más suaves
+                "bg-white border border-zinc-200 shadow-sm",
+                "transition transform duration-200 hover:-translate-y-2 hover:shadow-2xl",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-black/20",
                 "focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                 "flex flex-col text-zinc-900",
@@ -88,7 +89,7 @@ export default function GlassProductCard({ item }) {
                 type="button"
                 onClick={toggleFavourite}
                 aria-label={isFavourite ? "Quitar de favoritos" : "Agregar a favoritos"}
-                className="absolute top-2 right-2 z-10 rounded-full bg-white/80 p-1 text-zinc-700 hover:bg-white"
+                className="absolute top-3 right-3 z-10 rounded-full bg-white p-1.5 text-zinc-700 shadow hover:bg-white/90 transition"
             >
                 {isFavourite ? (
                     <HeartSolid className="h-5 w-5 text-red-500" />
@@ -97,7 +98,7 @@ export default function GlassProductCard({ item }) {
                 )}
             </button>
             {outOfStock && (
-                <span className="absolute top-2 left-2 rounded-md bg-red-600 px-2 py-1 text-xs font-semibold text-white">
+                <span className="absolute top-3 left-3 rounded-md bg-red-600 px-2 py-1 text-xs font-semibold text-white">
                     Sin stock
                 </span>
             )}
@@ -121,7 +122,7 @@ export default function GlassProductCard({ item }) {
                                 -{Math.round(discountNormalized)}%
                             </span>
                         )}
-                        <span className="inline-flex flex-shrink-0 whitespace-nowrap items-center rounded-full px-3 py-1 text-sm font-semibold bg-black text-white">
+                        <span className="inline-flex flex-shrink-0 whitespace-nowrap items-center rounded-full px-3 py-1 text-sm font-semibold bg-black text-white ring-1 ring-black/5">
                             {money(finalPrice)}
                         </span>
                     </div>
@@ -149,13 +150,15 @@ export default function GlassProductCard({ item }) {
                         : first?.src || first?.url || null;
                 return (
                     src && (
-                        <div className="mt-4 rounded-xl overflow-hidden ring-1 ring-zinc-200 bg-zinc-50">
-                            <img
-                                src={src}
-                                alt={title}
-                                className="w-full aspect-[4/3] object-cover transition duration-300 group-hover:scale-[1.02]"
-                                loading="lazy"
-                            />
+                        <div className="mt-4 rounded-xl overflow-hidden ring-1 ring-zinc-200 bg-gradient-to-br from-white to-zinc-50">
+                            <div className="w-full aspect-[4/3] flex items-center justify-center bg-zinc-50">
+                                <img
+                                    src={src}
+                                    alt={title}
+                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                    loading="lazy"
+                                />
+                            </div>
                         </div>
                     )
                 );

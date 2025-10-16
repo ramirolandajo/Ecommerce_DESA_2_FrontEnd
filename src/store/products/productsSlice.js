@@ -150,7 +150,7 @@ export const fetchProducts = createAsyncThunk("products/fetchAll", async (params
 export const fetchFilteredProducts = createAsyncThunk(
   "products/fetchFiltered",
   async (params = {}) => {
-    // params puede contener: page,size, priceMin, priceMax, brandCode, categoryCode, sortBy, sortOrder
+    // params puede contener: page,size, priceMin, priceMax, brandCode, categoryCode, brandCodes, categoryCodes, sortBy, sortOrder
     const {
       page = 0,
       size = 24,
@@ -158,6 +158,8 @@ export const fetchFilteredProducts = createAsyncThunk(
       priceMax = null,
       brandCode = null,
       categoryCode = null,
+      brandCodes = null,
+      categoryCodes = null,
       sortBy = null,
       sortOrder = null,
     } = params;
@@ -165,8 +167,12 @@ export const fetchFilteredProducts = createAsyncThunk(
     const body = {
       priceMin: priceMin == null || priceMin === "" ? null : Number(priceMin),
       priceMax: priceMax == null || priceMax === "" ? null : Number(priceMax),
-      brandCode: brandCode == null || brandCode === "" ? null : brandCode,
-      categoryCode: categoryCode == null || categoryCode === "" ? null : categoryCode,
+      // Si vienen brandCodes (array no vacío) los enviamos; si no, enviamos brandCode simple
+      brandCodes: Array.isArray(brandCodes) && brandCodes.length ? brandCodes : null,
+      brandCode: Array.isArray(brandCodes) && brandCodes.length ? null : (brandCode == null || brandCode === "" ? null : brandCode),
+      // Igual para categories
+      categoryCodes: Array.isArray(categoryCodes) && categoryCodes.length ? categoryCodes : null,
+      categoryCode: Array.isArray(categoryCodes) && categoryCodes.length ? null : (categoryCode == null || categoryCode === "" ? null : categoryCode),
       sortBy: sortBy || null,
       sortOrder: sortOrder || null,
       page,

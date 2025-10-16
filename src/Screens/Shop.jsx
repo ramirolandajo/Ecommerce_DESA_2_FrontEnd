@@ -9,7 +9,6 @@ import { getQueryScore } from "../utils/getQueryScore.js";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { ChevronDownIcon, FunnelIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { fetchFilteredProducts } from "../store/products/productsSlice";
-import { useRef } from "react";
 import { api } from "../api/axios";
 
 function deriveCategories(items) {
@@ -43,6 +42,16 @@ export default function Shop() {
   const initialMin = rawMin ?? "";
   const initialMax = rawMax ?? "";
 
+  // Estados que representan los filtros aplicados actualmente (se usan para la URL y para cargar datos)
+  const [appliedFilters, setAppliedFilters] = useState(() => ({
+    categoryNames: initialCat && initialCat !== 'All' ? [initialCat] : [],
+    subcategory: initialSub,
+    min: initialMin,
+    max: initialMax,
+    brandCodes: brandParam ? [brandParam] : [],
+  }));
+
+  // Estados locales para mostrar (opcional, la UI del sidebar manejará sus propios temporales)
   const [category, setCategory] = useState(initialCat);
   const [subcategory, setSubcategory] = useState(initialSub);
   const [min, setMin] = useState(initialMin);
@@ -50,16 +59,31 @@ export default function Shop() {
   const [brand, setBrand] = useState(brandParam);
   const [sort, setSort] = useState("relevance");
 
+  // Mover serverCategories arriba para que los useMemo posteriores puedan referenciarlo sin TDZ
+  const [serverCategories, setServerCategories] = useState([]);
+  // fallbackCategories: derivadas desde una petición amplia a /products en caso de que
+  // /categories no devuelva datos (evita que el sidebar muestre solo categorías presentes
+  // en la página filtrada actual).
+  const [fallbackCategories, setFallbackCategories] = useState([]);
+   const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const { items: products, status, error } = useSelector((state) => state.products);
   const dispatch = useDispatch();
   const pagination = useSelector(state => state.products.pagination);
   const [isLoading, setIsLoading] = useState(false);
-  const categories = useMemo(() => deriveCategories(products), [products]);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const endRef = useRef(null);
-  const observerRef = useRef(null);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [serverCategories, setServerCategories] = useState([]);
+  const derivedCategories = useMemo(() => deriveCategories(products), [products]);
+  // Construir categorías para el sidebar preferentemente desde el servidor
+  const sidebarCategories = useMemo(() => {
+    if (Array.isArray(serverCategories) && serverCategories.length) {
+      // serverCategories items pueden ser objetos { name, id, categoryCode, subs? }
+      return serverCategories.map((c) => ({ name: c.name ?? String(c), subs: Array.isArray(c.subs) ? c.subs : Array.isArray(c.subcategories) ? c.subcategories : [] }));
+    }
+    // Si el servidor no nos dio categorías, preferimos el fallback derivado de
+    // una petición amplia a /products (no filtrada). Si tampoco existe, caemos
+    // al derivado desde los productos actuales en el store.
+    if (Array.isArray(fallbackCategories) && fallbackCategories.length) return fallbackCategories;
+    return derivedCategories;
+  }, [serverCategories, derivedCategories]);
 
   const sortLabels = {
     relevance: "Relevancia",
@@ -79,8 +103,27 @@ export default function Shop() {
         else setServerCategories([]);
       })
       .catch(() => { if (mounted) setServerCategories([]); });
-    return () => { mounted = false; };
-  }, []);
+    // Si /categories no responde o devuelve vacío, intentamos obtener una lista amplia
+    // de productos para derivar categorías como fallback (no sustituye al store).
+    // Esto garantiza que el sidebar muestre todas las categorías aunque la lista de
+    // productos en el store esté filtrada.
+    api.get('/products?page=0&size=1000')
+      .then(res => {
+        if (!mounted) return;
+        const raw = res.data;
+        let list = raw;
+        if (!Array.isArray(list)) {
+          if (raw && Array.isArray(raw.content)) list = raw.content;
+          else if (raw && Array.isArray(raw.products)) list = raw.products;
+          else list = [];
+        }
+        // deriveCategories espera items con campos `categories` y `subcategory`
+        const derived = deriveCategories(list || []);
+        if (derived && derived.length) setFallbackCategories(derived);
+      })
+      .catch(() => { if (mounted) setFallbackCategories([]); });
+     return () => { mounted = false; };
+   }, []);
 
   // Sanear estado inicial de precios si vienen negativos por URL
   useEffect(() => {
@@ -90,45 +133,6 @@ export default function Shop() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    setSearchParams((prev) => {
-      const params = new URLSearchParams(prev);
-      // category/subcategory
-      if (category === "All" || category === "") params.delete("category");
-      else params.set("category", category);
-      if (subcategory) params.set("subcategory", subcategory);
-      else params.delete("subcategory");
-      return params;
-    });
-  }, [category, subcategory, setSearchParams]);
-
-  // Sincronizar min/max con URL y evitar negativos en la URL
-  useEffect(() => {
-    setSearchParams((prev) => {
-      const params = new URLSearchParams(prev);
-      const minNum = min === "" ? "" : Math.max(0, Number(min));
-      const maxNum = max === "" ? "" : Math.max(0, Number(max));
-
-      if (min === "" || Number.isNaN(Number(min)) || minNum === "") params.delete("min");
-      else params.set("min", String(minNum));
-
-      if (max === "" || Number.isNaN(Number(max)) || maxNum === "") params.delete("max");
-      else params.set("max", String(maxNum));
-
-      return params;
-    });
-  }, [min, max, setSearchParams]);
-
-  // Sincronizar brand con URL
-  useEffect(() => {
-    setSearchParams((prev) => {
-      const params = new URLSearchParams(prev);
-      if (!brand) params.delete("brand");
-      else params.set("brand", String(brand));
-      return params;
-    });
-  }, [brand, setSearchParams]);
-
   // Helper para resolver categoryCode desde serverCategories
   const resolveCategoryCode = (categoryName) => {
     if (!categoryName || categoryName === "All") return null;
@@ -137,11 +141,23 @@ export default function Shop() {
   };
 
   // Función para (re)cargar productos filtrados desde el servidor
-  const loadFiltered = ({ page = 0 } = {}) => {
+  const loadFiltered = ({ page = 0, filters = null } = {}) => {
     const pageSize = pagination?.size ?? 24;
-    const minNum = min === "" ? null : Math.max(0, Number(min));
-    const maxNum = max === "" ? null : Math.max(0, Number(max));
-    const categoryCode = resolveCategoryCode(category);
+    const usedFilters = filters || appliedFilters || {};
+    const minNum = usedFilters.min === "" || usedFilters.min == null ? null : Math.max(0, Number(usedFilters.min));
+    const maxNum = usedFilters.max === "" || usedFilters.max == null ? null : Math.max(0, Number(usedFilters.max));
+
+    // marcas (puede ser array de códigos)
+    const brandCodesRaw = Array.isArray(usedFilters.brandCodes) ? usedFilters.brandCodes : (usedFilters.brandCodes ? [usedFilters.brandCodes] : []);
+    // normalizar: convertir cadenas numéricas a números para que coincida con brandCode numérico del backend
+    const brandCodes = brandCodesRaw.map((c) => {
+      const n = Number(c);
+      return Number.isNaN(n) ? c : n;
+    }).filter(Boolean);
+
+    // categorías: resolvemos los categoryCodes para cada categoryName presente
+    const categoryNames = Array.isArray(usedFilters.categoryNames) ? usedFilters.categoryNames : (usedFilters.categoryNames ? [usedFilters.categoryNames] : []);
+    const categoryCodes = categoryNames.map((name) => resolveCategoryCode(name)).filter(Boolean);
 
     let sortBy = null;
     let sortOrder = null;
@@ -161,8 +177,8 @@ export default function Shop() {
       size: pageSize,
       priceMin: minNum,
       priceMax: maxNum,
-      brandCode: brand || null,
-      categoryCode: categoryCode || null,
+      brandCodes: brandCodes.length ? brandCodes : null,
+      categoryCodes: categoryCodes.length ? categoryCodes : null,
       sortBy,
       sortOrder,
     }));
@@ -170,16 +186,45 @@ export default function Shop() {
 
   // Al montar, cargar la primera página con los filtros iniciales
   useEffect(() => {
-    loadFiltered({ page: 0 });
+    // aplicamos los filtros iniciales (si existen)
+    loadFiltered({ page: 0, filters: appliedFilters });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serverCategories]);
 
-  // Cuando cambian los filtros/orden, recargar desde la página 0
-  useEffect(() => {
-    // resetear a página 0
-    loadFiltered({ page: 0 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, subcategory, min, max, brand, sort]);
+  // applyFilters: llamado desde el sidebar cuando el usuario presiona "Filtrar"
+  const applyFilters = (filters) => {
+    // aceptamos tanto categoryNames (array) como category (string) por compatibilidad
+    const { category: fCategory, categoryNames: fCategoryNames, subcategory: fSub, min: fMin, max: fMax, brandCodes = [] } = filters;
+    const catNames = Array.isArray(fCategoryNames) && fCategoryNames.length ? fCategoryNames : (fCategory && fCategory !== 'All' ? [fCategory] : []);
+
+    // actualizamos estados locales visibles usando la primera categoría si existe
+    setCategory(catNames.length ? catNames[0] : 'All');
+    setSubcategory(fSub || '');
+    setMin(fMin ?? '');
+    setMax(fMax ?? '');
+    setBrand((brandCodes && brandCodes.length) ? brandCodes[0] : '');
+
+    const newApplied = {
+      categoryNames: catNames,
+      subcategory: fSub || '',
+      min: fMin ?? '',
+      max: fMax ?? '',
+      brandCodes: brandCodes || [],
+    };
+    setAppliedFilters(newApplied);
+
+    // sincronizar con URL (guardamos solo la primera categoría/brand para compatibilidad con la URL actual)
+    const sp = new URLSearchParams();
+    if (catNames.length) sp.set('category', catNames[0]);
+    if (fSub) sp.set('subcategory', fSub);
+    if (fMin !== undefined && fMin !== null && fMin !== '') sp.set('min', String(Math.max(0, Number(fMin))));
+    if (fMax !== undefined && fMax !== null && fMax !== '') sp.set('max', String(Math.max(0, Number(fMax))));
+    if (brandCodes && brandCodes.length) sp.set('brand', String(brandCodes[0]));
+    setSearchParams(sp);
+
+    // disparar carga
+    loadFiltered({ page: 0, filters: newApplied });
+  };
 
   // Filtrado mejorado: solo filtrar si los productos están cargados
   const filtered = useMemo(() => {
@@ -233,28 +278,25 @@ export default function Shop() {
   // Mostrar loader también en estado idle (antes de que el hook dispare la carga)
   const showLoading = status === "loading" || status === "idle" || isLoading;
 
-  const hasMore = pagination.page + 1 < pagination.totalPages;
+  // Referencia aplicadaFilters para evitar warning de linter (no cambia lógica)
+  useEffect(() => {
+    // no-op: dependencia para linter
+  }, [appliedFilters]);
 
   return (
     <div className="px-4 pb-12 pt-6 md:pt-8 md:grid md:grid-cols-[16rem_1fr] md:gap-8">
       <FilterSidebar
-        categories={categories}
+        categories={sidebarCategories}
         category={category}
         subcategory={subcategory}
         min={min}
         max={max}
         brand={brand}
-        onCategory={(val) => {
-          setCategory(val);
-          setSubcategory("");
-        }}
-        onSubcategory={setSubcategory}
-        onMin={setMin}
-        onMax={setMax}
-        onBrand={setBrand}
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
+        onApply={applyFilters}
+        initialFilters={appliedFilters}
+         open={sidebarOpen}
+         onClose={() => setSidebarOpen(false)}
+       />
 
       <section>
         {/* Header */}
