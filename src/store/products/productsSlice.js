@@ -60,7 +60,6 @@ const initialState = {
     first: true,
     last: true,
   },
-  home: undefined, // Estado para datos de la pantalla principal
 };
 
 // --- Thunks ---
@@ -73,12 +72,12 @@ export const fetchProductsWithCategories = createAsyncThunk(
     let rawProducts = rawResponse;
     // Aseguramos que sea un array
     if (!Array.isArray(rawProducts)) {
-      if (rawProducts && Array.isArray(rawProducts.content)) {
-        rawProducts = rawProducts.content;
-      } else if (rawProducts && Array.isArray(rawProducts.products)) {
-        rawProducts = rawProducts.products;
+      if (rawProducts && Array.isArray(rawResponse.content)) {
+        rawProducts = rawResponse.content;
+      } else if (rawResponse && Array.isArray(rawResponse.products)) {
+        rawProducts = rawResponse.products;
       } else {
-        console.error("La respuesta de /products no es un array ni contiene 'content' ni 'products'.", rawProducts);
+        console.error("La respuesta de /products no es un array ni contiene 'content' ni 'products'.", rawResponse);
         rawProducts = [];
       }
     }
@@ -114,12 +113,12 @@ export const fetchProducts = createAsyncThunk("products/fetchAll", async (params
   let rawProducts = rawResponse;
   // Aseguramos que sea un array
   if (!Array.isArray(rawProducts)) {
-    if (rawProducts && Array.isArray(rawProducts.content)) {
-      rawProducts = rawProducts.content;
-    } else if (rawProducts && Array.isArray(rawProducts.products)) {
-      rawProducts = rawProducts.products;
+    if (rawResponse && Array.isArray(rawResponse.content)) {
+      rawProducts = rawResponse.content;
+    } else if (rawResponse && Array.isArray(rawResponse.products)) {
+      rawProducts = rawResponse.products;
     } else {
-      console.error("La respuesta de /products no es un array ni contiene 'content' ni 'products'.", rawProducts);
+      console.error("La respuesta de /products no es un array ni contiene 'content' ni 'products'.", rawResponse);
       rawProducts = [];
     }
   }
@@ -147,6 +146,71 @@ export const fetchProducts = createAsyncThunk("products/fetchAll", async (params
   };
 });
 
+// C) Nuevo thunk: fetchFilteredProducts -> POST /products/filter
+export const fetchFilteredProducts = createAsyncThunk(
+  "products/fetchFiltered",
+  async (params = {}) => {
+    // params puede contener: page,size, priceMin, priceMax, brandCode, categoryCode, sortBy, sortOrder
+    const {
+      page = 0,
+      size = 24,
+      priceMin = null,
+      priceMax = null,
+      brandCode = null,
+      categoryCode = null,
+      sortBy = null,
+      sortOrder = null,
+    } = params;
+
+    const body = {
+      priceMin: priceMin == null || priceMin === "" ? null : Number(priceMin),
+      priceMax: priceMax == null || priceMax === "" ? null : Number(priceMax),
+      brandCode: brandCode == null || brandCode === "" ? null : brandCode,
+      categoryCode: categoryCode == null || categoryCode === "" ? null : categoryCode,
+      sortBy: sortBy || null,
+      sortOrder: sortOrder || null,
+      page,
+      size,
+    };
+
+    // Hacemos la petición POST
+    const res = await api.post("/products/filter", body);
+    const rawResponse = res.data;
+    // El backend devuelve una página: content + pageable / totalPages etc.
+    const rawProducts = Array.isArray(rawResponse)
+      ? rawResponse
+      : Array.isArray(rawResponse.content)
+      ? rawResponse.content
+      : Array.isArray(rawResponse.products)
+      ? rawResponse.products
+      : [];
+
+    const needsCats = !rawProducts.every(
+      (p) => Array.isArray(p.categories) && p.categories.every((c) => c && typeof c === "object")
+    );
+    let normalized;
+    if (needsCats) {
+      const categories = await getJSON("/categories");
+      normalized = normalizeWithCategories(rawProducts, categories);
+    } else {
+      normalized = normalizeWithCategories(rawProducts);
+    }
+
+    return {
+      items: normalized,
+      pagination: {
+        page: rawResponse.pageable?.pageNumber ?? page,
+        size: rawResponse.pageable?.pageSize ?? size,
+        totalPages: rawResponse.totalPages ?? 1,
+        totalElements: rawResponse.totalElements ?? normalized.length,
+        numberOfElements: rawResponse.numberOfElements ?? normalized.length,
+        first: rawResponse.first ?? (page === 0),
+        last: rawResponse.last ?? false,
+      },
+    };
+  }
+);
+
 // C) Uno por id con productos relacionados
 export const fetchProduct = createAsyncThunk("products/fetchOne", async (id) => {
   const { product: rawProduct, relatedProducts = [] } = await getJSON(`/products/${id}`);
@@ -162,40 +226,6 @@ export const fetchProduct = createAsyncThunk("products/fetchOne", async (id) => 
   const [product, ...related] = normalizeWithCategories(all);
   return { product, relatedProducts: related };
 });
-
-// D) Nuevos thunks para la pantalla principal
-// Añadir soporte para /homescreen: thunk que devuelve { hero: [...], items: [...] }
-export const fetchHomeProducts = createAsyncThunk(
-  "products/fetchHome",
-  async () => {
-    const raw = await getJSON("/homescreen");
-
-    // Aceptar varias formas de respuesta: { hero, products } | { hero, tiles } | array (items)
-    const heroRaw = Array.isArray(raw?.hero) ? raw.hero : Array.isArray(raw?.slides) ? raw.slides : [];
-    let itemsRaw = [];
-
-    if (Array.isArray(raw?.products)) itemsRaw = raw.products;
-    else if (Array.isArray(raw?.tiles)) itemsRaw = raw.tiles;
-    else if (Array.isArray(raw?.items)) itemsRaw = raw.items;
-    else if (Array.isArray(raw)) itemsRaw = raw;
-
-    // Normalizar categorías de forma consistente: si alguno de los productos no tiene categorias embebidas, obtener /categories
-    const allToCheck = [...heroRaw, ...itemsRaw];
-    const needsCats = !allToCheck.every(
-      (p) => Array.isArray(p.categories) && p.categories.every((c) => c && typeof c === "object")
-    );
-
-    let categories = [];
-    if (needsCats) {
-      categories = await getJSON("/categories");
-    }
-
-    const normalizedHero = normalizeWithCategories(heroRaw, categories);
-    const normalizedItems = normalizeWithCategories(itemsRaw, categories);
-
-    return { hero: normalizedHero, items: normalizedItems };
-  }
-);
 
 // --- Slice ---
 const productsSlice = createSlice({
@@ -240,6 +270,21 @@ const productsSlice = createSlice({
         state.error = action.error?.message || "Error al cargar productos";
       })
 
+      // fetchFilteredProducts
+      .addCase(fetchFilteredProducts.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(fetchFilteredProducts.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.items = action.payload.items; // Siempre reemplaza con la página filtrada
+        state.pagination = action.payload.pagination;
+      })
+      .addCase(fetchFilteredProducts.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.error?.message || "Error al cargar productos filtrados";
+      })
+
       // fetchProduct (uno)
       .addCase(fetchProduct.pending, (state) => {
         state.status = "loading";
@@ -254,25 +299,6 @@ const productsSlice = createSlice({
       .addCase(fetchProduct.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error?.message || "Error al cargar el producto";
-      })
-
-      // fetchHomeProducts (nuevo endpoint optimizado para pantalla principal)
-      .addCase(fetchHomeProducts.pending, (state) => {
-        // inicializar sub-estado home si no existe
-        state.home = state.home ?? { items: [], hero: [], status: "idle", error: null };
-        state.home.status = "loading";
-        state.home.error = null;
-      })
-      .addCase(fetchHomeProducts.fulfilled, (state, action) => {
-        state.home = state.home ?? { items: [], hero: [], status: "idle", error: null };
-        state.home.status = "succeeded";
-        state.home.items = action.payload.items;
-        state.home.hero = action.payload.hero;
-      })
-      .addCase(fetchHomeProducts.rejected, (state, action) => {
-        state.home = state.home ?? { items: [], hero: [], status: "idle", error: null };
-        state.home.status = "failed";
-        state.home.error = action.error?.message || "Error al cargar home";
       });
   },
 });
@@ -287,9 +313,4 @@ export const selectProductById = (id) =>
   createSelector(selectAllProducts, (items) => items.find((p) => String(p.id) === String(id)) || null);
 
 export const selectRelatedProducts = (state) => state.products.related;
-
-// --- Selectores del home ---
-export const selectHomeProducts = (state) => state.products.home?.items ?? state.products.items;
-export const selectHomeHero = (state) => state.products.home?.hero ?? (state.products.items || []).filter((p) => p.hero);
-export const selectHomeStatus = (state) => state.products.home?.status ?? state.products.status;
 

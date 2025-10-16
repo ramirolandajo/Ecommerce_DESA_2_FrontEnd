@@ -31,11 +31,18 @@ export default function GlassProductCard({ item }) {
         }).format(n);
 
     const hasDiscount = typeof discount === "number" && discount > 0;
+    // normalizamos el descuento: puede venir como 5 (5%) o 0.05 (5%)
+    const discountNormalized =
+        typeof discount === "number"
+            ? discount > 0 && discount < 1
+                ? discount * 100
+                : discount
+            : 0;
     const finalPrice =
         typeof price === "number"
             ? price
             : typeof priceUnit === "number"
-            ? priceUnit * (1 - (hasDiscount ? discount : 0) / 100)
+            ? priceUnit * (1 - (hasDiscount ? discountNormalized : 0) / 100)
             : undefined;
 
     // si hay id → detalle; si no, cae al cta.href por compatibilidad
@@ -111,7 +118,7 @@ export default function GlassProductCard({ item }) {
                         )}
                         {hasDiscount && (
                             <span className="text-xs font-bold text-red-600">
-                                -{discount}%
+                                -{Math.round(discountNormalized)}%
                             </span>
                         )}
                         <span className="inline-flex flex-shrink-0 whitespace-nowrap items-center rounded-full px-3 py-1 text-sm font-semibold bg-black text-white">

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import Stepper from "../Components/Checkout/Stepper.jsx";
@@ -15,16 +15,22 @@ export default function Checkout() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const [loading, setLoading] = useState(false);
+
   const createdRef = useRef(false);
   useEffect(() => {
     if (!createdRef.current && purchaseId == null && items.length) {
       createdRef.current = true;
       (async () => {
+        console.log("Items del carrito a enviar al back:", items);
         try {
+          setLoading(true);
           const response = await dispatch(purchaseCreateCart()).unwrap();
           console.log(response);
         } catch (err) {
           console.error(err);
+        } finally {
+          setLoading(false);
         }
       })();
     }
@@ -36,9 +42,9 @@ export default function Checkout() {
       cancelRef.current = true;
       return;
     }
-    return () => {
-      dispatch(cancelPurchase());
-    };
+    // return () => {
+    //   dispatch(cancelPurchase());
+    // }; // Desactivado temporalmente para pruebas
   }, [dispatch]);
 
   useEffect(() => {
@@ -60,6 +66,7 @@ export default function Checkout() {
       alert("No hay compra pendiente");
       return;
     }
+    setLoading(true);
     try {
       await dispatch(confirmPurchase(addressId));
       dispatch(clearCart());
@@ -67,6 +74,18 @@ export default function Checkout() {
     } catch (err) {
       console.error(err);
       alert("No se pudo confirmar la compra");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    try {
+      await dispatch(cancelPurchase());
+      navigate('/cart');
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo cancelar la compra");
     }
   };
 
@@ -82,7 +101,13 @@ export default function Checkout() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-12">
       <h1 className="mb-8 text-3xl font-bold">Finalizar compra</h1>
-      <Stepper items={items} money={money} handleConfirm={handleConfirm} />
+      <Stepper
+        items={items}
+        money={money}
+        handleConfirm={handleConfirm}
+        handleCancel={handleCancel}
+        loading={loading}
+      />
     </section>
   );
 }

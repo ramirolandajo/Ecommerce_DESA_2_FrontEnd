@@ -8,8 +8,9 @@ import ProductSkeleton from "../Components/ProductSkeleton.jsx";
 import { getQueryScore } from "../utils/getQueryScore.js";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { ChevronDownIcon, FunnelIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-import { fetchProducts } from "../store/products/productsSlice";
+import { fetchFilteredProducts } from "../store/products/productsSlice";
 import { useRef } from "react";
+import { api } from "../api/axios";
 
 function deriveCategories(items) {
   const map = items.reduce((map, { categories, subcategory }) => {
@@ -35,6 +36,7 @@ export default function Shop() {
   const rawMin = searchParams.get("min");
   const rawMax = searchParams.get("max");
   const subParam = searchParams.get("subcategory");
+  const brandParam = searchParams.get("brand") || "";
 
   // Si la categoría es "All" (o ausente), no heredar subcategory de la URL
   const initialSub = initialCat === "All" ? "" : (subParam ?? "");
@@ -45,6 +47,7 @@ export default function Shop() {
   const [subcategory, setSubcategory] = useState(initialSub);
   const [min, setMin] = useState(initialMin);
   const [max, setMax] = useState(initialMax);
+  const [brand, setBrand] = useState(brandParam);
   const [sort, setSort] = useState("relevance");
 
   const { items: products, status, error } = useSelector((state) => state.products);
@@ -56,12 +59,28 @@ export default function Shop() {
   const endRef = useRef(null);
   const observerRef = useRef(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [serverCategories, setServerCategories] = useState([]);
 
   const sortLabels = {
     relevance: "Relevancia",
     "price-asc": "Precio: menor a mayor",
     "price-desc": "Precio: mayor a menor",
   };
+
+  // Cargar categorías desde el servidor para resolver categoryCode
+  useEffect(() => {
+    let mounted = true;
+    api.get("/categories")
+      .then(res => {
+        if (!mounted) return;
+        const data = res.data;
+        if (Array.isArray(data)) setServerCategories(data);
+        else if (Array.isArray(data.content)) setServerCategories(data.content);
+        else setServerCategories([]);
+      })
+      .catch(() => { if (mounted) setServerCategories([]); });
+    return () => { mounted = false; };
+  }, []);
 
   // Sanear estado inicial de precios si vienen negativos por URL
   useEffect(() => {
@@ -99,6 +118,68 @@ export default function Shop() {
       return params;
     });
   }, [min, max, setSearchParams]);
+
+  // Sincronizar brand con URL
+  useEffect(() => {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (!brand) params.delete("brand");
+      else params.set("brand", String(brand));
+      return params;
+    });
+  }, [brand, setSearchParams]);
+
+  // Helper para resolver categoryCode desde serverCategories
+  const resolveCategoryCode = (categoryName) => {
+    if (!categoryName || categoryName === "All") return null;
+    const found = serverCategories.find((c) => (c.name || String(c)).toLowerCase() === categoryName.toLowerCase());
+    return found?.categoryCode ?? found?.id ?? null;
+  };
+
+  // Función para (re)cargar productos filtrados desde el servidor
+  const loadFiltered = ({ page = 0 } = {}) => {
+    const pageSize = pagination?.size ?? 24;
+    const minNum = min === "" ? null : Math.max(0, Number(min));
+    const maxNum = max === "" ? null : Math.max(0, Number(max));
+    const categoryCode = resolveCategoryCode(category);
+
+    let sortBy = null;
+    let sortOrder = null;
+    if (sort === "price-asc") {
+      sortBy = "price";
+      sortOrder = "asc";
+    } else if (sort === "price-desc") {
+      sortBy = "price";
+      sortOrder = "desc";
+    } else if (sort === "relevance") {
+      sortBy = "relevance";
+      sortOrder = "desc";
+    }
+
+    dispatch(fetchFilteredProducts({
+      page,
+      size: pageSize,
+      priceMin: minNum,
+      priceMax: maxNum,
+      brandCode: brand || null,
+      categoryCode: categoryCode || null,
+      sortBy,
+      sortOrder,
+    }));
+  };
+
+  // Al montar, cargar la primera página con los filtros iniciales
+  useEffect(() => {
+    loadFiltered({ page: 0 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverCategories]);
+
+  // Cuando cambian los filtros/orden, recargar desde la página 0
+  useEffect(() => {
+    // resetear a página 0
+    loadFiltered({ page: 0 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category, subcategory, min, max, brand, sort]);
 
   // Filtrado mejorado: solo filtrar si los productos están cargados
   const filtered = useMemo(() => {
@@ -154,15 +235,6 @@ export default function Shop() {
 
   const hasMore = pagination.page + 1 < pagination.totalPages;
 
-  const fetchMoreData = () => {
-    if (!isLoadingMore && hasMore) {
-      setIsLoadingMore(true);
-      dispatch(fetchProducts({ page: pagination.page + 1, size: pagination.size })).finally(() => {
-        setIsLoadingMore(false);
-      });
-    }
-  };
-
   return (
     <div className="px-4 pb-12 pt-6 md:pt-8 md:grid md:grid-cols-[16rem_1fr] md:gap-8">
       <FilterSidebar
@@ -171,6 +243,7 @@ export default function Shop() {
         subcategory={subcategory}
         min={min}
         max={max}
+        brand={brand}
         onCategory={(val) => {
           setCategory(val);
           setSubcategory("");
@@ -178,6 +251,7 @@ export default function Shop() {
         onSubcategory={setSubcategory}
         onMin={setMin}
         onMax={setMax}
+        onBrand={setBrand}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
@@ -265,7 +339,7 @@ export default function Shop() {
             {pagination.totalPages > 1 && (
               <div className="flex justify-center items-center gap-2 mt-8">
                 <button
-                  onClick={() => dispatch(fetchProducts({ page: Math.max(0, pagination.page - 1), size: pagination.size }))}
+                  onClick={() => loadFiltered({ page: Math.max(0, pagination.page - 1) })}
                   disabled={pagination.page === 0 || status === "loading"}
                   className="p-2 rounded border border-zinc-300 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-50"
                   aria-label="Página anterior"
@@ -275,7 +349,7 @@ export default function Shop() {
                 {Array.from({ length: pagination.totalPages }, (_, i) => (
                   <button
                     key={i}
-                    onClick={() => dispatch(fetchProducts({ page: i, size: pagination.size }))}
+                    onClick={() => loadFiltered({ page: i })}
                     disabled={status === "loading"}
                     className={`px-3 py-2 rounded border ${
                       pagination.page === i
@@ -287,7 +361,7 @@ export default function Shop() {
                   </button>
                 ))}
                 <button
-                  onClick={() => dispatch(fetchProducts({ page: Math.min(pagination.totalPages - 1, pagination.page + 1), size: pagination.size }))}
+                  onClick={() => loadFiltered({ page: Math.min(pagination.totalPages - 1, pagination.page + 1) })}
                   disabled={pagination.page === pagination.totalPages - 1 || status === "loading"}
                   className="p-2 rounded border border-zinc-300 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-50"
                   aria-label="Página siguiente"

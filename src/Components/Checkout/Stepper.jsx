@@ -8,6 +8,7 @@ import {
   MapPinIcon,
   TruckIcon,
   CreditCardIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 
 const steps = [
@@ -16,7 +17,7 @@ const steps = [
   { id: 3, label: "Pago", Icon: CreditCardIcon },
 ];
 
-export default function Stepper({ items, money, handleConfirm }) {
+export default function Stepper({ items, money, handleConfirm, handleCancel, loading }) {
   const [step, setStep] = useState(1);
   const [address, setAddress] = useState("");      // 'home' | 'office'
   const [shipping, setShipping] = useState("");    // 'regular' | 'express' | 'scheduled'
@@ -32,7 +33,7 @@ export default function Stepper({ items, money, handleConfirm }) {
   const totalTimeRef = useRef(timeLeft);
   useEffect(() => {
     totalTimeRef.current = timeLeft;
-  }, [purchaseId]);
+  }, [purchaseId, timeLeft]);
 
   useEffect(() => {
     console.log("Stepper state", { purchaseId, timeLeft });
@@ -45,7 +46,7 @@ export default function Stepper({ items, money, handleConfirm }) {
 
   useEffect(() => {
     if (expired && purchaseId) {
-      dispatch(cancelPurchase());
+      // dispatch(cancelPurchase()); // Desactivado temporalmente para pruebas
     }
   }, [expired, purchaseId, dispatch]);
 
@@ -157,24 +158,34 @@ export default function Stepper({ items, money, handleConfirm }) {
         )}
 
         {/* Botonera inferior */}
-        <div className="flex justify-end gap-3 pt-2">
+        <div className="flex gap-3 pt-2">
           <button
               type="button"
-              onClick={back}
-              disabled={step === 1}
-              className="rounded-lg border border-zinc-300 bg-white px-5 py-2.5 text-sm text-zinc-800 shadow-sm disabled:opacity-50"
+              onClick={handleCancel}
+              className="rounded-lg border border-red-300 bg-white px-5 py-2.5 text-sm text-red-800 shadow-sm"
           >
-            Atrás
+            Cancelar compra
           </button>
-          <button
-              type="button"
-              onClick={next}
-              disabled={!canNext || (step === 3 && expired)}
-              className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white shadow-sm disabled:opacity-50"
-          >
-            {step === 3 ? "Pagar" : "Siguiente"}
-          </button>
+          <div className="ml-auto flex gap-3">
+            <button
+                type="button"
+                onClick={back}
+                disabled={step === 1}
+                className="rounded-lg border border-zinc-300 bg-white px-5 py-2.5 text-sm text-zinc-800 shadow-sm disabled:opacity-50"
+            >
+              Atrás
+            </button>
+            <button
+                type="button"
+                onClick={next}
+                disabled={!canNext || (step === 3 && loading)}
+                className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white shadow-sm disabled:opacity-50"
+            >
+              {step === 3 ? (loading ? <><ArrowPathIcon className="inline h-4 w-4 animate-spin mr-2" />Procesando...</> : "Pagar") : "Siguiente"}
+            </button>
+          </div>
         </div>
+        {console.log("Stepper render: step", step, "canNext", canNext, "expired", expired, "loading", loading, "card", card)}
       </div>
   );
 }

@@ -16,6 +16,7 @@ import { PATHS, productUrl } from "../routes/paths.js";
 import Breadcrumbs from "../Components/Breadcrumbs.jsx";
 import Loader from "../Components/Loader.jsx";
 import RelatedProductsSection from "../Sections/RelatedProductsSection.jsx";
+import ReviewsSection from "../Components/ReviewsSection";
 import { fetchProduct } from "../store/products/productsSlice.js";
 import { addFavourite, removeFavourite } from "../store/favourites/favouritesSlice.js";
 
@@ -98,22 +99,38 @@ export default function ProductDetail() {
     const money = (n) => formatter.format(n);
 
     const finalPrice = useMemo(() => {
+        // normalizamos el descuento: puede venir como 5 (5%) o 0.05 (5%)
+        const discountNormalized =
+            typeof discount === "number"
+                ? discount > 0 && discount < 1
+                    ? discount * 100
+                    : discount
+                : 0;
+
         if (typeof price === "number") return price;
         if (typeof priceUnit === "number") {
-            return priceUnit * (1 - (typeof discount === "number" ? discount : 0) / 100);
+            return priceUnit * (1 - (typeof discount === "number" ? discountNormalized : 0) / 100);
         }
         return undefined;
     }, [price, priceUnit, discount]);
 
+    // recalculamos hasDiscount en base al descuento normalizado o la diferencia entre priceUnit y finalPrice
     const hasDiscount =
-        (typeof discount === "number" && discount > 0) ||
+        (typeof discount === "number" && (discount > 0 || (discount > 0 && discount < 1))) ||
         (typeof priceUnit === "number" && typeof finalPrice === "number" && priceUnit > finalPrice);
 
     const { discountPercent, savings } = useMemo(() => {
         if (!hasDiscount) return { discountPercent: null, savings: null };
-        const pct =
+        // recalculamos el porcentaje usando la misma normalización
+        const discountNormalized =
             typeof discount === "number"
-                ? Math.round(discount)
+                ? discount > 0 && discount < 1
+                    ? discount * 100
+                    : discount
+                : null;
+        const pct =
+            typeof discount === "number" && discountNormalized !== null
+                ? Math.round(discountNormalized)
                 : typeof priceUnit === "number" && typeof finalPrice === "number"
                 ? Math.round(((priceUnit - finalPrice) / priceUnit) * 100)
                 : null;
@@ -617,6 +634,9 @@ export default function ProductDetail() {
                     {description || "Sin descripción disponible."}
                 </p>
             </div>
+
+            {/* Reseñas */}
+            <ReviewsSection productId={product?.id} />
 
             <RelatedProductsSection products={related} />
         </section>

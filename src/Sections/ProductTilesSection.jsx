@@ -5,6 +5,8 @@ import { useSelector } from "react-redux";
 import GlassProductCard from "../Components/GlassProductCard.jsx";
 import HomeProductSkeleton from "../Components/HomeProductSkeleton.jsx";
 import { getCategoryIcon } from "../data/categoryIcons.js";
+import { selectAllProducts } from "../store/products/productsSlice.js";
+import { selectHomeStatus, selectHomeProducts } from "../store/homeScreen/homeScreenSlice.js";
 
 const TABS = [
   { key: "new", label: "Novedades" },
@@ -23,7 +25,12 @@ const CATEGORY_LABELS = {
 };
 
 export default function ProductTilesSection() {
-  const { items: products, status } = useSelector((s) => s.products);
+  // Usamos los productos del store general y también los del home (si están disponibles)
+  const productsFromAll = useSelector(selectAllProducts);
+  const homeStatus = useSelector(selectHomeStatus);
+  const productsFromHome = useSelector(selectHomeProducts);
+  const products = productsFromHome.length > 0 ? productsFromHome : productsFromAll;
+  const status = homeStatus;
   const [activeTab, setActiveTab] = useState("new");
 
   // categorías dinámicas (ordenadas como en el mock)
@@ -124,7 +131,8 @@ export default function ProductTilesSection() {
         </header>
 
         {/* Grid de productos */}
-        {status === "loading" ? (
+        {status === "loading" || (products.length === 0 && status === 'idle') ? (
+          // Si el home está cargando O no hay productos aún (estado idle pero vacío), mostramos skeletons
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, idx) => (
               <HomeProductSkeleton key={idx} />

@@ -22,4 +22,10 @@ export async function getMyReview(productCode) {
   }
 }
 
-export default { addReview, getMyReview };
+// Nueva función para obtener todas las reseñas de un producto
+export async function getReviews(productId) {
+  const res = await api.get(`products/${productId}/reviews`);
+  return res.data; // se espera el ReviewResponse del backend
+}
+
+export default { addReview, getMyReview, getReviews };

@@ -1,5 +1,6 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import { api } from "../api/axios"; // importamos cliente para obtener marcas
 
 export default function FilterSidebar({
   open,
@@ -9,10 +10,12 @@ export default function FilterSidebar({
   subcategory,
   min,
   max,
+  brand,
   onCategory,
   onSubcategory,
   onMin,
   onMax,
+  onBrand,
 }) {
   // Aseguramos una opción "All" como centinela; se mostrará como "Todas"
   const allCategories = useMemo(
@@ -22,11 +25,34 @@ export default function FilterSidebar({
   const current = allCategories.find((c) => c.name === category) || allCategories[0];
   const subcats = current?.subs ?? [];
 
+  const [brands, setBrands] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    api
+      .get("/brands/all")
+      .then((res) => {
+        if (!mounted) return;
+        const data = res.data;
+        if (Array.isArray(data)) setBrands(data);
+        else if (Array.isArray(data.content)) setBrands(data.content);
+        else setBrands([]);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setBrands([]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const reset = () => {
     onCategory("All");
     onSubcategory("");
     onMin("");
     onMax("");
+    if (onBrand) onBrand("");
   };
 
   // Handlers para evitar negativos en precios. Permitimos string vacío para limpiar.
@@ -48,6 +74,23 @@ export default function FilterSidebar({
 
   const FiltersUI = (
     <div className="flex flex-col space-y-6 ">
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-zinc-700" htmlFor="brand-select">Marca</label>
+        <select
+          id="brand-select"
+          className="w-full h-10 rounded-2xl border border-zinc-300 bg-white px-3 text-sm text-zinc-800 shadow-sm"
+          value={brand ?? ""}
+          onChange={(e) => onBrand && onBrand(e.target.value)}
+        >
+          <option value="">Todas</option>
+          {brands.map((b) => (
+            <option key={b.id ?? b.brandCode ?? b.name} value={b.brandCode ?? b.id}>
+              {b.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="space-y-2">
         <label className="text-sm font-medium text-zinc-700" htmlFor="category-select">Categoría</label>
         <select

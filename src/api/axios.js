@@ -1,17 +1,11 @@
 import axios from "axios";
 
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || "/api",
+    baseURL: import.meta.env.VITE_API_URL || "http://localhost:8081/api",
 });
 
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem("token");
-    const publicRoutes = ["/login", "/register", "/verify-email"];
-    const currentPath = window.location.pathname;
-    if (!token && !publicRoutes.includes(currentPath)) {
-        window.location.href = "/login";
-        return Promise.reject("No token, redirigiendo al login");
-    }
     if (token) {
         config.headers = config.headers || {};
         config.headers.Authorization = `Bearer ${token}`;

@@ -3,26 +3,36 @@ import { motion as Motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { productUrl } from "../routes/paths";
-import { selectHomeHero } from "../store/products/productsSlice.js";
+import { selectHomeHero, selectHomeStatus } from "../store/homeScreen/homeScreenSlice.js";
+import HeroSkeleton from "./HeroSkeleton.jsx";
 
 export default function HeroShowcase() {
-    // Obtener slides ya filtrados desde el selector del store (pueden venir del endpoint /homescreen)
-    const slides = useSelector(selectHomeHero) || [];
+    // Obtener slides ya filtrados desde el selector del store (solo hero === true)
+    const slides = useSelector(selectHomeHero);
+    const status = useSelector(selectHomeStatus);
 
     const [index, setIndex] = useState(0);
     const [paused, setPaused] = useState(false);
     const timerRef = useRef(null);
 
-    const next = useCallback(() => setIndex((i) => (i + 1) % slides.length), [slides.length]);
-    const prev = useCallback(() => setIndex((i) => (i - 1 + slides.length) % slides.length), [slides.length]);
+    const next = useCallback(() => {
+        if (!slides || slides.length === 0) return;
+        setIndex((i) => (i + 1) % slides.length);
+    }, [slides]);
+    const prev = useCallback(() => {
+        if (!slides || slides.length === 0) return;
+        setIndex((i) => (i - 1 + slides.length) % slides.length);
+    }, [slides]);
 
     useEffect(() => {
         if (paused) return;
+        if (!slides || slides.length === 0) return;
         timerRef.current = setInterval(next, 6000);
         return () => clearInterval(timerRef.current);
-    }, [paused, next]);
+    }, [paused, next, slides]);
 
-    if (!slides || slides.length === 0) return null;
+    // Mostrar skeleton si estamos cargando o no hay slides aún
+    if (status === 'loading' || !slides || slides.length === 0) return <HeroSkeleton />;
 
     const medium = slides[index % slides.length];
     const large = slides[(index + 1) % slides.length];
@@ -84,12 +94,14 @@ function SlideCard({ slide, className = "", medium = false, large = false }) {
             className={`relative overflow-hidden rounded-3xl border border-slate-700/40 bg-slate-900 ${className}`}
         >
             <figure className="absolute inset-0">
-                <img
-                    src={slide?.mediaSrc?.[0] || ''}
-                    alt={slide?.title}
-                    className="h-full w-full object-cover opacity-50"
-                    draggable={false}
-                />
+                {slide?.mediaSrc?.[0] && (
+                    <img
+                        src={slide?.mediaSrc?.[0]}
+                        alt={slide?.title}
+                        className="h-full w-full object-cover opacity-50"
+                        draggable={false}
+                    />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
             </figure>
 
