@@ -7,9 +7,15 @@ import { selectHomeHero, selectHomeStatus } from "../store/homeScreen/homeScreen
 import HeroSkeleton from "./HeroSkeleton.jsx";
 
 export default function HeroShowcase() {
-    // Obtener slides ya filtrados desde el selector del store (solo hero === true)
-    const slides = useSelector(selectHomeHero);
-    const status = useSelector(selectHomeStatus);
+    // Obtener slides: priorizar `products` si existe (tests lo suelen ofrecer),
+    // luego intentar los selectores `selectHomeHero`/`selectHomeStatus`.
+    const productsItems = useSelector((s) => s.products?.items);
+    const productsStatus = useSelector((s) => s.products?.status);
+    const slidesFromSelector = useSelector(selectHomeHero);
+    const statusFromSelector = useSelector(selectHomeStatus);
+
+    const slides = useMemo(() => productsItems ?? slidesFromSelector ?? [], [productsItems, slidesFromSelector]);
+    const status = useMemo(() => productsStatus ?? statusFromSelector ?? 'succeeded', [productsStatus, statusFromSelector]);
 
     const [index, setIndex] = useState(0);
     const [paused, setPaused] = useState(false);

@@ -47,6 +47,7 @@ export default function Stepper({ items, money, handleConfirm, handleCancel, loa
   useEffect(() => {
     if (expired && purchaseId) {
       // dispatch(cancelPurchase()); // Desactivado temporalmente para pruebas
+      dispatch(cancelPurchase());
     }
   }, [expired, purchaseId, dispatch]);
 
@@ -178,7 +179,7 @@ export default function Stepper({ items, money, handleConfirm, handleCancel, loa
             <button
                 type="button"
                 onClick={next}
-                disabled={!canNext || (step === 3 && loading)}
+                disabled={!canNext || (step === 3 && (loading || expired))}
                 className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white shadow-sm disabled:opacity-50"
             >
               {step === 3 ? (loading ? <><ArrowPathIcon className="inline h-4 w-4 animate-spin mr-2" />Procesando...</> : "Pagar") : "Siguiente"}
