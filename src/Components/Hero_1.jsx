@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { motion as Motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { productUrl } from "../routes/paths";
 import { selectHomeHero, selectHomeStatus } from "../store/homeScreen/homeScreenSlice.js";
@@ -107,6 +107,8 @@ export default function HeroShowcase() {
 
 function SlideCard({ slide, className = "", medium = false, large = false, lightMode = false }) {
     const lines = useMemo(() => (slide?.title || "").split("\n"), [slide?.title]);
+    const navigate = useNavigate();
+    const [isHover, setIsHover] = useState(false);
 
     // Escalas tipográficas
     const titleClasses =
@@ -131,7 +133,21 @@ function SlideCard({ slide, className = "", medium = false, large = false, light
     return (
         <Motion.article
             layoutId={String(slide?.id)}
-            className={`relative overflow-hidden rounded-3xl ${lightMode ? 'border border-slate-300/40 bg-transparent' : 'border border-slate-700/40 bg-slate-900'} ${className}`}
+            // Efecto más sutil: escala reducida, sombra suave y ligero lift (y)
+            animate={{ scale: isHover ? 1.03 : 1, y: isHover ? -4 : 0, boxShadow: isHover ? '0 12px 24px rgba(2,6,23,0.35)' : '0 0px 0px rgba(0,0,0,0)', z: isHover ? 10 : 0 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 26, mass: 0.6 }}
+            className={`relative overflow-hidden rounded-3xl cursor-pointer transform-gpu transition-transform duration-300 ease-out will-change-transform ${lightMode ? 'border border-slate-300/40 bg-transparent' : 'border border-slate-700/40 bg-slate-900'} ${className}`}
+            onClick={() => navigate(productUrl(slide?.id))}
+            role="link"
+            tabIndex={0}
+            onMouseEnter={() => setIsHover(true)}
+            onMouseLeave={() => setIsHover(false)}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate(productUrl(slide?.id));
+                }
+            }}
         >
             {/* Imagen */}
             <figure className="absolute inset-0">
@@ -139,20 +155,15 @@ function SlideCard({ slide, className = "", medium = false, large = false, light
                     <img
                         src={slide?.mediaSrc?.[0]}
                         alt={slide?.title}
-                        className={`h-full w-full object-cover ${lightMode ? 'opacity-100' : 'opacity-50'}`}
+                        // la imagen no hace zoom por separado; el zoom aplica al bloque completo
+                        // No queremos que la imagen capture eventos; el article maneja hover/click
+                        className={`h-full w-full object-cover pointer-events-none ${lightMode ? 'opacity-100' : 'opacity-50'}`}
                         draggable={false}
                     />
                 )}
                 {/* Overlay general leve */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-black/8 to-transparent pointer-events-none" />
             </figure>
-
-            {/* Link que vuelve clickeable TODO el card */}
-            <Link
-                to={productUrl(slide?.id)}
-                aria-label={slide?.title || 'Ver producto'}
-                className="absolute inset-0 z-40"
-            />
 
             {/* CÁPSULA: banda inferior ancho completo, altura según contenido */}
             <div
