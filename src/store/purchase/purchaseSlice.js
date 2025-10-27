@@ -8,6 +8,7 @@ let timer = null;
 const initialState = {
   id: null,
   reservationTimestamp: null,
+  endTime: null,
   status: "idle",
   timeLeft: 0,
 };
@@ -57,9 +58,12 @@ const purchaseSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(tick, (state) => {
-        console.log("tick", state.timeLeft);
-        if (state.timeLeft > 0) {
-          state.timeLeft -= 1;
+        if (state.endTime) {
+          state.timeLeft = Math.max(0, Math.floor((state.endTime - Date.now()) / 1000));
+        } else {
+          if (state.timeLeft > 0) {
+            state.timeLeft -= 1;
+          }
         }
         if (state.timeLeft <= 0) {
           state.status = "expired";
@@ -68,17 +72,15 @@ const purchaseSlice = createSlice({
             timer = null;
           }
         }
+        console.log("tick", state.timeLeft);
       })
       .addCase(createCart.fulfilled, (state, action) => {
         state.id = action.payload.id;
         state.reservationTimestamp = action.payload.reservationTime;
+        state.endTime = new Date(action.payload.reservationTime).getTime() + 30 * 60 * 1000;
         state.status = action.payload.status;
-        let calculatedTime = Math.floor(
-          (new Date(action.payload.reservationTime) - Date.now()) / 1000,
-        );
-        // Si el tiempo calculado es menor o igual a cero, asignar 120 segundos por defecto
-        state.timeLeft = calculatedTime > 0 ? calculatedTime : 120;
-        console.log("createCart.fulfilled", action.payload);
+        state.timeLeft = Math.max(0, Math.floor((state.endTime - Date.now()) / 1000));
+        console.log("createCart.fulfilled", action.payload, "endTime", new Date(state.endTime), "timeLeft", state.timeLeft);
       })
       .addCase(confirmPurchase.fulfilled, () => {
         console.log("confirmPurchase.fulfilled");

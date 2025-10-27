@@ -55,8 +55,10 @@ const cartSlice = createSlice({
       if (qty < 1) return;
       const existing = state.items.find((i) => i.id === item.id);
       if (existing) {
+        if (existing.quantity + qty > (existing.stock ?? Infinity)) return; // No agregar si excede stock
         existing.quantity += qty;
       } else {
+        if (qty > (item.stock ?? Infinity)) return; // No agregar si excede stock
         state.items.push({ ...item, quantity: qty });
       }
       calcTotals(state);
@@ -70,7 +72,7 @@ const cartSlice = createSlice({
     incrementItem: (state, action) => {
       const id = action.payload;
       const item = state.items.find((i) => i.id === id);
-      if (item) {
+      if (item && item.quantity + 1 <= (item.stock ?? Infinity)) {
         item.quantity += 1;
         calcTotals(state);
         saveState(state);
@@ -89,7 +91,7 @@ const cartSlice = createSlice({
       const { id, quantity } = action.payload;
       if (quantity < 1) return;
       const item = state.items.find((i) => i.id === id);
-      if (item) {
+      if (item && quantity <= (item.stock ?? Infinity)) {
         item.quantity = quantity;
         calcTotals(state);
         saveState(state);

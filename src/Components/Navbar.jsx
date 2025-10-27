@@ -6,6 +6,7 @@ import CartDrawer from "./CartDrawer.jsx";
 import { getQueryScore } from "../utils/getQueryScore.js";
 import { logout } from "../store/user/userSlice.js";
 import { clearCart, clearCartOnServer } from "../store/cart/cartSlice.js";
+import { showNotification } from "../store/notification/notificationSlice.js";
 
 import {
   Disclosure,
@@ -77,7 +78,7 @@ export default function Navbar() {
 
   const handleCartClick = () => {
     if (!isLoggedIn) {
-      window.alert("Debes iniciar sesión para ver el carrito");
+      dispatch(showNotification({ message: "Debes iniciar sesión para ver el carrito", type: "warning" }));
       navigate("/login");
       return;
     }

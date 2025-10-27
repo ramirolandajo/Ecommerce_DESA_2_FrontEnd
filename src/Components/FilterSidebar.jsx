@@ -1,5 +1,6 @@
 import React, { useMemo, useEffect, useState } from "react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, TagIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { api } from "../api/axios"; // importamos cliente para obtener marcas
 
 export default function FilterSidebar({
@@ -32,6 +33,8 @@ export default function FilterSidebar({
   const [localMin, setLocalMin] = useState(initialFilters.min ?? (min ?? ""));
   const [localMax, setLocalMax] = useState(initialFilters.max ?? (max ?? ""));
   const [selectedBrandCodes, setSelectedBrandCodes] = useState(new Set(initialFilters.brandCodes || (brand ? [brand] : [])));
+  const [showAllBrands, setShowAllBrands] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -124,59 +127,22 @@ export default function FilterSidebar({
 
   const FiltersUI = (
     <div className="flex flex-col space-y-6 ">
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-zinc-700">Marcas</label>
-        <div className="border rounded p-2 bg-white">
-          {brands.length === 0 ? (
-            <div className="text-sm text-zinc-500">No hay marcas</div>
-          ) : (
-            brands.map((b) => {
-              const code = b.brandCode ?? b.id ?? b.name;
-              return (
-                <label key={code} className="flex items-center gap-2 text-sm py-1">
-                  <input type="checkbox" checked={selectedBrandCodes.has(code)} onChange={() => toggleBrand(code)} />
-                  <span>{b.name}</span>
-                </label>
-              );
-            })
-          )}
-        </div>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={handleApply}
+          className="flex-1 inline-flex items-center justify-center rounded-xl border border-slate-600/50 bg-slate-700/40 px-3 py-2 text-sm font-medium text-slate-100 shadow-sm hover:bg-slate-700/60"
+        >
+          Filtrar
+        </button>
+        <button
+          type="button"
+          onClick={clearLocal}
+          className="inline-flex items-center justify-center rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm hover:bg-zinc-50"
+        >
+          Limpiar filtros
+        </button>
       </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-zinc-700">Categorías</label>
-        <div className="border rounded p-2 bg-white">
-          {allCategories.filter(c => c.name !== 'All').map((c) => (
-            <label key={c.name} className="flex items-center gap-2 text-sm py-1">
-              <input type="checkbox" checked={selectedCategoryNames.has(c.name)} onChange={() => toggleCategoryName(c.name)} />
-              <span>{c.name}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Si está seleccionada una sola categoría, mostramos subcategorías de esa categoría */}
-      {selectedCategoryNames.size === 1 && (() => {
-        const only = Array.from(selectedCategoryNames)[0];
-        const cObj = allCategories.find(cc => cc.name === only);
-        const subs = cObj?.subs ?? [];
-        return subs.length > 0 ? (
-          <div className="space-y-2">
-            <label className=" text-sm font-medium text-zinc-700" htmlFor="subcategory-select">Subcategoría</label>
-            <select
-              id="subcategory-select"
-              className="w-full h-10 rounded-2xl border border-zinc-300 bg-white px-3 text-sm text-zinc-800 shadow-sm"
-              value={localSubcategory}
-              onChange={(e) => setLocalSubcategory(e.target.value)}
-            >
-              <option value="">Todas</option>
-              {subs.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-        ) : null;
-      })()}
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-zinc-700" htmlFor="min-price">Precio mín.</label>
@@ -206,22 +172,110 @@ export default function FilterSidebar({
         />
       </div>
 
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={handleApply}
-          className="flex-1 inline-flex items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
-        >
-          Filtrar
-        </button>
-        <button
-          type="button"
-          onClick={clearLocal}
-          className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm hover:bg-zinc-50"
-        >
-          Limpiar filtros
-        </button>
-      </div>
+      <Disclosure defaultOpen>
+        <DisclosureButton className="flex items-center justify-between w-full px-3 py-2 text-left text-sm font-semibold text-zinc-800 hover:bg-zinc-50 rounded-lg transition-colors">
+          <span>Marcas</span>
+          <ChevronDownIcon className="h-5 w-5 text-zinc-500 transition-transform data-[open]:rotate-180" />
+        </DisclosureButton>
+        <DisclosurePanel className="mt-2 space-y-2">
+          <div className="grid grid-cols-1 gap-2">
+            {(showAllBrands ? brands : brands.slice(0, 8)).map((b) => {
+              const code = b.brandCode ?? b.id ?? b.name;
+              return (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => toggleBrand(code)}
+                  className={[
+                    "inline-flex items-center justify-start px-3 py-2 rounded-xl text-sm transition-all select-none w-full",
+                    selectedBrandCodes.has(code)
+                      ? "bg-slate-900 text-white shadow-md border border-slate-800"
+                      : "bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-50",
+                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 overflow-hidden",
+                  ].join(" ")}
+                  aria-pressed={selectedBrandCodes.has(code)}
+                  title={b.name}
+                >
+                  <TagIcon className={`h-5 w-5 mr-2 ${selectedBrandCodes.has(code) ? "text-white" : "text-zinc-400"}`} aria-hidden="true" />
+                  <span className="whitespace-nowrap overflow-hidden text-ellipsis font-medium">{b.name}</span>
+                </button>
+              );
+            })}
+          </div>
+          {brands.length > 8 && (
+            <div className="mt-3 text-center">
+              <button type="button" onClick={() => setShowAllBrands((s) => !s)} className="text-sm text-indigo-600 hover:underline">
+                {showAllBrands ? 'Ver menos' : `Ver todas las marcas (${brands.length})`}
+              </button>
+            </div>
+          )}
+        </DisclosurePanel>
+      </Disclosure>
+
+      <Disclosure defaultOpen>
+        <DisclosureButton className="flex items-center justify-between w-full px-3 py-2 text-left text-sm font-semibold text-zinc-800 hover:bg-zinc-50 rounded-lg transition-colors">
+          <span>Categorías</span>
+          <ChevronDownIcon className="h-5 w-5 text-zinc-500 transition-transform data-[open]:rotate-180" />
+        </DisclosureButton>
+        <DisclosurePanel className="mt-2 space-y-2">
+          <div className="grid grid-cols-1 gap-2">
+            {(showAllCategories ? allCategories.filter(c => c.name !== 'All') : allCategories.filter(c => c.name !== 'All').slice(0,8)).map((c) => (
+              <button
+                key={c.name}
+                type="button"
+                onClick={() => toggleCategoryName(c.name)}
+                className={[
+                  "inline-flex items-center justify-start px-3 py-2 rounded-xl text-sm transition-all select-none w-full",
+                  selectedCategoryNames.has(c.name)
+                    ? "bg-slate-900 text-white shadow-md border border-slate-800"
+                    : "bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-50",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 overflow-hidden",
+                ].join(" ")}
+                aria-pressed={selectedCategoryNames.has(c.name)}
+                title={c.name}
+              >
+                <TagIcon className={`h-5 w-5 mr-2 ${selectedCategoryNames.has(c.name) ? "text-white" : "text-zinc-400"}`} aria-hidden="true" />
+                <span className="whitespace-nowrap overflow-hidden text-ellipsis font-medium">{c.name}</span>
+                {typeof c.count === 'number' ? (
+                  <span className={`ml-2 inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs ${selectedCategoryNames.has(c.name) ? "bg-white/10 text-white" : "bg-zinc-100 text-zinc-700"}`}>
+                    {c.count}
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+          {allCategories.filter(c => c.name !== 'All').length > 8 && (
+            <div className="mt-3 text-center">
+              <button type="button" onClick={() => setShowAllCategories((s) => !s)} className="text-sm text-indigo-600 hover:underline">
+                {showAllCategories ? 'Ver menos categorías' : `Ver todas las categorías (${allCategories.filter(c => c.name !== 'All').length})`}
+              </button>
+            </div>
+          )}
+        </DisclosurePanel>
+      </Disclosure>
+
+      {/* Si está seleccionada una sola categoría, mostramos subcategorías de esa categoría */}
+      {selectedCategoryNames.size === 1 && (() => {
+        const only = Array.from(selectedCategoryNames)[0];
+        const cObj = allCategories.find(cc => cc.name === only);
+        const subs = cObj?.subs ?? [];
+        return subs.length > 0 ? (
+          <div className="space-y-2">
+            <label className=" text-sm font-medium text-zinc-700" htmlFor="subcategory-select">Subcategoría</label>
+            <select
+              id="subcategory-select"
+              className="w-full h-10 rounded-2xl border border-zinc-300 bg-white px-3 text-sm text-zinc-800 shadow-sm"
+              value={localSubcategory}
+              onChange={(e) => setLocalSubcategory(e.target.value)}
+            >
+              <option value="">Todas</option>
+              {subs.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+        ) : null;
+      })()}
     </div>
   );
 

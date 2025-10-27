@@ -7,19 +7,29 @@ import { selectHomeHero, selectHomeStatus } from "../store/homeScreen/homeScreen
 import HeroSkeleton from "./HeroSkeleton.jsx";
 
 export default function HeroShowcase() {
-    // Obtener slides: priorizar `products` si existe (tests lo suelen ofrecer),
-    // luego intentar los selectores `selectHomeHero`/`selectHomeStatus`.
-    const productsItems = useSelector((s) => s.products?.items);
-    const productsStatus = useSelector((s) => s.products?.status);
+    // Cambios: usar únicamente datos del slice `homeScreen` y filtrar por `hero === true`.
+    // Se elimina el fallback a `products` para garantizar que el componente solo use el slice requerido.
     const slidesFromSelector = useSelector(selectHomeHero);
     const statusFromSelector = useSelector(selectHomeStatus);
 
-    const slides = useMemo(() => productsItems ?? slidesFromSelector ?? [], [productsItems, slidesFromSelector]);
-    const status = useMemo(() => productsStatus ?? statusFromSelector ?? 'succeeded', [productsStatus, statusFromSelector]);
+    const slides = useMemo(
+        () => (Array.isArray(slidesFromSelector) ? slidesFromSelector.filter((s) => s?.hero === true) : []),
+        [slidesFromSelector]
+    );
+    const status = statusFromSelector ?? "succeeded";
 
     const [index, setIndex] = useState(0);
     const [paused, setPaused] = useState(false);
     const timerRef = useRef(null);
+
+    // Si cambian las slides, asegurar que el índice esté dentro del rango
+    useEffect(() => {
+        if (!slides || slides.length === 0) {
+            setIndex(0);
+            return;
+        }
+        if (index >= slides.length) setIndex(0);
+    }, [slides, index]);
 
     const next = useCallback(() => {
         if (!slides || slides.length === 0) return;
@@ -71,7 +81,7 @@ export default function HeroShowcase() {
                     <div className="flex items-center gap-2">
                         {slides.map((s, i) => (
                             <button
-                                key={s.id}
+                                key={s?.id ?? i}
                                 onClick={() => setIndex(i)}
                                 className={`h-2 w-8 rounded-full transition-all ${
                                     i === index

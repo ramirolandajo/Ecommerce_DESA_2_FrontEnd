@@ -1,2 +1,84 @@
 @import "tailwindcss";
 
+/* Animaciones para el corazón */
+@keyframes heart-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); }
+  60% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+@keyframes heart-burst-scale {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+/* Simplificar partículas: bolitas sólidas, pequeñas y visibles */
+.burst-particle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--size, 12px);
+  height: var(--size, 12px);
+  transform: translate(-50%, -50%) scale(1);
+  border-radius: 50%;
+  background: rgba(239,68,68,1); /* rojo sólido */
+  opacity: 1;
+  pointer-events: none;
+  will-change: transform, opacity;
+  z-index: 70;
+  box-shadow: 0 4px 10px rgba(239,68,68,0.18);
+  transition: transform 420ms cubic-bezier(.16,.84,.44,1), opacity 420ms linear;
+}
+
+/* Desactivar las pseudo-nubes brumosas si existen para evitar efecto niebla */
+.heart-burst .burst-ring::before,
+.heart-burst .burst-ring::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Asegurar que el burst-ring no añada efectos extra */
+.heart-burst .burst-ring {
+  background: transparent !important;
+}
+
+/* Mantener overflow visible en el botón para que partículas no se recorten */
+.button-heart-hover { overflow: visible; }
+
+.heart-icon {
+  display: inline-block;
+  transform-origin: center center;
+}
+
+.heart-pop .heart-icon {
+  animation: heart-pop 420ms cubic-bezier(.17,.67,.11,1.02) both;
+}
+
+.heart-burst .heart-icon {
+  animation: heart-burst-scale 420ms cubic-bezier(.17,.67,.11,1.02) both;
+}
+
+.burst-ring {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 60; /* por encima del botón */
+}
+
+/* Ajustes para que el anillo no oculte el icono */
+.heart-burst .heart-icon {
+  position: relative;
+  z-index: 10;
+}
+
+/* un pequeño pulso al pasar el mouse para dar affordance */
+.button-heart-hover:hover .heart-icon { transform: scale(1.08); }
+
+/* compatibilidad: asegurar que el botón sigue clicable aun si la tarjeta tiene pointer-events-none aplicado */
+.button-heart-hover {
+  pointer-events: auto;
+  overflow: visible;
+}

@@ -1,11 +1,12 @@
 // src/Components/GlassProductCard.jsx
 // Card clickeable en estilo claro, sin blur ni glass, textos más oscuros.
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
 import { HeartIcon } from "@heroicons/react/24/outline";
 import { addFavourite, removeFavourite } from "../store/favourites/favouritesSlice.js";
+import { showNotification } from "../store/notification/notificationSlice.js";
 import { productUrl } from "../routes/paths"; // ajustá el path si tu estructura difiere
 
 export default function GlassProductCard({ item }) {
@@ -51,18 +52,72 @@ export default function GlassProductCard({ item }) {
 
     const dispatch = useDispatch();
     const isLoggedIn = useSelector((s) => s.user.isLoggedIn);
+    // Normalizamos el código del producto para comparar consistentemente
+    const code = item?.productCode ?? id;
     const isFavourite = useSelector((s) =>
-        s.favourites.items.some((p) => String(p.id) === String(id))
+        s.favourites.items.some((p) => String(p.productCode ?? p.id) === String(code))
     );
+
+    // Animación local del corazón: 'pop' al agregar, 'burst' al quitar
+    const [anim, setAnim] = useState(null);
+    const [particles, setParticles] = useState([]);
+    const timerRef = useRef(null);
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, []);
 
     const toggleFavourite = (e) => {
         e.preventDefault();
         e.stopPropagation();
         if (!isLoggedIn) {
-            window.alert("Debes iniciar sesión para gestionar favoritos");
+            dispatch(showNotification({ message: "Debes iniciar sesión para gestionar favoritos", type: "warning" }));
             return;
         }
-        dispatch(isFavourite ? removeFavourite(item.productCode) : addFavourite(item.productCode));
+        // Usamos el código normalizado (productCode si existe, si no fallback a id)
+        dispatch(isFavourite ? removeFavourite(code) : addFavourite(code));
+        // Trigger visual (arreglado y simplificado)
+        if (timerRef.current) clearTimeout(timerRef.current);
+        const rand = (min, max) => Math.random() * (max - min) + min;
+        if (isFavourite) {
+            // quitar favorito -> explosion muy simple y visible
+            const count = 3;
+            const parts = Array.from({ length: count }).map(() => {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.random() * 6 + 4; // 4-10px max
+                const tx = Math.round(Math.cos(angle) * radius);
+                const ty = Math.round(Math.sin(angle) * radius);
+                const size = Math.round(rand(8, 14)); // más pequeño y discreto
+                const dur = Math.round(rand(280, 420));
+                const delay = Math.round(rand(0, 30));
+                const s0 = 1; // sin escalado inicial
+                const s1 = rand(1.03, 1.08); // muy leve escala
+                const b0 = 0; // sin blur
+                const b1 = 0; // sin blur final
+                const o0 = 1; // totalmente opaco
+                return { tx, ty, size, dur, delay, s0, s1, b0, b1, o0 };
+            });
+            // añadimos flag animate:false inicialmente y luego lo activamos en el siguiente tick
+            const partsWithState = parts.map((p, i) => ({ id: i + Date.now(), ...p, animate: false }));
+            setParticles(partsWithState);
+            setAnim("burst");
+            // activar animación en el próximo frame para que las transiciones corran
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    setParticles((prev) => prev.map((x) => ({ ...x, animate: true })));
+                });
+            });
+            timerRef.current = setTimeout(() => {
+                setAnim(null);
+                setParticles([]);
+            }, 700);
+        } else {
+            // agregar favorito -> pop (sin partículas)
+            setParticles([]);
+            setAnim("pop");
+            timerRef.current = setTimeout(() => setAnim(null), 420);
+        }
     };
 
     return (
@@ -81,37 +136,14 @@ export default function GlassProductCard({ item }) {
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-black/20",
                 "focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                 "flex flex-col text-zinc-900",
-                outOfStock ? "pointer-events-none opacity-60" : "",
+                outOfStock ? "opacity-60" : "",
             ].join(" ")}
             aria-label={title}
         >
-            <button
-                type="button"
-                onClick={toggleFavourite}
-                aria-label={isFavourite ? "Quitar de favoritos" : "Agregar a favoritos"}
-                className="absolute top-3 right-3 z-10 rounded-full bg-white p-1.5 text-zinc-700 shadow hover:bg-white/90 transition"
-            >
-                {isFavourite ? (
-                    <HeartSolid className="h-5 w-5 text-red-500" />
-                ) : (
-                    <HeartIcon className="h-5 w-5" />
-                )}
-            </button>
-            {outOfStock && (
-                <span className="absolute top-3 left-3 rounded-md bg-red-600 px-2 py-1 text-xs font-semibold text-white">
-                    Sin stock
-                </span>
-            )}
-            {/* Top bar: marca + precio (+ descuento si aplica) */}
+            {/* Top bar: precio (+ descuento si aplica) */}
             <div className="flex flex-nowrap items-start justify-between gap-2 mb-3 min-h-[2rem]">
-                {brand?.name && (
-                    <span className="inline-flex items-center px-2 py-1 text-[11px] font-medium rounded-full bg-zinc-100 text-zinc-700 truncate max-w-[8rem]">
-                        {brand.name}
-                    </span>
-                )}
-
                 {typeof finalPrice !== "undefined" && (
-                    <div className="flex flex-nowrap items-center justify-end gap-2 flex-shrink-0">
+                    <div className="flex flex-nowrap items-center justify-start gap-2 flex-shrink-0">
                         {hasDiscount && typeof priceUnit === "number" && (
                             <span className="text-xs text-zinc-500 line-through">
                                 {money(priceUnit)}
@@ -150,7 +182,7 @@ export default function GlassProductCard({ item }) {
                         : first?.src || first?.url || null;
                 return (
                     src && (
-                        <div className="mt-4 rounded-xl overflow-hidden ring-1 ring-zinc-200 bg-gradient-to-br from-white to-zinc-50">
+                        <div className="mt-4 rounded-xl overflow-hidden ring-1 ring-zinc-200 bg-gradient-to-br from-white to-zinc-50 relative">
                             <div className="w-full aspect-[4/3] flex items-center justify-center bg-zinc-50">
                                 <img
                                     src={src}
@@ -164,7 +196,65 @@ export default function GlassProductCard({ item }) {
                 );
             })()}
 
-            <div className="mt-auto" />
+            {/* Corazón para favoritos */}
+            <button
+                type="button"
+                onClick={toggleFavourite}
+                aria-label={isFavourite ? "Quitar de favoritos" : "Agregar a favoritos"}
+                aria-pressed={isFavourite}
+                title={isFavourite ? "Quitar de favoritos" : "Agregar a favoritos"}
+                className={[
+                    "absolute top-3 right-3 z-10 rounded-full bg-white p-2 text-zinc-700 shadow hover:bg-white/90 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 pointer-events-auto",
+                    "button-heart-hover",
+                    anim === 'pop' ? 'heart-pop' : '',
+                    anim === 'burst' ? 'heart-burst' : '',
+                ].join(' ')}
+            >
+                {/* ring/particles for burst (render dinámico y aleatorio) */}
+                {anim === 'burst' && (
+                  <span className="burst-ring" aria-hidden="true">
+                    {particles.map((p) => {
+                      const initialStyle = {
+                        width: `${p.size}px`,
+                        height: `${p.size}px`,
+                        transform: `translate(-50%, -50%) scale(${p.s0})`,
+                        left: '50%',
+                        top: '50%',
+                        opacity: 1,
+                        background: 'rgba(239,68,68,1)',
+                        borderRadius: '50%',
+                        boxShadow: '0 6px 12px rgba(239,68,68,0.18)',
+                      };
+                      const targetTransform = `translate(calc(-50% + ${p.tx}px), calc(-50% + ${p.ty}px)) scale(${p.s1})`;
+                      const transition = `transform ${p.dur}ms cubic-bezier(.16,.84,.44,1) ${p.delay}ms, opacity ${p.dur}ms linear ${p.delay}ms`;
+                      const style = p.animate ? {
+                        ...initialStyle,
+                        transform: targetTransform,
+                        opacity: 0,
+                        transition,
+                      } : {
+                        ...initialStyle,
+                        transition,
+                      };
+                      return <span key={p.id} className="burst-particle" style={style} />;
+                    })}
+                  </span>
+                )}
+                {isFavourite ? (
+                    <HeartSolid className="h-5 w-5 text-red-500 heart-icon" />
+                ) : (
+                    <HeartIcon className="h-5 w-5 heart-icon" />
+                )}
+            </button>
+
+            {/* Marca */}
+            {brand?.name && (
+                <div className="absolute bottom-4 left-4 z-10">
+                    <span className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-zinc-100 text-zinc-700 truncate max-w-[10rem]">
+                        {brand.name}
+                    </span>
+                </div>
+            )}
         </Link>
     );
 }

@@ -68,7 +68,8 @@ export default function Checkout() {
     }
     setLoading(true);
     try {
-      await dispatch(confirmPurchase(addressId));
+      const result = await dispatch(confirmPurchase(addressId)).unwrap();
+      console.log("Respuesta del backend al confirmar compra:", result);
       dispatch(clearCart());
       navigate(`/purchase/${purchaseId}`);
     } catch (err) {
@@ -80,8 +81,10 @@ export default function Checkout() {
   };
 
   const handleCancel = async () => {
+    console.log("handleCancel called");
     try {
-      await dispatch(cancelPurchase());
+      const result = await dispatch(cancelPurchase()).unwrap();
+      console.log("Respuesta del backend al cancelar compra:", result);
       navigate('/cart');
     } catch (err) {
       console.error(err);

@@ -10,6 +10,7 @@ import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react
 import { ChevronDownIcon, FunnelIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { fetchFilteredProducts } from "../store/products/productsSlice";
 import { api } from "../api/axios";
+import CategoryButton from "../Components/CategoryButton.jsx";
 
 function deriveCategories(items) {
   const map = items.reduce((map, { categories, subcategory }) => {
@@ -51,6 +52,7 @@ export default function Shop() {
     brandCodes: brandParam ? [brandParam] : [],
   }));
 
+
   // Estados locales para mostrar (opcional, la UI del sidebar manejará sus propios temporales)
   const [category, setCategory] = useState(initialCat);
   const [subcategory, setSubcategory] = useState(initialSub);
@@ -74,16 +76,29 @@ export default function Shop() {
   const derivedCategories = useMemo(() => deriveCategories(products), [products]);
   // Construir categorías para el sidebar preferentemente desde el servidor
   const sidebarCategories = useMemo(() => {
-    if (Array.isArray(serverCategories) && serverCategories.length) {
-      // serverCategories items pueden ser objetos { name, id, categoryCode, subs? }
-      return serverCategories.map((c) => ({ name: c.name ?? String(c), subs: Array.isArray(c.subs) ? c.subs : Array.isArray(c.subcategories) ? c.subcategories : [] }));
+    // Helper: contamos productos por categoría en la lista `products` (fallback si necesario)
+    const listForCounts = (Array.isArray(products) && products.length) ? products : [];
+    const countsMap = new Map();
+    for (const p of listForCounts) {
+      const names = Array.isArray(p.categories) ? p.categories.map(c => (typeof c === 'string' ? c : c?.name)).filter(Boolean) : [];
+      for (const n of names) countsMap.set(n, (countsMap.get(n) || 0) + 1);
     }
-    // Si el servidor no nos dio categorías, preferimos el fallback derivado de
-    // una petición amplia a /products (no filtrada). Si tampoco existe, caemos
-    // al derivado desde los productos actuales en el store.
-    if (Array.isArray(fallbackCategories) && fallbackCategories.length) return fallbackCategories;
-    return derivedCategories;
-  }, [serverCategories, derivedCategories]);
+
+    const normalizeServer = (c) => ({
+      name: c.name ?? String(c),
+      subs: Array.isArray(c.subs) ? c.subs : Array.isArray(c.subcategories) ? c.subcategories : [],
+      count: countsMap.get(c.name ?? String(c)) || 0,
+    });
+
+    if (Array.isArray(serverCategories) && serverCategories.length) {
+      // devolvemos ordenadas por count desc para mostrar las más populares primero
+      return serverCategories.map(normalizeServer).sort((a,b) => b.count - a.count);
+    }
+
+    const deriveWithCounts = (arr) => arr.map((c) => ({ name: c.name, subs: c.subs || [], count: countsMap.get(c.name) || 0 }));
+    if (Array.isArray(fallbackCategories) && fallbackCategories.length) return deriveWithCounts(fallbackCategories).sort((a,b) => b.count - a.count);
+    return deriveWithCounts(derivedCategories).sort((a,b) => b.count - a.count);
+  }, [serverCategories, derivedCategories, fallbackCategories, products]);
 
   const sortLabels = {
     relevance: "Relevancia",
@@ -226,7 +241,6 @@ export default function Shop() {
     loadFiltered({ page: 0, filters: newApplied });
   };
 
-  // Filtrado mejorado: solo filtrar si los productos están cargados
   const filtered = useMemo(() => {
     if (status !== "succeeded") return [];
     const q = query.trim();

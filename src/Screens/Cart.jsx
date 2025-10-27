@@ -8,6 +8,7 @@ import {
   decrementItem,
   clearCart,
 } from "../store/cart/cartSlice";
+import { createCart as purchaseCreateCart } from "../store/purchase/purchaseSlice";
 import { PATHS } from "../routes/paths";
 import { TrashIcon } from "@heroicons/react/24/outline";
 
@@ -40,8 +41,17 @@ export default function Cart() {
 
   const navigate = useNavigate();
 
-  const handleCheckout = () => {
-    navigate(PATHS.checkout);
+  const handleCheckout = async () => {
+    try {
+      const result = await dispatch(purchaseCreateCart()).unwrap();
+      console.log(
+        "Respuesta del backend al finalizar compra desde carrito:",
+        result,
+      );
+      navigate(PATHS.checkout);
+    } catch (err) {
+      console.error("Error al crear el carrito:", err);
+    }
   };
 
   if (items.length === 0) {

@@ -220,6 +220,7 @@ export default function ProductDetail() {
                     price: finalPrice,
                     quantity: qty,
                     image: Array.isArray(product.mediaSrc) ? product.mediaSrc[0] : "",
+                    stock: stock,
                 })
             );
             setAdded(true);
