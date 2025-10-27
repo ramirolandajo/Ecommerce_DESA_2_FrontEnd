@@ -20,6 +20,8 @@ export default function HeroShowcase() {
 
     const [index, setIndex] = useState(0);
     const [paused, setPaused] = useState(false);
+    // Forzamos modo claro y eliminamos el toggle de UI
+    const lightMode = true;
     const timerRef = useRef(null);
 
     // Si cambian las slides, asegurar que el índice esté dentro del rango
@@ -56,7 +58,8 @@ export default function HeroShowcase() {
     const small2 = slides[(index + 3) % slides.length];
 
     return (
-        <section className="w-full bg-gradient-to-br from-slate-800 via-black to-slate-900 text-white">
+        // usar fondo totalmente blanco en modo claro para que las imágenes no queden "lavadas"
+        <section className={`w-full ${lightMode ? 'bg-white text-black' : 'bg-gradient-to-br from-slate-800 via-black to-slate-900 text-white'}`}>
             <div className="w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12 max-w-screen-2xl mx-auto">
                 <div
                     className="grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-[280px_140px] xl:grid-rows-[340px_160px] gap-4 lg:gap-6"
@@ -64,15 +67,15 @@ export default function HeroShowcase() {
                     onMouseLeave={() => setPaused(false)}
                 >
                     {/* Arriba izquierda */}
-                    <SlideCard slide={medium} className="h-full" medium />
+                    <SlideCard slide={medium} className="h-full" medium lightMode={lightMode} />
 
                     {/* Derecha ocupa 2 filas */}
-                    <SlideCard slide={large} className="lg:row-span-2 h-full" large />
+                    <SlideCard slide={large} className="lg:row-span-2 h-full" large lightMode={lightMode} />
 
                     {/* Abajo izquierda */}
                     <div className="grid grid-cols-2 gap-4">
-                        <SlideCard slide={small1} className="h-full" small />
-                        <SlideCard slide={small2} className="h-full" small />
+                        <SlideCard slide={small1} className="h-full" small lightMode={lightMode} />
+                        <SlideCard slide={small2} className="h-full" small lightMode={lightMode} />
                     </div>
                 </div>
 
@@ -85,15 +88,16 @@ export default function HeroShowcase() {
                                 onClick={() => setIndex(i)}
                                 className={`h-2 w-8 rounded-full transition-all ${
                                     i === index
-                                        ? "bg-slate-200"
-                                        : "bg-slate-500/40 hover:bg-slate-400/70"
+                                        ? lightMode ? "bg-slate-800" : "bg-slate-200"
+                                        : lightMode ? "bg-slate-300/40 hover:bg-slate-400/70" : "bg-slate-500/40 hover:bg-slate-400/70"
                                 }`}
                             />
                         ))}
                     </div>
                     <div className="flex gap-3">
-                        <Ctrl onClick={prev} label="Anterior" />
-                        <Ctrl onClick={next} label="Siguiente" />
+                        <Ctrl onClick={prev} label="Anterior" lightMode={lightMode} />
+                        <Ctrl onClick={next} label="Siguiente" lightMode={lightMode} />
+                        {/* Toggle de modo eliminado: la app muestra solo modo claro aquí */}
                     </div>
                 </div>
             </div>
@@ -101,85 +105,95 @@ export default function HeroShowcase() {
     );
 }
 
-function SlideCard({ slide, className = "", medium = false, large = false }) {
+function SlideCard({ slide, className = "", medium = false, large = false, lightMode = false }) {
     const lines = useMemo(() => (slide?.title || "").split("\n"), [slide?.title]);
+
+    // Escalas tipográficas
+    const titleClasses =
+        large
+            ? "text-4xl sm:text-5xl md:text-6xl"
+            : medium
+                ? "text-2xl sm:text-3xl md:text-4xl"
+                : "text-base sm:text-lg";
+
+    const descClasses =
+        large ? "text-base sm:text-lg"
+            : medium ? "text-sm sm:text-base"
+                : "text-[11px] sm:text-xs";
+
+    // Config de cápsula por tamaño (transparencia, radios, padding)
+    const cfg = useMemo(() => {
+        if (large)  return { insetX: "inset-x-4", bottom: "bottom-4",  radius: "rounded-[32px]", padX: "px-6 md:px-8", padY: "py-5 md:py-6", alpha: 0.56, ring: "ring-white/10" };
+        if (medium) return { insetX: "inset-x-4", bottom: "bottom-4",  radius: "rounded-[28px]", padX: "px-5 md:px-6", padY: "py-4 md:py-5", alpha: 0.52, ring: "ring-white/10" };
+        return             { insetX: "inset-x-3", bottom: "bottom-3",  radius: "rounded-[24px]", padX: "px-4",       padY: "py-3.5",     alpha: 0.46, ring: "ring-white/5"  };
+    }, [large, medium]);
 
     return (
         <Motion.article
             layoutId={String(slide?.id)}
-            className={`relative overflow-hidden rounded-3xl border border-slate-700/40 bg-slate-900 ${className}`}
+            className={`relative overflow-hidden rounded-3xl ${lightMode ? 'border border-slate-300/40 bg-transparent' : 'border border-slate-700/40 bg-slate-900'} ${className}`}
         >
+            {/* Imagen */}
             <figure className="absolute inset-0">
                 {slide?.mediaSrc?.[0] && (
                     <img
                         src={slide?.mediaSrc?.[0]}
                         alt={slide?.title}
-                        className="h-full w-full object-cover opacity-50"
+                        className={`h-full w-full object-cover ${lightMode ? 'opacity-100' : 'opacity-50'}`}
                         draggable={false}
                     />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+                {/* Overlay general leve */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-black/8 to-transparent pointer-events-none" />
             </figure>
 
-            <div className="relative flex flex-col justify-end p-4 sm:p-6 md:p-8 h-full">
+            {/* Link que vuelve clickeable TODO el card */}
+            <Link
+                to={productUrl(slide?.id)}
+                aria-label={slide?.title || 'Ver producto'}
+                className="absolute inset-0 z-40"
+            />
 
+            {/* CÁPSULA: banda inferior ancho completo, altura según contenido */}
+            <div
+                className={`absolute ${cfg.insetX} ${cfg.bottom} ${cfg.radius} pointer-events-none ring-1 ${cfg.ring} z-30`}
+                style={{
+                    background: `linear-gradient(to top,
+            rgba(0,0,0,${cfg.alpha}) 0%,
+            rgba(0,0,0,${Math.max(cfg.alpha - 0.18, 0)}) 55%,
+            rgba(0,0,0,0) 100%)`,
+                    backdropFilter: "blur(5px)",
+                    WebkitBackdropFilter: "blur(5px)",
+                }}
+            >
+                {/* Texto dentro de la cápsula (no captura eventos, el Link de arriba sí) */}
+                <div className={`pointer-events-none ${cfg.padX} ${cfg.padY}`}>
+                    <h3 className={`leading-tight text-white drop-shadow-md ${titleClasses}`}>
+                        {lines.map((line, i) => (
+                            <span
+                                key={i}
+                                className={i === lines.length - 1 ? "block font-semibold" : "block font-light"}
+                            >
+                {line}
+              </span>
+                        ))}
+                    </h3>
 
-                {/* Título con mezcla light/bold */}
-                <h3
-                    className={`leading-tight ${
-                        large
-                            ? "text-4xl sm:text-5xl md:text-6xl"
-                            : medium
-                                ? "text-2xl sm:text-3xl md:text-4xl"
-                                : "text-base sm:text-lg"
-                    }`}
-                >
-                    {lines.map((line, i) => (
-                        <span
-                            key={i}
-                            className={i === lines.length - 1 ? "block font-semibold" : "block font-light"}
-                        >
-              {line}
-            </span>
-                    ))}
-                </h3>
-
-                {/* Descripción con tamaño distinto según card */}
-                <p
-                    className={`mt-2 max-w-md ${
-                        large
-                            ? "text-base sm:text-lg"
-                            : medium
-                                ? "text-sm sm:text-base"
-                                : "text-[11px] sm:text-xs"
-                    } text-slate-200/80`}
-                >
-                    {slide?.description}
-                </p>
-
-                {/* CTA */}
-                <Link
-                    to={productUrl(slide?.id)}
-                    className={`mt-3 inline-flex items-center justify-center rounded-xl border border-slate-600/50 bg-slate-700/40 ${
-                        large
-                            ? "px-5 py-2.5 text-sm"
-                            : medium
-                                ? "px-4 py-2 text-sm"
-                                : "px-3 py-1.5 text-[11px]"
-                    } font-medium backdrop-blur hover:bg-slate-700/60 text-slate-100`}
-                >
-                    {slide?.cta?.label ?? "Comprar"}
-                </Link>
+                    <p className={`mt-2 text-slate-100/90 ${descClasses}`}>
+                        {slide?.description}
+                    </p>
+                </div>
             </div>
         </Motion.article>
     );
 }
 
-function Ctrl({ onClick, label }) {
+
+function Ctrl({ onClick, label, lightMode }) {
     return (
         <button
             onClick={onClick}
-            className="rounded-xl border border-slate-600/40 px-4 py-2 text-sm text-slate-200 hover:bg-slate-700/30"
+            className={`rounded-xl px-4 py-2 text-sm font-medium ${lightMode ? 'border border-slate-300/40 bg-white/40 hover:bg-white/60 text-slate-900' : 'border border-slate-600/40 bg-slate-700/40 hover:bg-slate-700/60 text-slate-200'}`}
             aria-label={label}
         >
             {label}

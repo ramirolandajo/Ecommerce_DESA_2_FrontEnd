@@ -297,7 +297,7 @@ export default function ProductDetail() {
                                                 className={[
                                                     "relative h-16 w-16 shrink-0 overflow-hidden rounded-lg snap-start transition-shadow",
                                                     isActive
-                                                        ? "ring-2 ring-indigo-500"
+                                                        ? "ring-1 ring-zinc-200 bg-zinc-100"
                                                         : "ring-1 ring-zinc-200 hover:ring-zinc-300",
                                                     "bg-white"
                                                 ].join(" ")}
@@ -334,7 +334,7 @@ export default function ProductDetail() {
                                                 className={[
                                                     "group relative aspect-square overflow-hidden rounded-lg transition-shadow",
                                                     isActive
-                                                        ? "ring-2 ring-indigo-500"
+                                                        ? "ring-1 ring-zinc-200 bg-zinc-100"
                                                         : "ring-1 ring-zinc-200 hover:ring-zinc-300",
                                                     "bg-white"
                                                 ].join(" ")}
