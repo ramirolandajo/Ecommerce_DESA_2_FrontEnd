@@ -35,10 +35,8 @@ export default function ProductDetail() {
     const qtyId = useId();
 
     useEffect(() => {
-        if (!product || String(product.id) !== String(id)) {
-            dispatch(fetchProduct(id));
-        }
-    }, [dispatch, id, product]);
+        dispatch(fetchProduct(id));
+    }, [dispatch, id]);
 
     const {
         title = '',
