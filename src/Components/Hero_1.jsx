@@ -50,7 +50,7 @@ export default function HeroShowcase() {
     }, [paused, next, slides]);
 
     // Mostrar skeleton si estamos cargando o no hay slides aún
-    if (status === 'loading' || !slides || slides.length === 0) return <HeroSkeleton />;
+    if (status === 'loading' || !slides || slides.length === 0) return <HeroSkeleton lightMode={lightMode} />;
 
     const medium = slides[index % slides.length];
     const large = slides[(index + 1) % slides.length];
