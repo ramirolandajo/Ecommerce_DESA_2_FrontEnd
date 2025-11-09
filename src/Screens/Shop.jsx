@@ -38,12 +38,10 @@ export default function Shop() {
   const subParam = searchParams.get("subcategory");
   const brandParam = searchParams.get("brand") || "";
 
-  // Si la categoría es "All" (o ausente), no heredar subcategory de la URL
   const initialSub = initialCat === "All" ? "" : (subParam ?? "");
   const initialMin = rawMin ?? "";
   const initialMax = rawMax ?? "";
 
-  // Estados que representan los filtros aplicados actualmente (se usan para la URL y para cargar datos)
   const [appliedFilters, setAppliedFilters] = useState(() => ({
     categoryNames: initialCat && initialCat !== 'All' ? [initialCat] : [],
     subcategory: initialSub,
@@ -52,9 +50,8 @@ export default function Shop() {
     brandCodes: brandParam ? [brandParam] : [],
   }));
 
-  const [hasActiveFilters, setHasActiveFilters] = useState(false);
+  const [pendingFilters, setPendingFilters] = useState(false);
 
-  // Estados locales para mostrar (opcional, la UI del sidebar manejará sus propios temporales)
   const [category, setCategory] = useState(initialCat);
   const [subcategory, setSubcategory] = useState(initialSub);
   const [min, setMin] = useState(initialMin);
@@ -62,22 +59,17 @@ export default function Shop() {
   const [brand, setBrand] = useState(brandParam);
   const [sort, setSort] = useState("relevance");
 
-  // Mover serverCategories arriba para que los useMemo posteriores puedan referenciarlo sin TDZ
   const [serverCategories, setServerCategories] = useState([]);
-  // fallbackCategories: derivadas desde una petición amplia a /products en caso de que
-  // /categories no devuelva datos (evita que el sidebar muestre solo categorías presentes
-  // en la página filtrada actual).
   const [fallbackCategories, setFallbackCategories] = useState([]);
-   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { items: products, status, error } = useSelector((state) => state.products);
   const dispatch = useDispatch();
   const pagination = useSelector(state => state.products.pagination);
   const [isLoading, setIsLoading] = useState(false);
   const derivedCategories = useMemo(() => deriveCategories(products), [products]);
-  // Construir categorías para el sidebar preferentemente desde el servidor
+
   const sidebarCategories = useMemo(() => {
-    // Helper: contamos productos por categoría en la lista `products` (fallback si necesario)
     const listForCounts = (Array.isArray(products) && products.length) ? products : [];
     const countsMap = new Map();
     for (const p of listForCounts) {
@@ -92,7 +84,6 @@ export default function Shop() {
     });
 
     if (Array.isArray(serverCategories) && serverCategories.length) {
-      // devolvemos ordenadas por count desc para mostrar las más populares primero
       return serverCategories.map(normalizeServer).sort((a,b) => b.count - a.count);
     }
 
@@ -107,7 +98,6 @@ export default function Shop() {
     "price-desc": "Precio: mayor a menor",
   };
 
-  // Cargar categorías desde el servidor para resolver categoryCode
   useEffect(() => {
     let mounted = true;
     api.get("/categories")
@@ -119,10 +109,7 @@ export default function Shop() {
         else setServerCategories([]);
       })
       .catch(() => { if (mounted) setServerCategories([]); });
-    // Si /categories no responde o devuelve vacío, intentamos obtener una lista amplia
-    // de productos para derivar categorías como fallback (no sustituye al store).
-    // Esto garantiza que el sidebar muestre todas las categorías aunque la lista de
-    // productos en el store esté filtrada.
+    
     api.get('/products?page=0&size=1000')
       .then(res => {
         if (!mounted) return;
@@ -133,7 +120,6 @@ export default function Shop() {
           else if (raw && Array.isArray(raw.products)) list = raw.products;
           else list = [];
         }
-        // deriveCategories espera items con campos `categories` y `subcategory`
         const derived = deriveCategories(list || []);
         if (derived && derived.length) setFallbackCategories(derived);
       })
@@ -141,37 +127,29 @@ export default function Shop() {
      return () => { mounted = false; };
    }, []);
 
-  // Sanear estado inicial de precios si vienen negativos por URL
   useEffect(() => {
     if (min !== "" && Number(min) < 0) setMin("0");
     if (max !== "" && Number(max) < 0) setMax("0");
-    // Solo al montar
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Helper para resolver categoryCode desde serverCategories
   const resolveCategoryCode = (categoryName) => {
     if (!categoryName || categoryName === "All") return null;
     const found = serverCategories.find((c) => (c.name || String(c)).toLowerCase() === categoryName.toLowerCase());
     return found?.categoryCode ?? found?.id ?? null;
   };
 
-  // Función para (re)cargar productos filtrados desde el servidor
   const loadFiltered = ({ page = 0, filters = null } = {}) => {
     const pageSize = pagination?.size ?? 24;
     const usedFilters = filters || appliedFilters || {};
     const minNum = usedFilters.min === "" || usedFilters.min == null ? null : Math.max(0, Number(usedFilters.min));
     const maxNum = usedFilters.max === "" || usedFilters.max == null ? null : Math.max(0, Number(usedFilters.max));
 
-    // marcas (puede ser array de códigos)
     const brandCodesRaw = Array.isArray(usedFilters.brandCodes) ? usedFilters.brandCodes : (usedFilters.brandCodes ? [usedFilters.brandCodes] : []);
-    // normalizar: convertir cadenas numéricas a números para que coincida con brandCode numérico del backend
     const brandCodes = brandCodesRaw.map((c) => {
       const n = Number(c);
       return Number.isNaN(n) ? c : n;
     }).filter(Boolean);
 
-    // categorías: resolvemos los categoryCodes para cada categoryName presente
     const categoryNames = Array.isArray(usedFilters.categoryNames) ? usedFilters.categoryNames : (usedFilters.categoryNames ? [usedFilters.categoryNames] : []);
     const categoryCodes = categoryNames.map((name) => resolveCategoryCode(name)).filter(Boolean);
 
@@ -200,20 +178,14 @@ export default function Shop() {
     }));
   };
 
-  // Al montar, cargar la primera página con los filtros iniciales
   useEffect(() => {
-    // aplicamos los filtros iniciales (si existen)
     loadFiltered({ page: 0, filters: appliedFilters });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serverCategories]);
 
-  // applyFilters: llamado desde el sidebar cuando el usuario presiona "Filtrar"
   const applyFilters = (filters) => {
-    // aceptamos tanto categoryNames (array) como category (string) por compatibilidad
     const { category: fCategory, categoryNames: fCategoryNames, subcategory: fSub, min: fMin, max: fMax, brandCodes = [] } = filters;
     const catNames = Array.isArray(fCategoryNames) && fCategoryNames.length ? fCategoryNames : (fCategory && fCategory !== 'All' ? [fCategory] : []);
 
-    // actualizamos estados locales visibles usando la primera categoría si existe
     setCategory(catNames.length ? catNames[0] : 'All');
     setSubcategory(fSub || '');
     setMin(fMin ?? '');
@@ -228,8 +200,8 @@ export default function Shop() {
       brandCodes: brandCodes || [],
     };
     setAppliedFilters(newApplied);
+    setPendingFilters(false); // Reiniciar el estado pendiente
 
-    // sincronizar con URL (guardamos solo la primera categoría/brand para compatibilidad con la URL actual)
     const sp = new URLSearchParams();
     if (catNames.length) sp.set('category', catNames[0]);
     if (fSub) sp.set('subcategory', fSub);
@@ -238,8 +210,18 @@ export default function Shop() {
     if (brandCodes && brandCodes.length) sp.set('brand', String(brandCodes[0]));
     setSearchParams(sp);
 
-    // disparar carga
     loadFiltered({ page: 0, filters: newApplied });
+  };
+
+  const handleFilterChange = (localFilters) => {
+    const { categoryNames, subcategory, min, max, brandCodes } = localFilters;
+    const hasChanges =
+      (categoryNames.length > 0 && !(categoryNames.length === 1 && categoryNames[0] === 'All')) ||
+      subcategory !== '' ||
+      min !== '' ||
+      max !== '' ||
+      brandCodes.length > 0;
+    setPendingFilters(hasChanges);
   };
 
   const filtered = useMemo(() => {
@@ -277,33 +259,18 @@ export default function Shop() {
     } else if (sort === "price-desc") {
       arr.sort((a, b) => (b.price || 0) - (a.price || 0));
     } else if (query) {
-      // Relevancia solo si hay consulta
       arr.sort((a, b) => (b.score || 0) - (a.score || 0));
     }
     return arr;
   }, [filtered, sort, query]);
 
-  // Mini shimmer al cambiar filtros/orden
   useEffect(() => {
     setIsLoading(true);
     const t = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(t);
   }, [category, subcategory, min, max, sort, query]);
 
-  // Mostrar loader también en estado idle (antes de que el hook dispare la carga)
   const showLoading = status === "loading" || status === "idle" || isLoading;
-
-  // Referencia aplicadaFilters para evitar warning de linter (no cambia lógica)
-  useEffect(() => {
-    const { categoryNames, subcategory, min, max, brandCodes } = appliedFilters;
-    const active =
-      (categoryNames && categoryNames.length > 0 && categoryNames[0] !== 'All') ||
-      (subcategory && subcategory !== '') ||
-      (min !== '' && min !== null) ||
-      (max !== '' && max !== null) ||
-      (brandCodes && brandCodes.length > 0);
-    setHasActiveFilters(active);
-  }, [appliedFilters]);
 
   return (
     <div className="px-4 pb-12 pt-6 md:pt-8 md:grid md:grid-cols-[16rem_1fr] md:gap-8">
@@ -323,17 +290,16 @@ export default function Shop() {
         max={max}
         brand={brand}
         onApply={applyFilters}
+        onFilterChange={handleFilterChange}
         initialFilters={appliedFilters}
-         open={sidebarOpen}
-         onClose={() => setSidebarOpen(false)}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
        />
 
       <section>
-        {/* Header */}
         <div className="mb-6 flex items-center justify-between gap-4">
           <h1 className="text-2xl font-bold">Tienda</h1>
 
-          {/* Desktop controls */}
           <div className="hidden md:block">
             <select
               className="rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 shadow-sm"
@@ -346,12 +312,11 @@ export default function Shop() {
             </select>
           </div>
 
-          {/* Mobile controls */}
           <div className="flex items-center gap-2 md:hidden">
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              className={`inline-flex items-center gap-2 rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm ${hasActiveFilters ? 'filters-active' : ''}`}
+              className={`inline-flex items-center gap-2 rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm ${pendingFilters ? 'filters-active' : ''}`}
               aria-label="Abrir filtros"
             >
               <FunnelIcon className="h-4 w-4" />
@@ -407,7 +372,6 @@ export default function Shop() {
                 <GlassProductCard key={item.id} item={item} />
               ))}
             </div>
-            {/* Paginador */}
             {pagination.totalPages > 1 && (
               <div className="flex justify-center items-center gap-2 mt-8">
                 <button

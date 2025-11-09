@@ -12,22 +12,16 @@ export default function FilterSidebar({
   min,
   max,
   brand,
-  // nuevo: callback que aplica filtros (no dispara automáticamente al cambiar controles)
   onApply,
-  // optional initial filters to populate UI
+  onFilterChange, // Nueva prop
   initialFilters = {},
 }) {
-  // Aseguramos una opción "All" como centinela; se mostrará como "Todas"
   const allCategories = useMemo(
     () => [{ name: "All", subs: [] }, ...(categories || [])],
     [categories]
   );
-  // not using a single current category; categories list is used for multi-select
 
   const [brands, setBrands] = useState([]);
-
-  // Estado local del panel (no aplicar hasta que el usuario presione 'Filtrar')
-  // categories as a set to allow multiple selection
   const [selectedCategoryNames, setSelectedCategoryNames] = useState(new Set(initialFilters.categoryNames || (category && category !== 'All' ? [category] : [])));
   const [localSubcategory, setLocalSubcategory] = useState(initialFilters.subcategory || subcategory || "");
   const [localMin, setLocalMin] = useState(initialFilters.min ?? (min ?? ""));
@@ -38,8 +32,7 @@ export default function FilterSidebar({
 
   useEffect(() => {
     let mounted = true;
-    api
-      .get("/brands/all")
+    api.get("/brands/all")
       .then((res) => {
         if (!mounted) return;
         const data = res.data;
@@ -50,14 +43,10 @@ export default function FilterSidebar({
         if (!mounted) return;
         setBrands([]);
       });
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
-  // Sincronizar estado local cuando cambian los filtros aplicados desde el padre
   useEffect(() => {
-    // initialFilters may contain: categoryNames (array), subcategory, min, max, brandCodes (array)
     setSelectedCategoryNames(new Set(initialFilters.categoryNames || []));
     setLocalSubcategory(initialFilters.subcategory || "");
     setLocalMin(initialFilters.min ?? "");
@@ -65,13 +54,26 @@ export default function FilterSidebar({
     setSelectedBrandCodes(new Set(initialFilters.brandCodes || []));
   }, [initialFilters]);
 
+  // Notificar al padre sobre cambios en los filtros locales
+  useEffect(() => {
+    if (onFilterChange) {
+      const filters = {
+        categoryNames: Array.from(selectedCategoryNames),
+        subcategory: localSubcategory,
+        min: localMin,
+        max: localMax,
+        brandCodes: Array.from(selectedBrandCodes),
+      };
+      onFilterChange(filters);
+    }
+  }, [selectedCategoryNames, localSubcategory, localMin, localMax, selectedBrandCodes, onFilterChange]);
+
   const clearLocal = () => {
     setSelectedCategoryNames(new Set());
     setLocalSubcategory("");
     setLocalMin("");
     setLocalMax("");
     setSelectedBrandCodes(new Set());
-    // Notificar al padre para que aplique la limpieza y recargue resultados
     if (onApply) {
       onApply({ categoryNames: [], subcategory: "", min: "", max: "", brandCodes: [] });
     }
@@ -104,16 +106,14 @@ export default function FilterSidebar({
       brandCodes: Array.from(selectedBrandCodes),
     };
     if (onApply) onApply(filters);
-    // opcional: cerrar panel mobile
     if (onClose) onClose();
   };
 
-  // Handlers para evitar negativos en precios. Permitimos string vacío para limpiar.
   const handleMinChange = (e) => {
     const v = e.target.value;
     if (v === "") return setLocalMin("");
     const n = Number(v);
-    if (Number.isNaN(n)) return; // ignorar caracteres no numéricos
+    if (Number.isNaN(n)) return;
     setLocalMin(String(Math.max(0, n)));
   };
 
@@ -254,7 +254,6 @@ export default function FilterSidebar({
         </DisclosurePanel>
       </Disclosure>
 
-      {/* Si está seleccionada una sola categoría, mostramos subcategorías de esa categoría */}
       {selectedCategoryNames.size === 1 && (() => {
         const only = Array.from(selectedCategoryNames)[0];
         const cObj = allCategories.find(cc => cc.name === only);
@@ -281,49 +280,21 @@ export default function FilterSidebar({
 
   return (
     <>
-      {/* Desktop aside solo cuando no está abierto el panel móvil */}
       {!open && (
-        <aside
-          className="
-            hidden md:block
-            sticky top-4 self-start
-            w-64
-            pr-4
-          "
-        >
-          <div className="
-            h-[calc(100vh-2rem)] 
-            overflow-y-auto
-            border-r border-zinc-200
-            px-2 py-6
-          ">
+        <aside className="hidden md:block sticky top-4 self-start w-64 pr-4">
+          <div className="h-[calc(100vh-2rem)] overflow-y-auto border-r border-zinc-200 px-2 py-6">
             {FiltersUI}
           </div>
         </aside>
       )}
 
-      {/* Overlay y panel para Mobile */}
       {open && (
         <div className="md:hidden">
           <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
-          <div
-            className="
-                fixed left-0 z-50
-                top-0
-                w-[85%] max-w-sm
-                bg-white shadow-xl flex flex-col
-                h-full
-              "
-            role="dialog" aria-modal="true" aria-label="Filtros"
-          >
+          <div className="fixed left-0 z-50 top-0 w-[85%] max-w-sm bg-white shadow-xl flex flex-col h-full" role="dialog" aria-modal="true" aria-label="Filtros">
             <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
               <span className="text-sm font-medium">Filtros</span>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-full p-1 hover:bg-zinc-100"
-                aria-label="Cerrar filtros"
-              >
+              <button type="button" onClick={onClose} className="rounded-full p-1 hover:bg-zinc-100" aria-label="Cerrar filtros">
                 <XMarkIcon className="h-5 w-5 text-zinc-700" />
               </button>
             </div>
