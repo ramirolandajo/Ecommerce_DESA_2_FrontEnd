@@ -125,13 +125,25 @@ export default function FilterSidebar({
     setLocalMax(String(Math.max(0, n)));
   };
 
+  // Determina si hay cambios locales para 'iluminar' el botón Filtrar
+  const hasChanges = useMemo(() => {
+    const hasCats = selectedCategoryNames && selectedCategoryNames.size > 0;
+    const hasBrands = selectedBrandCodes && selectedBrandCodes.size > 0;
+    return hasCats || hasBrands || (localSubcategory && localSubcategory !== "") || (localMin && localMin !== "") || (localMax && localMax !== "");
+  }, [selectedCategoryNames, selectedBrandCodes, localSubcategory, localMin, localMax]);
+
   const FiltersUI = (
     <div className="flex flex-col space-y-6 ">
       <div className="flex gap-2">
         <button
           type="button"
           onClick={handleApply}
-          className="flex-1 inline-flex items-center justify-center rounded-xl border border-slate-600/50 bg-slate-700/40 px-3 py-2 text-sm font-medium text-slate-100 shadow-sm hover:bg-slate-700/60"
+          className={[
+            "flex-1 inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-medium shadow-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2",
+            hasChanges
+              ? "border border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg"
+              : "border border-slate-600/50 bg-slate-700/40 text-slate-100 hover:bg-slate-700/60",
+          ].join(" ")}
         >
           Filtrar
         </button>
