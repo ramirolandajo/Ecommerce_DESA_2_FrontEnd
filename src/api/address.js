@@ -53,7 +53,7 @@ export const updateAddress = async (id, data) => {
           : String(data.description),
     };
     console.log("[updateAddress] payload:", payload);
-    const res = await api.put(`/address/${id}`, payload);
+    const res = await api.put(`user/address/${id}`, payload);
     return res.data;
   } catch (error) {
     handleError(error);
@@ -62,7 +62,7 @@ export const updateAddress = async (id, data) => {
 
 export const deleteAddress = async (id) => {
   try {
-    const res = await api.delete(`/address/${id}`);
+    const res = await api.delete(`user/address/${id}`);
     return res.data;
   } catch (error) {
     handleError(error);
