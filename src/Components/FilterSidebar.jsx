@@ -285,14 +285,20 @@ export default function FilterSidebar({
       {!open && (
         <aside
           className="
-    hidden md:block
-    sticky top-4 self-start
-
-    w-56 border-r border-zinc-200 bg-white
-    px-2 py-6
-  "
+            hidden md:block
+            sticky top-4 self-start
+            w-64
+            pr-4
+          "
         >
-          {FiltersUI}
+          <div className="
+            h-[calc(100vh-2rem)] 
+            overflow-y-auto
+            border-r border-zinc-200
+            px-2 py-6
+          ">
+            {FiltersUI}
+          </div>
         </aside>
       )}
 
@@ -306,6 +312,7 @@ export default function FilterSidebar({
                 top-0
                 w-[85%] max-w-sm
                 bg-white shadow-xl flex flex-col
+                h-full
               "
             role="dialog" aria-modal="true" aria-label="Filtros"
           >
@@ -320,7 +327,7 @@ export default function FilterSidebar({
                 <XMarkIcon className="h-5 w-5 text-zinc-700" />
               </button>
             </div>
-            <div className="px-4 py-6">{FiltersUI}</div>
+            <div className="px-4 py-6 overflow-y-auto flex-1">{FiltersUI}</div>
           </div>
         </div>
       )}

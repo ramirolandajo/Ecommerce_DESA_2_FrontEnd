@@ -52,6 +52,7 @@ export default function Shop() {
     brandCodes: brandParam ? [brandParam] : [],
   }));
 
+  const [hasActiveFilters, setHasActiveFilters] = useState(false);
 
   // Estados locales para mostrar (opcional, la UI del sidebar manejará sus propios temporales)
   const [category, setCategory] = useState(initialCat);
@@ -294,11 +295,26 @@ export default function Shop() {
 
   // Referencia aplicadaFilters para evitar warning de linter (no cambia lógica)
   useEffect(() => {
-    // no-op: dependencia para linter
+    const { categoryNames, subcategory, min, max, brandCodes } = appliedFilters;
+    const active =
+      (categoryNames && categoryNames.length > 0 && categoryNames[0] !== 'All') ||
+      (subcategory && subcategory !== '') ||
+      (min !== '' && min !== null) ||
+      (max !== '' && max !== null) ||
+      (brandCodes && brandCodes.length > 0);
+    setHasActiveFilters(active);
   }, [appliedFilters]);
 
   return (
     <div className="px-4 pb-12 pt-6 md:pt-8 md:grid md:grid-cols-[16rem_1fr] md:gap-8">
+      <style>
+        {`
+          .filters-active {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+            border-color: #3B82F6;
+          }
+        `}
+      </style>
       <FilterSidebar
         categories={sidebarCategories}
         category={category}
@@ -335,7 +351,7 @@ export default function Shop() {
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              className="inline-flex items-center gap-2 rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm"
+              className={`inline-flex items-center gap-2 rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm ${hasActiveFilters ? 'filters-active' : ''}`}
               aria-label="Abrir filtros"
             >
               <FunnelIcon className="h-4 w-4" />
