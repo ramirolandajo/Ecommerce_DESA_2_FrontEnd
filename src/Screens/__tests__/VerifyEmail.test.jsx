@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
+import { act } from '@testing-library/react';
 import VerifyEmail from '../VerifyEmail.jsx';
 
 vi.mock('react-redux', () => {
@@ -27,7 +28,6 @@ describe('VerifyEmail screen', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const { createRoot } = require('react-dom/client');
-    const { act } = require('react-dom/test-utils');
 
     await act(async () => {
       createRoot(container).render(<VerifyEmail />);
@@ -48,7 +48,6 @@ describe('VerifyEmail screen', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const { createRoot } = require('react-dom/client');
-    const { act } = require('react-dom/test-utils');
 
     await act(async () => {
       createRoot(container).render(<VerifyEmail />);

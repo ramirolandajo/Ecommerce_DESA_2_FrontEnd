@@ -54,7 +54,7 @@ describe('store index', () => {
     expect(store.getState().favourites.items).toEqual(initial);
     store.dispatch(addFavourite.fulfilled({ id: 3 }));
     expect(store.getState().favourites.items).toEqual([...initial, { id: 3 }]);
-    store.dispatch(removeFavourite.fulfilled(1));
+    store.dispatch(removeFavourite.fulfilled({ originalIdentifier: 1 }));
     expect(store.getState().favourites.items).toEqual([{ id: 2 }, { id: 3 }]);
   });
 });

@@ -40,7 +40,7 @@ describe("favouritesSlice", () => {
   it("handles removeFavourite.fulfilled", () => {
     const state = reducer(
       { ...initialState, items: [{ id: 1 }, { id: 2 }] },
-      removeFavourite.fulfilled(1),
+      removeFavourite.fulfilled({ originalIdentifier: 1 }),
     );
     expect(state.items).toEqual([{ id: 2 }]);
   });

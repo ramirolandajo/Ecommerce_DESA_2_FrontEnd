@@ -9,8 +9,8 @@ describe('CategoryButton', () => {
   it('renders label and handles click', async () => {
     const onClick = vi.fn();
     render(<CategoryButton name="Tech" onClick={onClick} />);
-    expect(screen.getByRole('button', { name: 'Tech' })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Tech' }));
+    expect(screen.getByRole('button', { name: 'Categoría Tech' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Categoría Tech' }));
     expect(onClick).toHaveBeenCalled();
   });
 

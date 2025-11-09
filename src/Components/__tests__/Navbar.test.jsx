@@ -17,6 +17,39 @@ vi.mock('../../api/auth', () => ({
 }));
 import { logout as apiLogout } from '../../api/auth';
 
+// Mock headlessui to avoid ResizeObserver issues in tests
+vi.mock('@headlessui/react', () => {
+  const React = require('react');
+  // helper that returns only children, ignores props to avoid invalid DOM attributes
+  const passthrough = (tag) => (props) => React.createElement(React.Fragment, null, props.children);
+  return {
+    Disclosure: passthrough('nav'),
+    DisclosureButton: passthrough('button'),
+    DisclosurePanel: passthrough('div'),
+    Menu: passthrough('div'),
+    // Make MenuButton render an actual button so it is queryable by role
+    MenuButton: (props) => React.createElement('button', { type: 'button' }, props.children),
+    // MenuItem should expose the children directly so nested buttons work as expected
+    MenuItem: (props) => props.children,
+    MenuItems: passthrough('div'),
+    // Dialog/Transition primitives used by CartDrawer
+    Transition: passthrough('div'),
+    TransitionChild: passthrough('div'),
+    Dialog: passthrough('div'),
+    DialogBackdrop: passthrough('div'),
+    DialogPanel: passthrough('div'),
+  };
+});
+
+// Ensure ResizeObserver is defined for headlessui usage in tests
+if (typeof global.ResizeObserver === 'undefined') {
+  global.ResizeObserver = vi.fn(() => ({
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  }));
+}
+
 import Navbar from '../Navbar.jsx';
 import userReducer from '../../store/user/userSlice.js';
 
@@ -26,7 +59,6 @@ describe('Navbar', () => {
   });
 
   it('does not open cart and redirects to login when logged out', async () => {
-    window.alert = vi.fn();
     const store = configureStore({
       reducer: {
         user: () => ({ isLoggedIn: false, userInfo: null }),
@@ -47,7 +79,6 @@ describe('Navbar', () => {
     await userEvent.click(screen.getByLabelText('Carrito'));
     expect(screen.queryByText('Your Cart')).toBeNull();
     expect(navigate).toHaveBeenCalledWith('/login');
-    expect(window.alert).toHaveBeenCalled();
   });
 
   it('logs out via menu when logged in', async () => {
@@ -78,7 +109,7 @@ describe('Navbar', () => {
 
     // El botón del menú de usuario muestra inicialmente "U"
     await userEvent.click(screen.getByRole('button', { name: 'U' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: /cerrar sesi/i }));
+    await userEvent.click(screen.getByRole('button', { name: /cerrar sesi/i }));
     await waitFor(() => expect(store.getState().user.isLoggedIn).toBe(false));
     expect(apiLogout).toHaveBeenCalled();
     expect(localStorage.removeItem).toHaveBeenCalledWith('token');

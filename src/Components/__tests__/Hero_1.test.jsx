@@ -19,7 +19,8 @@ describe('HeroShowcase', () => {
     reducer: {
       products: () => ({ items: slides, status: 'succeeded' }),
       cart: () => ({ items: [] }),
-      user: () => ({})
+      user: () => ({}),
+      homeScreen: () => ({ hero: slides, status: 'succeeded' })
     }
   });
 

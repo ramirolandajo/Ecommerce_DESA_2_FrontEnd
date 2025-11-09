@@ -2,12 +2,12 @@ import { describe, it, expect, vi } from "vitest";
 
 vi.mock("../../api/purchase.js", () => ({
   default: {
-    createCart: vi.fn().mockResolvedValue({
+    createCart: vi.fn().mockReturnValue(Promise.resolve({
       id: 1,
       reservationTime: new Date(Date.now() + 10000).toISOString(),
       status: "PENDING",
-    }),
-    cancelPurchase: vi.fn().mockResolvedValue({}),
+    })),
+    cancelPurchase: vi.fn().mockReturnValue(Promise.resolve({})),
   },
 }));
 
@@ -24,6 +24,7 @@ const initialState = {
   reservationTimestamp: null,
   status: "idle",
   timeLeft: 0,
+  endTime: null,
 };
 
 describe("purchaseSlice", () => {
@@ -37,7 +38,8 @@ describe("purchaseSlice", () => {
       id: 1,
       reservationTimestamp,
       status: "PENDING",
-      timeLeft: 10,
+      timeLeft: 1810,
+      endTime: base + 1810000,
     });
     spy.mockRestore();
   });

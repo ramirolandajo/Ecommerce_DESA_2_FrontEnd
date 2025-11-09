@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi } from "vitest";
-import { act } from "react";
+import { act, waitFor } from "@testing-library/react";
 import { createRoot } from "react-dom/client";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
@@ -8,14 +8,19 @@ import Stepper from "../Stepper.jsx";
 import purchaseReducer, { tick } from "../../../store/purchase/purchaseSlice.js";
 
 vi.mock("../../../api/address.js", () => ({
-  getAddresses: vi.fn().mockResolvedValue([
-    {
-      id: "home",
-      title: "Home",
-      tag: "HOME",
-      lines: ["123 Main St", "(000) 000-0000"],
-    },
-  ]),
+  getAddresses: vi.fn().mockImplementation(async () => {
+    // debug log to verify mock is used during tests
+    // eslint-disable-next-line no-console
+    console.log('[mock getAddresses] called');
+    return [
+      {
+        id: "home",
+        // API-like shape: description as array
+        description: ["123 Main St", "(000) 000-0000"],
+        tag: "HOME",
+      },
+    ];
+  }),
   addAddress: vi.fn(),
   updateAddress: vi.fn(),
   deleteAddress: vi.fn(),
@@ -65,6 +70,11 @@ describe("Stepper", () => {
   it("navigates through steps and calls confirm", async () => {
     const { container, handleConfirm } = setup();
     await act(async () => {});
+
+    await waitFor(() => {
+      const radio = container.querySelector('input[name="address"]');
+      expect(radio).toBeInTheDocument();
+    });
 
     const getButton = (text) =>
       Array.from(container.querySelectorAll("button")).find(
@@ -117,6 +127,11 @@ describe("Stepper", () => {
       timeLeft: 2,
     });
     await act(async () => {});
+
+    await waitFor(() => {
+      const radio = container.querySelector('input[name="address"]');
+      expect(radio).toBeInTheDocument();
+    });
 
     const getButton = (text) =>
       Array.from(container.querySelectorAll("button")).find(
@@ -187,4 +202,3 @@ describe("Stepper", () => {
     expect(progress.style.width).toBe("75%");
   });
 });
-

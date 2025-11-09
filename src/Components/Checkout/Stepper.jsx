@@ -47,6 +47,7 @@ export default function Stepper({ items, money, handleConfirm, handleCancel, loa
   useEffect(() => {
     if (expired && purchaseId) {
       // dispatch(cancelPurchase()); // Desactivado: solo contador visual, backend maneja expiración
+      dispatch(cancelPurchase());
     }
   }, [expired, purchaseId, dispatch]);
 

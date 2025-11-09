@@ -5,7 +5,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { renderToString } from 'react-dom/server';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ProductDetail from '../ProductDetail.jsx';
-import productsReducer, { fetchProduct } from '../../store/products/productsSlice.js';
+import { fetchProduct } from '../../store/products/productsSlice.js';
 import favouritesReducer from '../../store/favourites/favouritesSlice.js';
 
 vi.mock('../../api/favourites.js', () => ({
@@ -15,7 +15,22 @@ vi.mock('../../api/favourites.js', () => ({
     removeFavouriteProduct: vi.fn().mockResolvedValue(),
   },
 }));
-import React from "react";
+// Provide a mock that includes a default reducer so configureStore works in tests
+vi.mock('../../store/products/productsSlice.js', () => {
+  const { createSlice } = require('@reduxjs/toolkit');
+  // simple reducer that returns state (no-op)
+  const slice = createSlice({ name: 'products', initialState: { items: [], current: null, related: [], status: 'idle', error: null }, reducers: {} });
+  // create a mock fetchProduct that returns a plain action object and exposes pending.type
+  const fetchProductMock = (id) => ({ type: 'products/fetchOne/mock', meta: { id } });
+  fetchProductMock.pending = { type: 'products/fetchOne/pending' };
+  fetchProductMock.fulfilled = { type: 'products/fetchOne/fulfilled' };
+  return {
+    __esModule: true,
+    fetchProduct: fetchProductMock,
+    default: slice.reducer,
+  };
+});
+import productsReducer from '../../store/products/productsSlice.js';
 
 describe('ProductDetail', () => {
   it('shows Loader when status is loading', () => {
@@ -166,7 +181,7 @@ describe('ProductDetail', () => {
       </Provider>
     );
 
-    const btn = screen.getByLabelText('Agregar a favoritos');
+    const btn = await screen.findByLabelText('Agregar a favoritos');
     fireEvent.click(btn);
     await waitFor(() => expect(store.getState().favourites.items).toHaveLength(1));
   });

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
+import { act } from '@testing-library/react';
 import Login from '../Login.jsx';
 
 const dispatch = vi.fn(() => ({ unwrap: () => Promise.resolve() }));
@@ -32,7 +33,6 @@ describe('Login screen', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const { createRoot } = require('react-dom/client');
-    const { act } = require('react-dom/test-utils');
 
     act(() => {
       createRoot(container).render(<Login />);
@@ -53,7 +53,6 @@ describe('Login screen', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const { createRoot } = require('react-dom/client');
-    const { act } = require('react-dom/test-utils');
 
     act(() => {
       createRoot(container).render(<Login />);

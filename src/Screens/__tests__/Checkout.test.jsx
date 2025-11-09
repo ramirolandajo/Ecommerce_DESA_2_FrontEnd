@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
+import { act } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
@@ -34,6 +35,7 @@ const renderWithStore = (preloadedState, initialEntries = ['/checkout']) => {
         <MemoryRouter initialEntries={initialEntries}>
           <Routes>
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/purchase/:id" element={<div>Purchase Detail</div>} />
           </Routes>
         </MemoryRouter>
       </Provider>
@@ -61,7 +63,6 @@ describe('Checkout screen', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const { createRoot } = require('react-dom/client');
-    const { act } = require('react-dom/test-utils');
 
     const purchaseService = (await import('../../api/purchase.js')).default;
 
@@ -71,6 +72,7 @@ describe('Checkout screen', () => {
           <MemoryRouter initialEntries={['/checkout']}>
             <Routes>
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/purchase/:id" element={<div>Purchase Detail</div>} />
             </Routes>
           </MemoryRouter>
         </Provider>
@@ -84,4 +86,3 @@ describe('Checkout screen', () => {
     expect(purchaseService.confirmPurchase).toHaveBeenCalled();
   });
 });
-

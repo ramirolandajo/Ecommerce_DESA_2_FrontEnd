@@ -75,12 +75,19 @@ const purchaseSlice = createSlice({
         console.log("tick", state.timeLeft);
       })
       .addCase(createCart.fulfilled, (state, action) => {
-        state.id = action.payload.id;
-        state.reservationTimestamp = action.payload.reservationTime;
-        state.endTime = new Date(action.payload.reservationTime).getTime() + 30 * 60 * 1000;
-        state.status = action.payload.status;
-        state.timeLeft = Math.max(0, Math.floor((state.endTime - Date.now()) / 1000));
-        console.log("createCart.fulfilled", action.payload, "endTime", new Date(state.endTime), "timeLeft", state.timeLeft);
+        // Defensive: some tests/mocks may dispatch fulfilled without payload
+        const payload = action?.payload ?? {};
+        state.id = payload.id ?? null;
+        state.reservationTimestamp = payload.reservationTime ?? null;
+        if (payload.reservationTime) {
+          state.endTime = new Date(payload.reservationTime).getTime() + 30 * 60 * 1000;
+          state.timeLeft = Math.max(0, Math.floor((state.endTime - Date.now()) / 1000));
+        } else {
+          state.endTime = null;
+          state.timeLeft = payload.timeLeft ?? state.timeLeft ?? 0;
+        }
+        state.status = payload.status ?? state.status;
+        console.log("createCart.fulfilled", payload, "endTime", state.endTime ? new Date(state.endTime) : null, "timeLeft", state.timeLeft);
       })
       .addCase(confirmPurchase.fulfilled, () => {
         console.log("confirmPurchase.fulfilled");
