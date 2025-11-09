@@ -13,13 +13,31 @@
   100% { transform: scale(1.35); opacity: 0; }
 }
 
-/* Simplificar partículas: bolitas sólidas, pequeñas y visibles */
+/* Pulsing border para el botón Filtrar: anillo sutil que se expande y desvanece */
+@keyframes pulse-border {
+  0% {
+    box-shadow: 0 0 0 0 rgba(99,102,241,0.55);
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 8px 24px 6px rgba(99,102,241,0.08);
+    opacity: 0.9;
+    transform: scale(1.01);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(99,102,241,0);
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
 .burst-particle {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: var(--size, 12px);
-  height: var(--size, 12px);
+  width: 12px;
+  height: 12px;
   transform: translate(-50%, -50%) scale(1);
   border-radius: 50%;
   background: rgba(239,68,68,1); /* rojo sólido */
@@ -81,4 +99,34 @@
 .button-heart-hover {
   pointer-events: auto;
   overflow: visible;
+}
+
+.filter-button-pulse {
+  position: relative; /* para el ::after */
+  overflow: visible; /* permitir que el anillo sea visible */
+  z-index: 0; /* asegurar stacking coherente */
+}
+
+.filter-button-pulse::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(100% + 18px); /* ligeramente más ancho que el botón */
+  height: calc(100% + 18px);
+  transform: translate(-50%, -50%) scale(1);
+  border-radius: inherit;
+  pointer-events: none;
+  background: transparent;
+  box-shadow: 0 0 0 0 rgba(99,102,241,0.45);
+  transition: box-shadow 420ms cubic-bezier(.2,.8,.2,1), transform 420ms cubic-bezier(.2,.8,.2,1), opacity 420ms ease;
+  will-change: box-shadow, transform, opacity;
+  z-index: -1; /* detrás del botón */
+  animation: pulse-border 2000ms cubic-bezier(.2,.8,.2,1) infinite;
+}
+
+/* Pulso más marcado al recibir foco (accesibilidad) */
+.filter-button-pulse:focus-visible::after {
+  animation-duration: 1400ms;
+  box-shadow: 0 0 0 6px rgba(99,102,241,0.12);
 }
