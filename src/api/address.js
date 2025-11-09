@@ -52,6 +52,7 @@ export const updateAddress = async (id, data) => {
           ? data.description.join(" ")
           : String(data.description),
     };
+    console.log("[updateAddress] payload:", payload);
     const res = await api.put(`/address/${id}`, payload);
     return res.data;
   } catch (error) {
