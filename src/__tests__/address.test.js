@@ -44,7 +44,7 @@ describe('address api', () => {
   it('updateAddress sends description string', async () => {
     api.put.mockResolvedValue({ data: { ok: true } });
     const res = await updateAddress(1, { description: 'foo' });
-    expect(api.put).toHaveBeenCalledWith('/address/1', {
+    expect(api.put).toHaveBeenCalledWith('user/address/1', {
       description: 'foo',
     });
     expect(res).toEqual({ ok: true });
@@ -53,7 +53,7 @@ describe('address api', () => {
   it('deleteAddress calls correct endpoint and returns success', async () => {
     api.delete = vi.fn().mockResolvedValue({ data: 'Dirección eliminada con éxito' });
     const res = await deleteAddress(1);
-    expect(api.delete).toHaveBeenCalledWith('/address/1');
+    expect(api.delete).toHaveBeenCalledWith('user/address/1');
     expect(res).toBe('Dirección eliminada con éxito');
   });
 });
