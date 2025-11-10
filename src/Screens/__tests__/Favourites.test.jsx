@@ -1,8 +1,20 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
+
+// Mockear solo fetchFavourites, conservando el resto del módulo (incluido el reducer)
+vi.mock('../../store/favourites/favouritesSlice.js', async () => {
+  const actual = await vi.importActual('../../store/favourites/favouritesSlice.js');
+  return {
+    __esModule: true,
+    ...actual,
+    // reemplazamos fetchFavourites por un thunk que no realiza llamadas ni dispatch adicionales
+    fetchFavourites: () => () => Promise.resolve(),
+  };
+});
+
 import Favourites from '../Favourites.jsx';
 import favouritesReducer from '../../store/favourites/favouritesSlice.js';
 

@@ -9,10 +9,9 @@ export default function Favourites() {
   const { items, status } = useSelector((s) => s.favourites);
 
   useEffect(() => {
-    if (status === "idle") {
-      dispatch(fetchFavourites());
-    }
-  }, [dispatch, status]);
+    // Siempre obtener favoritos cuando se monta la pantalla para evitar datos inconsistentes
+    dispatch(fetchFavourites());
+  }, [dispatch]);
 
   if (status === "loading") {
     return (
