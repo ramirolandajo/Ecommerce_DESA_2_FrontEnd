@@ -9,10 +9,9 @@ const initialState = {
 
 export const fetchFavourites = createAsyncThunk(
   "favourites/fetchFavourites",
-  // Añadimos getState para poder mapear productCode desde el store de products cuando el backend
-  // no lo incluye en la respuesta
   async (_, { getState }) => {
     const items = await favouritesApi.getFavouriteProducts();
+    console.log("fetchFavourites", items);
     const state = getState();
     const productsList = state.products?.list || state.products?.items || [];
     // Mapear cada producto devuelto por el backend y, si encontramos el mismo producto en
