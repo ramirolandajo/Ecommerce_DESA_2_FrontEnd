@@ -27,7 +27,7 @@ export default function Login() {
         navigate(from || "/");
       }
     } catch (err) {
-      setError(err.message || "Error al iniciar sesión");
+      setError(err.response?.data?.error || err.message || "Error al iniciar sesión");
     } finally {
       setLoading(false);
     }

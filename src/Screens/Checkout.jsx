@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import Stepper from "../Components/Checkout/Stepper.jsx";
 import { clearCart } from "../store/cart/cartSlice.js";
+import { showNotification } from "../store/notification/notificationSlice.js";
 import {
   createCart as purchaseCreateCart,
   confirmPurchase,
@@ -75,7 +76,7 @@ export default function Checkout() {
       navigate(`/purchase/${purchaseId}`);
     } catch (err) {
       console.error(err);
-      alert("No se pudo confirmar la compra");
+      dispatch(showNotification({ message: err.response?.data?.error || err.message || "No se pudo confirmar la compra", type: "error" }));
     } finally {
       setLoading(false);
     }
@@ -94,7 +95,7 @@ export default function Checkout() {
       navigate('/');
     } catch (err) {
       console.error(err);
-      alert("No se pudo cancelar la compra");
+      dispatch(showNotification({ message: err.response?.data?.error || err.message || "No se pudo cancelar la compra", type: "error" }));
     } finally {
       setLoading(false);
     }

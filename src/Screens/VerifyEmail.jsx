@@ -15,16 +15,16 @@ export default function VerifyEmail() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await dispatch(verifyEmail({ email, token }));
-    if (result.type === "user/verifyEmail/fulfilled") {
+    try {
+      await dispatch(verifyEmail({ email, token })).unwrap();
       setIsSuccess(true);
       setMessage("¡Verificación exitosa!");
       setTimeout(() => {
         navigate("/login");
       }, 1500); // Redirige después de 1.5 segundos
-    } else {
+    } catch (err) {
       setIsSuccess(false);
-      setMessage("La verificación falló.");
+      setMessage(err.response?.data?.error || err.message || "La verificación falló.");
     }
   };
 

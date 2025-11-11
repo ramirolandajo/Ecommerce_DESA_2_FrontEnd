@@ -25,7 +25,7 @@ export default function Register() {
       await dispatch(register({ name, email, password })).unwrap();
       navigate("/verify-email", { state: { email } });
     } catch (err) {
-      setError(err.message || "Error al registrarse");
+      setError(err.response?.data?.error || err.message || "Error al registrarse");
     } finally {
       setLoading(false);
     }

@@ -280,7 +280,7 @@ export default function ProductDetail() {
             dispatch(showNotification({ type: 'success', message: 'Reseña enviada correctamente' }));
             setExistingReview({ calification, description: reviewDescription });
         } catch (ex) {
-            dispatch(showNotification({ type: 'error', message: ex.response?.data?.message || ex.message || 'Error al enviar reseña' }));
+            dispatch(showNotification({ type: 'error', message: ex.response?.data?.error || ex.message || 'Error al enviar reseña' }));
         } finally {
             setReviewLoading(false);
         }
