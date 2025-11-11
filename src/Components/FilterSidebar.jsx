@@ -1,6 +1,8 @@
 import React, { useMemo, useEffect, useState } from "react";
 import { XMarkIcon, TagIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
+import { useDispatch } from "react-redux";
+import { showNotification } from "../store/notification/notificationSlice.js";
 import { api } from "../api/axios"; // importamos cliente para obtener marcas
 
 export default function FilterSidebar({
@@ -29,6 +31,7 @@ export default function FilterSidebar({
   const [selectedBrandCodes, setSelectedBrandCodes] = useState(new Set(initialFilters.brandCodes || (brand ? [brand] : [])));
   const [showAllBrands, setShowAllBrands] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     let mounted = true;
@@ -98,6 +101,10 @@ export default function FilterSidebar({
   };
 
   const handleApply = () => {
+    if (localMax && localMin && Number(localMax) < Number(localMin)) {
+      dispatch(showNotification({ message: "El precio máximo no puede ser menor al precio mínimo", type: "error" }));
+      return;
+    }
     const filters = {
       categoryNames: Array.from(selectedCategoryNames),
       subcategory: localSubcategory,
@@ -110,7 +117,7 @@ export default function FilterSidebar({
   };
 
   const handleMinChange = (e) => {
-    const v = e.target.value;
+    const v = e.target.value.replace(',', '.');
     if (v === "") return setLocalMin("");
     const n = Number(v);
     if (Number.isNaN(n)) return;
@@ -118,7 +125,7 @@ export default function FilterSidebar({
   };
 
   const handleMaxChange = (e) => {
-    const v = e.target.value;
+    const v = e.target.value.replace(',', '.');
     if (v === "") return setLocalMax("");
     const n = Number(v);
     if (Number.isNaN(n)) return;

@@ -10,7 +10,7 @@ import {
     ArrowsPointingOutIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon } from "@heroicons/react/24/outline";
-import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
+import { HeartIcon as HeartSolid, StarIcon } from "@heroicons/react/24/solid";
 import { addItemIfLoggedIn } from "../store/cart/cartSlice.js";
 import { PATHS, productUrl } from "../routes/paths.js";
 import Breadcrumbs from "../Components/Breadcrumbs.jsx";
@@ -19,6 +19,8 @@ import RelatedProductsSection from "../Sections/RelatedProductsSection.jsx";
 import ReviewsSection from "../Components/ReviewsSection";
 import { fetchProduct } from "../store/products/productsSlice.js";
 import { addFavourite, removeFavourite } from "../store/favourites/favouritesSlice.js";
+import { showNotification } from "../store/notification/notificationSlice.js";
+import { getMyReview, addReview } from "../api/reviews.js";
 
 export default function ProductDetail() {
     const { id } = useParams();
@@ -33,10 +35,33 @@ export default function ProductDetail() {
     const [qty, setQty] = useState(1);
     const [added, setAdded] = useState(false);
     const qtyId = useId();
+    const [calification, setCalification] = useState(5);
+    const [reviewDescription, setReviewDescription] = useState("");
+    const [existingReview, setExistingReview] = useState(null);
+    const [reviewLoading, setReviewLoading] = useState(false);
 
     useEffect(() => {
         dispatch(fetchProduct(id));
     }, [dispatch, id]);
+
+    useEffect(() => {
+        if (!isLoggedIn || !product?.productCode) return;
+        let mounted = true;
+        setReviewLoading(true);
+        getMyReview(product.productCode)
+            .then((r) => {
+                if (!mounted) return;
+                setExistingReview(r);
+            })
+            .catch(() => {
+                if (!mounted) return;
+                setExistingReview(null);
+            })
+            .finally(() => {
+                if (mounted) setReviewLoading(false);
+            });
+        return () => (mounted = false);
+    }, [isLoggedIn, product?.productCode]);
 
     const {
         title = '',
@@ -82,7 +107,7 @@ export default function ProductDetail() {
     const stock = Number.isFinite(rawStock) ? rawStock : Infinity;
     const outOfStock = stock === 0;
     const isFiniteStock = Number.isFinite(stock);
-    const isQtyValid = qty >= 1 && qty <= stock;
+    const isQtyValid = qty > 0 && qty <= stock;
 
     // Formateador monetario memoizado
     const formatter = useMemo(
@@ -199,9 +224,9 @@ export default function ProductDetail() {
     };
 
     const clampQty = (n) => {
-        if (Number.isNaN(n) || n < 1) return 1;
-        if (isFiniteStock) return Math.min(Math.max(1, n), stock);
-        return n;
+        if (Number.isNaN(n) || n < 0) return 0;
+        if (isFiniteStock) return Math.min(Math.max(0, n), stock);
+        return Math.max(0, n);
     };
 
     const handleQtyChange = (next) => {
@@ -232,9 +257,33 @@ export default function ProductDetail() {
     };
 
     const toggleFavourite = () => {
+        if (!isLoggedIn) {
+            dispatch(showNotification({ message: "Debes iniciar sesión para agregar a favoritos", type: "warning" }));
+            return;
+        }
         const code = product?.productCode ?? product?.id;
         if (!code) return;
         dispatch(isFavourite ? removeFavourite(code) : addFavourite(code));
+        if (!isFavourite) {
+            dispatch(showNotification({ type: 'success', message: 'Producto agregado a favoritos' }));
+        } else {
+            dispatch(showNotification({ type: 'info', message: 'Producto eliminado de favoritos' }));
+        }
+    };
+
+    const submitReview = async (e) => {
+        e.preventDefault();
+        if (existingReview) return;
+        setReviewLoading(true);
+        try {
+            await addReview(product.productCode, { calification: Number(calification), description: reviewDescription });
+            dispatch(showNotification({ type: 'success', message: 'Reseña enviada correctamente' }));
+            setExistingReview({ calification, description: reviewDescription });
+        } catch (ex) {
+            dispatch(showNotification({ type: 'error', message: ex.response?.data?.message || ex.message || 'Error al enviar reseña' }));
+        } finally {
+            setReviewLoading(false);
+        }
     };
 
     // --- Returns condicionales después de los hooks ---
@@ -483,7 +532,7 @@ export default function ProductDetail() {
                                 type="button"
                                 className="px-3 py-2 text-zinc-700 hover:bg-zinc-50 disabled:opacity-30"
                                 onClick={() => handleQtyChange(qty - 1)}
-                                disabled={qty <= 1}
+                                disabled={qty <= 0}
                                 aria-label="Disminuir"
                             >
                                 –
@@ -491,7 +540,7 @@ export default function ProductDetail() {
                             <input
                                 id={qtyId}
                                 type="number"
-                                min={1}
+                                min={0}
                                 max={isFiniteStock ? stock : undefined}
                                 value={qty}
                                 onChange={(e) => handleQtyChange(parseInt(e.target.value, 10))}
@@ -636,6 +685,46 @@ export default function ProductDetail() {
 
             {/* Reseñas */}
             <ReviewsSection productId={product?.id} />
+
+            {/* Formulario de reseña */}
+            {isLoggedIn && !existingReview && (
+                <div className="mt-12 border-t border-zinc-200 pt-6">
+                    <h2 className="text-lg font-semibold text-zinc-900 mb-4">Deja tu reseña</h2>
+                    <form onSubmit={submitReview} className="space-y-4 bg-white p-6 rounded shadow">
+                        <div>
+                            <label className="block text-sm font-medium text-zinc-700 mb-2">Calificación</label>
+                            <div className="flex gap-1">
+                                {[1,2,3,4,5].map((star) => (
+                                    <button
+                                        key={star}
+                                        type="button"
+                                        onClick={() => setCalification(star)}
+                                        className="focus:outline-none"
+                                    >
+                                        <StarIcon className={`h-6 w-6 ${star <= calification ? 'text-amber-400' : 'text-zinc-300'}`} />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-zinc-700 mb-2">Comentario (opcional)</label>
+                            <textarea
+                                value={reviewDescription}
+                                onChange={(e) => setReviewDescription(e.target.value)}
+                                className="w-full h-24 rounded border border-zinc-300 px-3 py-2 text-sm"
+                                placeholder="Escribe tu opinión sobre el producto..."
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={reviewLoading}
+                            className="inline-flex items-center rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                        >
+                            {reviewLoading ? 'Enviando...' : 'Enviar reseña'}
+                        </button>
+                    </form>
+                </div>
+            )}
 
             <RelatedProductsSection products={related} />
         </section>

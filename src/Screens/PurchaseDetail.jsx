@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import purchaseService from "../api/purchase";
 import { TruckIcon, CalendarDaysIcon, MapPinIcon, CreditCardIcon } from "@heroicons/react/24/outline";
-import { reviewByCodeUrl } from "../routes/paths";
+import { reviewByCodeUrl, productUrl } from "../routes/paths";
 import { getMyReview } from "../api/reviews";
+import { addItemIfLoggedIn } from "../store/cart/cartSlice.js";
+import { showNotification } from "../store/notification/notificationSlice.js";
 
 const statusStyles = {
   CONFIRMED: "bg-emerald-100 text-emerald-700 border-emerald-300",
@@ -15,44 +18,47 @@ function ProductCard({ item, isReviewed }) {
   const product = item.product || {};
   const productCode = product.productCode; // usar SOLO productCode (no fallback a id)
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm">
-      {product.mediaSrc?.[0] && (
-        <img src={product.mediaSrc[0]} alt={product.title} className="h-16 w-16 rounded-lg object-cover border" />
-      )}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-zinc-900 text-lg truncate">{product.title}</span>
-          <span className="ml-2 text-xs text-zinc-500 bg-zinc-200 rounded px-2 py-0.5">x{item.quantity}</span>
+    <Link to={productUrl(product.id)} className="block">
+      <div className="flex items-center gap-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm hover:bg-zinc-100 transition">
+        {product.mediaSrc?.[0] && (
+          <img src={product.mediaSrc[0]} alt={product.title} className="h-16 w-16 rounded-lg object-cover border" />
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-zinc-900 text-lg truncate">{product.title}</span>
+            <span className="ml-2 text-xs text-zinc-500 bg-zinc-200 rounded px-2 py-0.5">x{item.quantity}</span>
+          </div>
+          <div className="text-xs text-zinc-500 truncate">{product.description}</div>
         </div>
-        <div className="text-xs text-zinc-500 truncate">{product.description}</div>
-      </div>
-      <div className="flex flex-col items-end gap-3">
-        <span className="font-bold text-emerald-700 text-lg">${product.price}</span>
-        {productCode ? (
-          isReviewed ? (
-            <span className="inline-flex items-center rounded border px-3 py-1 text-sm bg-emerald-50 text-emerald-700">
-              Reseñado
-            </span>
+        <div className="flex flex-col items-end gap-3">
+          <span className="font-bold text-emerald-700 text-lg">${product.price}</span>
+          {productCode ? (
+            isReviewed ? (
+              <span className="inline-flex items-center rounded border px-3 py-1 text-sm bg-emerald-50 text-emerald-700">
+                Reseñado
+              </span>
+            ) : (
+              <Link
+                to={reviewByCodeUrl(productCode)}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center rounded border px-3 py-1 text-sm bg-white hover:bg-zinc-50"
+              >
+                Dejar reseña
+              </Link>
+            )
           ) : (
-            <Link
-              to={reviewByCodeUrl(productCode)}
-              className="inline-flex items-center rounded border px-3 py-1 text-sm bg-white hover:bg-zinc-50"
+            <button
+              type="button"
+              disabled
+              title="No es posible dejar reseña (no hay productCode)"
+              className="inline-flex items-center rounded border px-3 py-1 text-sm bg-zinc-100 text-zinc-400 cursor-not-allowed"
             >
               Dejar reseña
-            </Link>
-          )
-        ) : (
-          <button
-            type="button"
-            disabled
-            title="No es posible dejar reseña (no hay productCode)"
-            className="inline-flex items-center rounded border px-3 py-1 text-sm bg-zinc-100 text-zinc-400 cursor-not-allowed"
-          >
-            Dejar reseña
-          </button>
-        )}
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -62,6 +68,8 @@ export default function PurchaseDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [reviewedMap, setReviewedMap] = useState({}); // productCode -> true
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchPurchase() {
@@ -99,6 +107,36 @@ export default function PurchaseDetail() {
     }
     fetchPurchase();
   }, [id]);
+
+  const repeatPurchase = async () => {
+    if (!purchase?.cart?.items) return;
+    let addedCount = 0;
+    let failedCount = 0;
+    for (const item of purchase.cart.items) {
+      const product = item.product;
+      if (!product) continue;
+      try {
+        await dispatch(addItemIfLoggedIn({
+          id: String(product.id),
+          title: product.title,
+          price: product.price,
+          quantity: item.quantity,
+          image: product.mediaSrc?.[0] || "",
+          stock: product.stock,
+        })).unwrap();
+        addedCount++;
+      } catch (err) {
+        failedCount++;
+      }
+    }
+    if (addedCount > 0) {
+      dispatch(showNotification({ message: `${addedCount} producto(s) agregado(s) al carrito`, type: "success" }));
+    }
+    if (failedCount > 0) {
+      dispatch(showNotification({ message: `${failedCount} producto(s) no pudieron agregarse (stock insuficiente)`, type: "warning" }));
+    }
+    navigate('/cart');
+  };
 
   if (loading) return (
     <section className="mx-auto max-w-3xl px-4 py-12">
@@ -156,6 +194,14 @@ export default function PurchaseDetail() {
         {purchase.cart?.items?.map((item) => (
           <ProductCard key={item.id} item={item} isReviewed={!!reviewedMap[item.product?.productCode]} />
         ))}
+      </div>
+      <div className="mt-8 flex justify-center">
+        <button
+          onClick={repeatPurchase}
+          className="inline-flex items-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          Repetir compra
+        </button>
       </div>
     </section>
   );

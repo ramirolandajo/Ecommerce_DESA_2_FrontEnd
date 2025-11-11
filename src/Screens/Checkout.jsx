@@ -16,6 +16,7 @@ export default function Checkout() {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const createdRef = useRef(false);
   useEffect(() => {
@@ -80,15 +81,22 @@ export default function Checkout() {
     }
   };
 
-  const handleCancel = async () => {
-    console.log("handleCancel called");
+  const handleCancel = () => {
+    setShowCancelModal(true);
+  };
+
+  const confirmCancel = async () => {
+    setShowCancelModal(false);
+    setLoading(true);
     try {
       const result = await dispatch(cancelPurchase()).unwrap();
       console.log("Respuesta del backend al cancelar compra:", result);
-      navigate('/cart');
+      navigate('/');
     } catch (err) {
       console.error(err);
       alert("No se pudo cancelar la compra");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -111,6 +119,31 @@ export default function Checkout() {
         handleCancel={handleCancel}
         loading={loading}
       />
+
+      {/* Modal de cancelar compra */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white p-6 rounded shadow-lg max-w-sm w-full mx-4">
+            <h2 className="text-lg font-semibold mb-4">¿Quieres cancelar tu compra?</h2>
+            <p className="text-sm text-zinc-600 mb-6">¿Estás seguro? Esta acción no se puede deshacer.</p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="flex-1 px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 rounded hover:bg-zinc-200"
+              >
+                No
+              </button>
+              <button
+                onClick={confirmCancel}
+                disabled={loading}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50"
+              >
+                {loading ? 'Cancelando...' : 'Sí, cancelar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

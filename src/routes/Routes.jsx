@@ -16,6 +16,7 @@ const VerifyEmail = lazy(() => import("../Screens/VerifyEmail.jsx"));
 const PurchaseDetail = lazy(() => import("../Screens/PurchaseDetail.jsx"));
 const UserPurchases = lazy(() => import("../Screens/UserPurchases.jsx"));
 const ReviewProduct = lazy(() => import("../Screens/ReviewProduct.jsx"));
+const UserProfile = lazy(() => import("../Screens/UserProfile.jsx"));
 
 const NotFound = () => (
   <div className="mx-auto max-w-3xl px-4 py-16">
@@ -83,6 +84,14 @@ export default function AppRoutes() {
           element: (
             <RequireAuth>
               <ReviewProduct />
+            </RequireAuth>
+          ),
+        },
+        {
+          path: "/user-profile",
+          element: (
+            <RequireAuth>
+              <UserProfile />
             </RequireAuth>
           ),
         },

@@ -301,6 +301,14 @@ export default function Navbar() {
                           Mis compras
                         </Link>
                       </MenuItem>
+                      <MenuItem>
+                        <Link
+                          to="/user-profile"
+                          className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Mi cuenta
+                        </Link>
+                      </MenuItem>
                     </MenuItems>
                   </Menu>
                 ) : (

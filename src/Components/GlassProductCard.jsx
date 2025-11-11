@@ -247,6 +247,15 @@ export default function GlassProductCard({ item }) {
                 )}
             </button>
 
+            {/* Etiqueta sin stock */}
+            {outOfStock && (
+                <div className="absolute top-3 left-3 z-10">
+                    <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-gray-800 text-white">
+                        Sin stock
+                    </span>
+                </div>
+            )}
+
             {/* Marca */}
             {brand?.name && (
                 <div className="absolute bottom-4 left-4 z-10">

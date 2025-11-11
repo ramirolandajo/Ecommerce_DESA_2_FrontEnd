@@ -146,7 +146,7 @@ export default function CartDrawer({ open, onClose }) {
                                                                 </button>
                                                                 <input
                                                                     type="number"
-                                                                    min={1}
+                                                                    min={0}
                                                                     value={qty}
                                                                     onChange={(e) =>
                                                                         handleQtyChange(dispatch, item.id, e.target.value)
@@ -245,6 +245,8 @@ function handleQtyChange(dispatch, id, qty) {
     const quantity = Number(qty);
     if (Number.isFinite(quantity) && quantity > 0) {
         dispatch(updateQuantity({ id, quantity }));
+    } else if (quantity <= 0) {
+        dispatch(removeItem(id));
     }
 }
 
