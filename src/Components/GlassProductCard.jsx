@@ -28,7 +28,8 @@ export default function GlassProductCard({ item }) {
         new Intl.NumberFormat("es-AR", {
             style: "currency",
             currency: curr,
-            maximumFractionDigits: 0,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
         }).format(n);
 
     const hasDiscount = typeof discount === "number" && discount > 0;

@@ -115,7 +115,8 @@ export default function ProductDetail() {
             new Intl.NumberFormat("es-AR", {
                 style: "currency",
                 currency,
-                maximumFractionDigits: 0,
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
             }),
         [currency]
     );

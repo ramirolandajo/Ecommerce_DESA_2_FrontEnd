@@ -31,7 +31,7 @@ function ProductCard({ item, isReviewed }) {
           <div className="text-xs text-zinc-500 truncate">{product.description}</div>
         </div>
         <div className="flex flex-col items-end gap-3">
-          <span className="font-bold text-emerald-700 text-lg">${product.price}</span>
+          <span className="font-bold text-emerald-700 text-lg">{money(product.price)}</span>
           {productCode ? (
             isReviewed ? (
               <span className="inline-flex items-center rounded border px-3 py-1 text-sm bg-emerald-50 text-emerald-700">
@@ -70,6 +70,14 @@ export default function PurchaseDetail() {
   const [reviewedMap, setReviewedMap] = useState({}); // productCode -> true
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const money = (n) =>
+    new Intl.NumberFormat("es-AR", {
+      style: "currency",
+      currency: "ARS",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(n) || 0);
 
   useEffect(() => {
     async function fetchPurchase() {
@@ -186,7 +194,7 @@ export default function PurchaseDetail() {
           </div>
         </div>
         <div className="flex justify-end">
-          <span className="text-2xl font-extrabold text-emerald-700">Total: ${purchase.cart?.finalPrice}</span>
+          <span className="text-2xl font-extrabold text-emerald-700">Total: {money(purchase.cart?.finalPrice)}</span>
         </div>
       </div>
       <h2 className="mb-4 text-xl font-bold text-zinc-900">Productos</h2>

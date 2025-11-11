@@ -9,6 +9,14 @@ const statusStyles = {
   PENDING: "bg-yellow-100 text-yellow-700 border-yellow-300",
 };
 
+const money = (n) =>
+  new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(n) || 0);
+
 function PurchaseCard({ purchase, onClick }) {
   const status = purchase.status;
   const statusClass = statusStyles[status] || "bg-zinc-100 text-zinc-700 border-zinc-300";
@@ -50,7 +58,7 @@ function PurchaseCard({ purchase, onClick }) {
         )}
       </div>
       <div className="flex justify-end pt-2">
-        <span className="text-lg font-bold text-emerald-700">${purchase.cart?.finalPrice}</span>
+        <span className="text-lg font-bold text-emerald-700">{money(purchase.cart?.finalPrice)}</span>
       </div>
     </div>
   );
