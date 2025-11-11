@@ -14,6 +14,16 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.data?.error) {
+            error.message = error.response.data.error;
+        }
+        return Promise.reject(error);
+    }
+);
+
 export const request = {
     get: (url, config) => api.get(url, config),
     post: (url, data, config) => api.post(url, data, config),
