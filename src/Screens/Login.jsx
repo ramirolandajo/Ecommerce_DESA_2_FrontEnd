@@ -98,6 +98,14 @@ export default function Login() {
             Regístrate
           </a>
         </div>
+        <div className="mt-4 text-center text-sm text-gray-600">
+          <a
+            href="/forgot-password"
+            className="font-medium text-blue-600 hover:text-blue-800"
+          >
+            ¿Olvidaste tu contraseña?
+          </a>
+        </div>
       </div>
     </div>
   );

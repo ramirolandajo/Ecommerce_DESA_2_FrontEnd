@@ -17,6 +17,7 @@ const PurchaseDetail = lazy(() => import("../Screens/PurchaseDetail.jsx"));
 const UserPurchases = lazy(() => import("../Screens/UserPurchases.jsx"));
 const ReviewProduct = lazy(() => import("../Screens/ReviewProduct.jsx"));
 const UserProfile = lazy(() => import("../Screens/UserProfile.jsx"));
+const ForgotPassword = lazy(() => import("../Screens/ForgotPassword.jsx"));
 
 const NotFound = () => (
   <div className="mx-auto max-w-3xl px-4 py-16">
@@ -30,6 +31,7 @@ export default function AppRoutes() {
     { path: "/login", element: <Login /> },
     { path: "/register", element: <Register /> },
     { path: "/verify-email", element: <VerifyEmail /> },
+    { path: "/forgot-password", element: <ForgotPassword /> },
     {
       element: <Layout />,
       children: [
