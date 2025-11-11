@@ -14,7 +14,7 @@ const statusStyles = {
   PENDING: "bg-yellow-100 text-yellow-700 border-yellow-300",
 };
 
-function ProductCard({ item, isReviewed }) {
+function ProductCard({ item, isReviewed, money }) {
   const product = item.product || {};
   const productCode = product.productCode; // usar SOLO productCode (no fallback a id)
   return (
@@ -99,11 +99,7 @@ export default function PurchaseDetail() {
           const map = {};
           checks.forEach((res, idx) => {
             const code = productCodes[idx];
-            if (res.status === "fulfilled" && res.value) {
-              map[code] = true;
-            } else {
-              map[code] = false;
-            }
+            map[code] = res.status === "fulfilled" && res.value;
           });
           setReviewedMap(map);
         }
@@ -133,7 +129,7 @@ export default function PurchaseDetail() {
           stock: product.stock,
         })).unwrap();
         addedCount++;
-      } catch (err) {
+      } catch {
         failedCount++;
       }
     }
@@ -200,7 +196,7 @@ export default function PurchaseDetail() {
       <h2 className="mb-4 text-xl font-bold text-zinc-900">Productos</h2>
       <div className="grid gap-4">
         {purchase.cart?.items?.map((item) => (
-          <ProductCard key={item.id} item={item} isReviewed={!!reviewedMap[item.product?.productCode]} />
+          <ProductCard key={item.id} item={item} isReviewed={!!reviewedMap[item.product?.productCode]} money={money} />
         ))}
       </div>
       <div className="mt-8 flex justify-center">
