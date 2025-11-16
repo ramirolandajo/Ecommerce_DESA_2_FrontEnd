@@ -20,7 +20,6 @@ export default function ForgotPassword() {
     setError(null);
     try {
       await requestPasswordReset(email);
-      setMessage("Se ha enviado un correo con el código de recuperación");
       setStep(2);
     } catch (err) {
       setError(err.response?.data?.error || err.message || "Error al enviar el correo");

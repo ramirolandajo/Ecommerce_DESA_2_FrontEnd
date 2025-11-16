@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../store/user/userSlice.js";
 import { showNotification } from "../store/notification/notificationSlice.js";
 import { useNavigate } from "react-router-dom";
+import { deactivateAccount } from "../api/auth.js";
 
 export default function UserProfile() {
   const dispatch = useDispatch();
@@ -15,8 +16,7 @@ export default function UserProfile() {
     if (!confirm("¿Estás seguro de que quieres desactivar tu cuenta? Esta acción no se puede deshacer.")) return;
     setLoading(true);
     try {
-      // Assume there's an API to deactivate
-      // await deactivateAccount();
+      await deactivateAccount();
       dispatch(logout());
       dispatch(showNotification({ message: "Cuenta desactivada", type: "info" }));
       navigate("/");

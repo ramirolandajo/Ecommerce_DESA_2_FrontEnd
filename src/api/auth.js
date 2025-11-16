@@ -32,3 +32,8 @@ export const fetchCurrentUser = async () => {
     const { user } = res.data;
     return { user };
 };
+
+export const deactivateAccount = async () => {
+    const res = await api.put("/user/disable");
+    return res.data;
+};
