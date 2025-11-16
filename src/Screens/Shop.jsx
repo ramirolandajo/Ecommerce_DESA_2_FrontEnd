@@ -182,7 +182,7 @@ export default function Shop() {
 
   useEffect(() => {
     if (!isSearchMode && products.length === 0) {
-      dispatch(fetchProducts());
+      dispatch(fetchFilteredProducts({ page: 0, size: 24 }));
     }
   }, [isSearchMode, products.length, dispatch]);
 
@@ -213,6 +213,13 @@ export default function Shop() {
     if (fMax !== undefined && fMax !== null && fMax !== '') sp.set('max', String(Math.max(0, Number(fMax))));
     if (brandCodes && brandCodes.length) sp.set('brand', String(brandCodes[0]));
     setSearchParams(sp);
+
+    // Si se limpian los filtros y estamos en modo búsqueda, limpiar la búsqueda
+    if (isSearchMode && catNames.length === 0 && !fSub && !fMin && !fMax && brandCodes.length === 0) {
+      dispatch(fetchFilteredProducts({ page: 0, size: 24 }));
+      setSearchParams(new URLSearchParams());
+      return;
+    }
 
     if (!isSearchMode) {
       loadFiltered({ page: 0, filters: newApplied });

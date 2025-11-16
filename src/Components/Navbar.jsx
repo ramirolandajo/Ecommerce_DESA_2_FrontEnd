@@ -4,7 +4,7 @@ import { useNavigate, NavLink, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import CartDrawer from "./CartDrawer.jsx";
 import { searchProducts } from "../api/products.js";
-import { fetchSearchProducts, fetchProducts } from "../store/products/productsSlice.js";
+import { fetchSearchProducts, fetchProducts, fetchFilteredProducts } from "../store/products/productsSlice.js";
 import { logout } from "../store/user/userSlice.js";
 import { clearCart, clearCartOnServer } from "../store/cart/cartSlice.js";
 import { showNotification } from "../store/notification/notificationSlice.js";
@@ -152,7 +152,7 @@ export default function Navbar() {
     setIsLoading(false);
     setQuery("");
     setSuggestions([]);
-    dispatch(fetchProducts());
+    dispatch(fetchFilteredProducts({ page: 0, size: 24 }));
     navigate('/shop');
   };
 
