@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || "http://ecommerce-prod-env.eba-guhrbi5i.sa-east-1.elasticbeanstalk.com/api/",
+    baseURL: import.meta.env.VITE_API_URL || "/api",
 });
 
 api.interceptors.request.use((config) => {
