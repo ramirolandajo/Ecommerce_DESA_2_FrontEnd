@@ -1,5 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="18" fill="#0ea5a4" />
-  <text x="50%" y="53%" font-size="48" text-anchor="middle" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-weight="700">CM</text>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g transform="matrix(0.031953,0,0,0.031953,-3.337353,27.337353)">
+        <path d="M160,-720L160,-800L800,-800L800,-720L160,-720ZM160,-160L160,-400L120,-400L120,-480L160,-680L800,-680L840,-480L840,-400L800,-400L800,-160L720,-160L720,-400L560,-400L560,-160L160,-160ZM240,-240L480,-240L480,-400L240,-400L240,-240ZM202,-480L758,-480L202,-480ZM202,-480L758,-480L734,-600L226,-600L202,-480Z" style="fill-rule:nonzero;stroke:white;stroke-width:23.48px;"/>
+    </g>
 </svg>
-
