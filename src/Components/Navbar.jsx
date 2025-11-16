@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, NavLink, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import CartDrawer from "./CartDrawer.jsx";
-import { getQueryScore } from "../utils/getQueryScore.js";
+import { searchProducts } from "../api/products.js";
+import { fetchSearchProducts, fetchProducts } from "../store/products/productsSlice.js";
 import { logout } from "../store/user/userSlice.js";
 import { clearCart, clearCartOnServer } from "../store/cart/cartSlice.js";
 import { showNotification } from "../store/notification/notificationSlice.js";
@@ -68,7 +69,6 @@ export default function Navbar() {
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const userInfo = useSelector((state) => state.user.userInfo);
   const dispatch = useDispatch();
-  const { items: products } = useSelector((s) => s.products);
 
   const totalItems = useSelector((s) =>
     s.cart.items.reduce((acc, i) => acc + i.quantity, 0)
@@ -98,19 +98,17 @@ export default function Navbar() {
     }
 
     setIsLoading(true);
-    const q = value.toLowerCase();
-    const pool = Array.isArray(products) ? products.filter((t) => t.stock > 0) : [];
 
-    searchTimeout.current = setTimeout(() => {
-      const filtered = pool
-        .map((item) => ({ item, score: getQueryScore(item, q) }))
-        .filter(({ score }) => score > 0)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 5)
-        .map(({ item }) => item);
-
-      setSuggestions(filtered);
-      setIsLoading(false);
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        const results = await searchProducts(value);
+        setSuggestions(results.slice(0, 5));
+      } catch (error) {
+        console.error("Error searching products:", error);
+        setSuggestions([]);
+      } finally {
+        setIsLoading(false);
+      }
     }, 400);
   };
 
@@ -132,7 +130,8 @@ export default function Navbar() {
   }, []);
 
   const handleSelect = (title) => {
-    navigate(`/shop?query=${encodeURIComponent(title)}`);
+    dispatch(fetchSearchProducts(title));
+    navigate('/shop');
     setSuggestions([]);
     setQuery(title);
   };
@@ -142,7 +141,10 @@ export default function Navbar() {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     setIsLoading(false);
     setSuggestions([]);
-    navigate(`/shop?query=${encodeURIComponent(query)}`);
+    if (query.trim()) {
+      dispatch(fetchSearchProducts(query));
+    }
+    navigate('/shop');
   };
 
   const handleClear = () => {
@@ -150,7 +152,8 @@ export default function Navbar() {
     setIsLoading(false);
     setQuery("");
     setSuggestions([]);
-    navigate("/shop");
+    dispatch(fetchProducts());
+    navigate('/shop');
   };
 
   return (

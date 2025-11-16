@@ -51,6 +51,7 @@ const initialState = {
   related: [],
   status: "idle", // idle | loading | succeeded | failed
   error: null,
+  isSearchMode: false,
   pagination: {
     page: 0,
     size: 24, // Cambiado a 24 por página
@@ -217,6 +218,30 @@ export const fetchFilteredProducts = createAsyncThunk(
   }
 );
 
+// D) Nuevo thunk: fetchSearchProducts -> GET /products/search?query=...
+export const fetchSearchProducts = createAsyncThunk(
+  "products/fetchSearch",
+  async (query) => {
+    const res = await api.get(`/products/search?query=${encodeURIComponent(query)}`);
+    const rawProducts = res.data;
+    // Asumimos que devuelve array de productos completos o SearchProductDTO
+    // Para compatibilidad, normalizamos si es necesario
+    const normalized = normalizeWithCategories(rawProducts);
+    return {
+      items: normalized,
+      pagination: {
+        page: 0,
+        size: normalized.length,
+        totalPages: 1,
+        totalElements: normalized.length,
+        numberOfElements: normalized.length,
+        first: true,
+        last: true,
+      },
+    };
+  }
+);
+
 // C) Uno por id con productos relacionados
 export const fetchProduct = createAsyncThunk("products/fetchOne", async (id) => {
   const { product: rawProduct, relatedProducts = [] } = await getJSON(`/products/${id}`);
@@ -255,6 +280,7 @@ const productsSlice = createSlice({
         state.status = "succeeded";
         state.items = action.payload.items; // Siempre reemplaza
         state.pagination = action.payload.pagination;
+        state.isSearchMode = false;
       })
       .addCase(fetchProductsWithCategories.rejected, (state, action) => {
         state.status = "failed";
@@ -270,6 +296,7 @@ const productsSlice = createSlice({
         state.status = "succeeded";
         state.items = action.payload.items; // Siempre reemplaza
         state.pagination = action.payload.pagination;
+        state.isSearchMode = false;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.status = "failed";
@@ -285,10 +312,27 @@ const productsSlice = createSlice({
         state.status = "succeeded";
         state.items = action.payload.items; // Siempre reemplaza con la página filtrada
         state.pagination = action.payload.pagination;
+        state.isSearchMode = false;
       })
       .addCase(fetchFilteredProducts.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error?.message || "Error al cargar productos filtrados";
+      })
+
+      // fetchSearchProducts
+      .addCase(fetchSearchProducts.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(fetchSearchProducts.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.items = action.payload.items; // Siempre reemplaza con los resultados de búsqueda
+        state.pagination = action.payload.pagination;
+        state.isSearchMode = true;
+      })
+      .addCase(fetchSearchProducts.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.error?.message || "Error al cargar productos de búsqueda";
       })
 
       // fetchProduct (uno)

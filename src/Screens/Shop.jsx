@@ -5,12 +5,10 @@ import { useDispatch, useSelector } from "react-redux";
 import GlassProductCard from "../Components/GlassProductCard.jsx";
 import FilterSidebar from "../Components/FilterSidebar.jsx";
 import ProductSkeleton from "../Components/ProductSkeleton.jsx";
-import { getQueryScore } from "../utils/getQueryScore.js";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { ChevronDownIcon, FunnelIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-import { fetchFilteredProducts } from "../store/products/productsSlice";
+import { fetchFilteredProducts, fetchProducts } from "../store/products/productsSlice";
 import { api } from "../api/axios";
-import CategoryButton from "../Components/CategoryButton.jsx";
 
 function deriveCategories(items) {
   const map = items.reduce((map, { categories, subcategory }) => {
@@ -63,7 +61,7 @@ export default function Shop() {
   const [fallbackCategories, setFallbackCategories] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const { items: products, status, error } = useSelector((state) => state.products);
+  const { items: products, status, error, isSearchMode } = useSelector((state) => state.products);
   const dispatch = useDispatch();
   const pagination = useSelector(state => state.products.pagination);
   const [isLoading, setIsLoading] = useState(false);
@@ -182,6 +180,12 @@ export default function Shop() {
     loadFiltered({ page: 0, filters: appliedFilters });
   }, [serverCategories]);
 
+  useEffect(() => {
+    if (!isSearchMode && products.length === 0) {
+      dispatch(fetchProducts());
+    }
+  }, [isSearchMode, products.length, dispatch]);
+
   const applyFilters = (filters) => {
     const { category: fCategory, categoryNames: fCategoryNames, subcategory: fSub, min: fMin, max: fMax, brandCodes = [] } = filters;
     const catNames = Array.isArray(fCategoryNames) && fCategoryNames.length ? fCategoryNames : (fCategory && fCategory !== 'All' ? [fCategory] : []);
@@ -210,7 +214,9 @@ export default function Shop() {
     if (brandCodes && brandCodes.length) sp.set('brand', String(brandCodes[0]));
     setSearchParams(sp);
 
-    loadFiltered({ page: 0, filters: newApplied });
+    if (!isSearchMode) {
+      loadFiltered({ page: 0, filters: newApplied });
+    }
   };
 
   const handleFilterChange = (localFilters) => {
@@ -226,7 +232,6 @@ export default function Shop() {
 
   const filtered = useMemo(() => {
     if (status !== "succeeded") return [];
-    const q = query.trim();
     const minNum = min === "" ? null : Math.max(0, Number(min));
     const maxNum = max === "" ? null : Math.max(0, Number(max));
     const withinRange = (price) => {
@@ -236,21 +241,12 @@ export default function Shop() {
       return gteMin && lteMax;
     };
     const isAll = category === "All" || category === "";
-    if (!q) {
-      return products.filter((t) => {
-        const matchesCat = isAll ? true : t.categories?.some((c) => (c?.name ?? c) === category);
-        const matchesSub = subcategory ? t.subcategory === subcategory : true;
-        return matchesCat && matchesSub && withinRange(t.price);
-      });
-    }
-    return products
-      .map((t) => ({ ...t, score: getQueryScore(t, q) }))
-      .filter((t) => {
-        const matchesCat = isAll ? true : t.categories?.some((c) => (c?.name ?? c) === category);
-        const matchesSub = subcategory ? t.subcategory === subcategory : true;
-        return matchesCat && matchesSub && withinRange(t.price) && t.score > 0;
-      });
-  }, [products, category, subcategory, min, max, query, status]);
+    return products.filter((t) => {
+      const matchesCat = isAll ? true : t.categories?.some((c) => (c?.name ?? c) === category);
+      const matchesSub = subcategory ? t.subcategory === subcategory : true;
+      return matchesCat && matchesSub && withinRange(t.price);
+    });
+  }, [products, category, subcategory, min, max, status]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
@@ -258,17 +254,15 @@ export default function Shop() {
       arr.sort((a, b) => (a.price || 0) - (b.price || 0));
     } else if (sort === "price-desc") {
       arr.sort((a, b) => (b.price || 0) - (a.price || 0));
-    } else if (query) {
-      arr.sort((a, b) => (b.score || 0) - (a.score || 0));
     }
     return arr;
-  }, [filtered, sort, query]);
+  }, [filtered, sort]);
 
   useEffect(() => {
     setIsLoading(true);
     const t = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(t);
-  }, [category, subcategory, min, max, sort, query]);
+  }, [category, subcategory, min, max, sort]);
 
   const showLoading = status === "loading" || status === "idle" || isLoading;
 
@@ -372,7 +366,7 @@ export default function Shop() {
                 <GlassProductCard key={item.id} item={item} />
               ))}
             </div>
-            {pagination.totalPages > 1 && (
+            {pagination.totalPages > 1 && !isSearchMode && (
               <div className="flex justify-center items-center gap-2 mt-8">
                 <button
                   onClick={() => loadFiltered({ page: Math.max(0, pagination.page - 1) })}

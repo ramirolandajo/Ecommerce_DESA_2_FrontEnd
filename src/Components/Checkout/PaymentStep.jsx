@@ -70,8 +70,8 @@ export default function PaymentStep({ items, address, shipping, money, card, set
   }, [products]);
 
   const subtotal = items.reduce((a, i) => a + (i.price ?? 0) * (i.quantity ?? 1), 0);
-  const tax = 50;
-  const shippingCost = shipping === "express" ? 8.5 : 29;
+  const tax = 0;
+  const shippingCost = 0;
   const total = subtotal + tax + shippingCost;
 
   /* ===== estado del form sin botón “siguiente” ===== */

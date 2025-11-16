@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useParams, Link } from "react-router-dom";
 import purchaseService from "../api/purchase";
 import { TruckIcon, CalendarDaysIcon, MapPinIcon, CreditCardIcon } from "@heroicons/react/24/outline";
 import { reviewByCodeUrl, productUrl } from "../routes/paths";
 import { getMyReview } from "../api/reviews";
-import { addItemIfLoggedIn } from "../store/cart/cartSlice.js";
-import { showNotification } from "../store/notification/notificationSlice.js";
 
 const statusStyles = {
   CONFIRMED: "bg-emerald-100 text-emerald-700 border-emerald-300",
@@ -68,8 +65,6 @@ export default function PurchaseDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [reviewedMap, setReviewedMap] = useState({}); // productCode -> true
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   const money = (n) =>
     new Intl.NumberFormat("es-AR", {
@@ -111,36 +106,6 @@ export default function PurchaseDetail() {
     }
     fetchPurchase();
   }, [id]);
-
-  const repeatPurchase = async () => {
-    if (!purchase?.cart?.items) return;
-    let addedCount = 0;
-    let failedCount = 0;
-    for (const item of purchase.cart.items) {
-      const product = item.product;
-      if (!product) continue;
-      try {
-        await dispatch(addItemIfLoggedIn({
-          id: String(product.id),
-          title: product.title,
-          price: product.price,
-          quantity: item.quantity,
-          image: product.mediaSrc?.[0] || "",
-          stock: product.stock,
-        })).unwrap();
-        addedCount++;
-      } catch {
-        failedCount++;
-      }
-    }
-    if (addedCount > 0) {
-      dispatch(showNotification({ message: `${addedCount} producto(s) agregado(s) al carrito`, type: "success" }));
-    }
-    if (failedCount > 0) {
-      dispatch(showNotification({ message: `${failedCount} producto(s) no pudieron agregarse (stock insuficiente)`, type: "warning" }));
-    }
-    navigate('/cart');
-  };
 
   if (loading) return (
     <section className="mx-auto max-w-3xl px-4 py-12">
@@ -198,14 +163,6 @@ export default function PurchaseDetail() {
         {purchase.cart?.items?.map((item) => (
           <ProductCard key={item.id} item={item} isReviewed={!!reviewedMap[item.product?.productCode]} money={money} />
         ))}
-      </div>
-      <div className="mt-8 flex justify-center">
-        <button
-          onClick={repeatPurchase}
-          className="inline-flex items-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-700"
-        >
-          Repetir compra
-        </button>
       </div>
     </section>
   );
