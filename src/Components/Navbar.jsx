@@ -168,9 +168,8 @@ export default function Navbar() {
 
     if (query.trim()) {
       dispatch(fetchSearchProducts(query));
-    } else {
-      dispatch(fetchFilteredProducts({ page: 0, size: 24 }));
     }
+    // No hacer dispatch si no hay query, Shop.jsx maneja la carga inicial
   }, [dispatch, searchParams]);
 
   return (

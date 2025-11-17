@@ -190,7 +190,7 @@ export default function Shop() {
     if (query && !isSearchMode) {
       dispatch(fetchSearchProducts(query));
     }
-  }, [query, dispatch]);
+  }, [query, isSearchMode, dispatch]);
 
   const applyFilters = (filters) => {
     const { category: fCategory, categoryNames: fCategoryNames, subcategory: fSub, min: fMin, max: fMax, brandCodes = [] } = filters;
