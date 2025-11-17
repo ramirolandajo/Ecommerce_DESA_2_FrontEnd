@@ -4,7 +4,6 @@ import { useNavigate, NavLink, Link, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import CartDrawer from "./CartDrawer.jsx";
 import { searchProducts } from "../api/products.js";
-import { fetchSearchProducts, fetchFilteredProducts } from "../store/products/productsSlice.js";
 import { logout } from "../store/user/userSlice.js";
 import { clearCart, clearCartOnServer } from "../store/cart/cartSlice.js";
 import { showNotification } from "../store/notification/notificationSlice.js";
@@ -65,11 +64,12 @@ export default function Navbar() {
   const [isLoading, setIsLoading] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const searchTimeout = useRef(null);
+  const suggestionController = useRef(null);
   const navigate = useNavigate();
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const userInfo = useSelector((state) => state.user.userInfo);
   const dispatch = useDispatch();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   const totalItems = useSelector((s) =>
     s.cart.items.reduce((acc, i) => acc + i.quantity, 0)
@@ -102,9 +102,15 @@ export default function Navbar() {
 
     searchTimeout.current = setTimeout(async () => {
       try {
-        const results = await searchProducts(value);
+        if (suggestionController.current) suggestionController.current.abort();
+        suggestionController.current = new AbortController();
+        const results = await searchProducts(value, suggestionController.current.signal);
         setSuggestions(results.slice(0, 5));
       } catch (error) {
+        if (error.name === 'CanceledError' || error.name === 'AbortError') {
+          // request was aborted; ignore
+          return;
+        }
         console.error("Error searching products:", error);
         setSuggestions([]);
       } finally {
@@ -127,13 +133,13 @@ export default function Navbar() {
   useEffect(() => {
     return () => {
       if (searchTimeout.current) clearTimeout(searchTimeout.current);
+      if (suggestionController.current) suggestionController.current.abort();
     };
   }, []);
 
   const handleSelect = (title) => {
-    dispatch(fetchSearchProducts(title));
-    setSearchParams({ query: title });
-    navigate('/shop');
+    // Navegar directamente a /shop con query para evitar perder el param al cambiar ruta
+    navigate(`/shop?query=${encodeURIComponent(title)}`);
     setSuggestions([]);
     setQuery(title);
   };
@@ -144,12 +150,10 @@ export default function Navbar() {
     setIsLoading(false);
     setSuggestions([]);
     if (query.trim()) {
-      dispatch(fetchSearchProducts(query));
-      setSearchParams({ query });
+      navigate(`/shop?query=${encodeURIComponent(query)}`);
     } else {
-      setSearchParams({});
+      navigate('/shop');
     }
-    navigate('/shop');
   };
 
   const handleClear = () => {
@@ -157,20 +161,14 @@ export default function Navbar() {
     setIsLoading(false);
     setQuery("");
     setSuggestions([]);
-    dispatch(fetchFilteredProducts({ page: 0, size: 24 }));
-    setSearchParams({});
     navigate('/shop');
   };
 
   useEffect(() => {
-    const query = searchParams.get("query") || "";
-    setQuery(query);
-
-    if (query.trim()) {
-      dispatch(fetchSearchProducts(query));
-    }
-    // No hacer dispatch si no hay query, Shop.jsx maneja la carga inicial
-  }, [dispatch, searchParams]);
+    // Solo sincronizar el input con la URL; no disparar búsquedas desde aquí
+    const q = searchParams.get("query") || "";
+    setQuery(q);
+  }, [searchParams]);
 
   return (
     <>

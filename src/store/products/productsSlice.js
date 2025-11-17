@@ -150,7 +150,7 @@ export const fetchProducts = createAsyncThunk("products/fetchAll", async (params
 // C) Nuevo thunk: fetchFilteredProducts -> POST /products/filter
 export const fetchFilteredProducts = createAsyncThunk(
   "products/fetchFiltered",
-  async (params = {}) => {
+  async (params = {}, thunkAPI) => {
     // params puede contener: page,size, priceMin, priceMax, brandCode, categoryCode, brandCodes, categoryCodes, sortBy, sortOrder
     const {
       page = 0,
@@ -180,8 +180,8 @@ export const fetchFilteredProducts = createAsyncThunk(
       size,
     };
 
-    // Hacemos la petición POST
-    const res = await api.post("/products/filter", body);
+    // Hacemos la petición POST, pasando el signal para permitir cancelación
+    const res = await api.post("/products/filter", body, { signal: thunkAPI.signal });
     const rawResponse = res.data;
     // El backend devuelve una página: content + pageable / totalPages etc.
     const rawProducts = Array.isArray(rawResponse)
@@ -221,8 +221,8 @@ export const fetchFilteredProducts = createAsyncThunk(
 // D) Nuevo thunk: fetchSearchProducts -> GET /products/search?query=...
 export const fetchSearchProducts = createAsyncThunk(
   "products/fetchSearch",
-  async (query) => {
-    const res = await api.get(`/products/search?query=${encodeURIComponent(query)}`);
+  async (query, thunkAPI) => {
+    const res = await api.get(`/products/search?query=${encodeURIComponent(query)}`, { signal: thunkAPI.signal });
     const rawProducts = res.data;
     // Asumimos que devuelve array de productos completos o SearchProductDTO
     // Para compatibilidad, normalizamos si es necesario

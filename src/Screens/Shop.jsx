@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import GlassProductCard from "../Components/GlassProductCard.jsx";
@@ -107,90 +107,74 @@ export default function Shop() {
         else setServerCategories([]);
       })
       .catch(() => { if (mounted) setServerCategories([]); });
-    
-    api.get('/products?page=0&size=1000')
-      .then(res => {
-        if (!mounted) return;
-        const raw = res.data;
-        let list = raw;
-        if (!Array.isArray(list)) {
-          if (raw && Array.isArray(raw.content)) list = raw.content;
-          else if (raw && Array.isArray(raw.products)) list = raw.products;
-          else list = [];
-        }
-        const derived = deriveCategories(list || []);
-        if (derived && derived.length) setFallbackCategories(derived);
-      })
-      .catch(() => { if (mounted) setFallbackCategories([]); });
-     return () => { mounted = false; };
-   }, []);
+
+    // Solo obtener listado grande de productos si NO hay query en la URL.
+    // Este listado se usa únicamente para derivar categorías de fallback
+    // y provoca que la app haga una petición masiva que compite con la búsqueda.
+    if (!query) {
+      api.get('/products?page=0&size=1000')
+        .then(res => {
+          if (!mounted) return;
+          const raw = res.data;
+          let list = raw;
+          if (!Array.isArray(list)) {
+            if (raw && Array.isArray(raw.content)) list = raw.content;
+            else if (raw && Array.isArray(raw.products)) list = raw.products;
+            else list = [];
+          }
+          const derived = deriveCategories(list || []);
+          if (derived && derived.length) setFallbackCategories(derived);
+        })
+        .catch(() => { if (mounted) setFallbackCategories([]); });
+    }
+
+    return () => { mounted = false; };
+  }, [query]);
 
   useEffect(() => {
     if (min !== "" && Number(min) < 0) setMin("0");
     if (max !== "" && Number(max) < 0) setMax("0");
-  }, []);
+  }, [min, max]);
 
-  const resolveCategoryCode = (categoryName) => {
+  const resolveCategoryCode = useCallback((categoryName) => {
     if (!categoryName || categoryName === "All") return null;
     const found = serverCategories.find((c) => (c.name || String(c)).toLowerCase() === categoryName.toLowerCase());
     return found?.categoryCode ?? found?.id ?? null;
-  };
-
-  const loadFiltered = ({ page = 0, filters = null } = {}) => {
-    const pageSize = pagination?.size ?? 24;
-    const usedFilters = filters || appliedFilters || {};
-    const minNum = usedFilters.min === "" || usedFilters.min == null ? null : Math.max(0, Number(usedFilters.min));
-    const maxNum = usedFilters.max === "" || usedFilters.max == null ? null : Math.max(0, Number(usedFilters.max));
-
-    const brandCodesRaw = Array.isArray(usedFilters.brandCodes) ? usedFilters.brandCodes : (usedFilters.brandCodes ? [usedFilters.brandCodes] : []);
-    const brandCodes = brandCodesRaw.map((c) => {
-      const n = Number(c);
-      return Number.isNaN(n) ? c : n;
-    }).filter(Boolean);
-
-    const categoryNames = Array.isArray(usedFilters.categoryNames) ? usedFilters.categoryNames : (usedFilters.categoryNames ? [usedFilters.categoryNames] : []);
-    const categoryCodes = categoryNames.map((name) => resolveCategoryCode(name)).filter(Boolean);
-
-    let sortBy = null;
-    let sortOrder = null;
-    if (sort === "price-asc") {
-      sortBy = "price";
-      sortOrder = "asc";
-    } else if (sort === "price-desc") {
-      sortBy = "price";
-      sortOrder = "desc";
-    } else if (sort === "relevance") {
-      sortBy = "relevance";
-      sortOrder = "desc";
-    }
-
-    dispatch(fetchFilteredProducts({
-      page,
-      size: pageSize,
-      priceMin: minNum,
-      priceMax: maxNum,
-      brandCodes: brandCodes.length ? brandCodes : null,
-      categoryCodes: categoryCodes.length ? categoryCodes : null,
-      sortBy,
-      sortOrder,
-    }));
-  };
-
-  useEffect(() => {
-    loadFiltered({ page: 0, filters: appliedFilters });
   }, [serverCategories]);
 
+  // Centralizamos la lógica de fetch: si hay query en la URL -> búsqueda,
+  // si no hay query -> cargamos productos filtrados según appliedFilters.
   useEffect(() => {
-    if (!isSearchMode && products.length === 0) {
-      dispatch(fetchFilteredProducts({ page: 0, size: 24 }));
-    }
-  }, [isSearchMode, products.length, dispatch]);
+    const doFetch = async () => {
+      if (query) {
+        // Ejecutar búsqueda por query
+        dispatch(fetchSearchProducts(query));
+        return;
+      }
 
-  useEffect(() => {
-    if (query && !isSearchMode) {
-      dispatch(fetchSearchProducts(query));
-    }
-  }, [query, isSearchMode, dispatch]);
+      // No hay query: preparar filtros para el endpoint /products/filter
+      const usedFilters = appliedFilters || {};
+      const minNum = usedFilters.min === "" || usedFilters.min == null ? null : Math.max(0, Number(usedFilters.min));
+      const maxNum = usedFilters.max === "" || usedFilters.max == null ? null : Math.max(0, Number(usedFilters.max));
+      const brandCodesRaw = Array.isArray(usedFilters.brandCodes) ? usedFilters.brandCodes : (usedFilters.brandCodes ? [usedFilters.brandCodes] : []);
+      const brandCodes = brandCodesRaw.map((c) => { const n = Number(c); return Number.isNaN(n) ? c : n; }).filter(Boolean);
+      const categoryNames = Array.isArray(usedFilters.categoryNames) ? usedFilters.categoryNames : (usedFilters.categoryNames ? [usedFilters.categoryNames] : []);
+      const categoryCodes = categoryNames.map((name) => resolveCategoryCode(name)).filter(Boolean);
+
+      let sortBy = null;
+      let sortOrder = null;
+      if (sort === "price-asc") { sortBy = "price"; sortOrder = "asc"; }
+      else if (sort === "price-desc") { sortBy = "price"; sortOrder = "desc"; }
+      else if (sort === "relevance") { sortBy = "relevance"; sortOrder = "desc"; }
+
+      const pageSize = pagination?.size ?? 24;
+      dispatch(fetchFilteredProducts({ page: 0, size: pageSize, priceMin: minNum, priceMax: maxNum, brandCodes: brandCodes.length ? brandCodes : null, categoryCodes: categoryCodes.length ? categoryCodes : null, sortBy, sortOrder }));
+    };
+
+    doFetch();
+    // Incluir resolveCategoryCode en las dependencias para que ESLint no advierta y
+    // para que si cambian las categorías del servidor se recalcule correctamente.
+  }, [query, appliedFilters, sort, serverCategories, pagination?.size, dispatch, resolveCategoryCode]);
 
   const applyFilters = (filters) => {
     const { category: fCategory, categoryNames: fCategoryNames, subcategory: fSub, min: fMin, max: fMax, brandCodes = [] } = filters;
@@ -225,8 +209,7 @@ export default function Shop() {
       setSearchParams(sp); // Ya incluye los filtros, sin query
     }
 
-    // Siempre cargar los productos filtrados
-    loadFiltered({ page: 0, filters: newApplied });
+    // No disparamos loadFiltered aquí: el efecto central se encargará de hacer el fetch
   };
 
   const handleFilterChange = (localFilters) => {
