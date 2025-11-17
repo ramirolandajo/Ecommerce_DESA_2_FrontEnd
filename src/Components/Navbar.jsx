@@ -1,10 +1,10 @@
 // Navbar.jsx
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, NavLink, Link } from "react-router-dom";
+import { useNavigate, NavLink, Link, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import CartDrawer from "./CartDrawer.jsx";
 import { searchProducts } from "../api/products.js";
-import { fetchSearchProducts, fetchProducts, fetchFilteredProducts } from "../store/products/productsSlice.js";
+import { fetchSearchProducts, fetchFilteredProducts } from "../store/products/productsSlice.js";
 import { logout } from "../store/user/userSlice.js";
 import { clearCart, clearCartOnServer } from "../store/cart/cartSlice.js";
 import { showNotification } from "../store/notification/notificationSlice.js";
@@ -69,6 +69,7 @@ export default function Navbar() {
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const userInfo = useSelector((state) => state.user.userInfo);
   const dispatch = useDispatch();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const totalItems = useSelector((s) =>
     s.cart.items.reduce((acc, i) => acc + i.quantity, 0)
@@ -131,6 +132,7 @@ export default function Navbar() {
 
   const handleSelect = (title) => {
     dispatch(fetchSearchProducts(title));
+    setSearchParams({ query: title });
     navigate('/shop');
     setSuggestions([]);
     setQuery(title);
@@ -143,6 +145,9 @@ export default function Navbar() {
     setSuggestions([]);
     if (query.trim()) {
       dispatch(fetchSearchProducts(query));
+      setSearchParams({ query });
+    } else {
+      setSearchParams({});
     }
     navigate('/shop');
   };
@@ -153,8 +158,20 @@ export default function Navbar() {
     setQuery("");
     setSuggestions([]);
     dispatch(fetchFilteredProducts({ page: 0, size: 24 }));
+    setSearchParams({});
     navigate('/shop');
   };
+
+  useEffect(() => {
+    const query = searchParams.get("query") || "";
+    setQuery(query);
+
+    if (query.trim()) {
+      dispatch(fetchSearchProducts(query));
+    } else {
+      dispatch(fetchFilteredProducts({ page: 0, size: 24 }));
+    }
+  }, [dispatch, searchParams]);
 
   return (
     <>

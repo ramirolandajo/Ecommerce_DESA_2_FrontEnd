@@ -7,7 +7,7 @@ import FilterSidebar from "../Components/FilterSidebar.jsx";
 import ProductSkeleton from "../Components/ProductSkeleton.jsx";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { ChevronDownIcon, FunnelIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-import { fetchFilteredProducts, fetchProducts } from "../store/products/productsSlice";
+import { fetchFilteredProducts } from "../store/products/productsSlice";
 import { api } from "../api/axios";
 
 function deriveCategories(items) {
@@ -185,6 +185,12 @@ export default function Shop() {
       dispatch(fetchFilteredProducts({ page: 0, size: 24 }));
     }
   }, [isSearchMode, products.length, dispatch]);
+
+  useEffect(() => {
+    if (query && !isSearchMode) {
+      dispatch(fetchSearchProducts(query));
+    }
+  }, [query, isSearchMode, dispatch]);
 
   const applyFilters = (filters) => {
     const { category: fCategory, categoryNames: fCategoryNames, subcategory: fSub, min: fMin, max: fMax, brandCodes = [] } = filters;
