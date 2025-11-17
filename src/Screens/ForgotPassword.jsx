@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { requestPasswordReset, validateResetToken, changePassword } from "../api/password";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function ForgotPassword() {
   const [step, setStep] = useState(1); // 1: email, 2: token, 3: new password
@@ -12,6 +13,8 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const navigate = useNavigate();
 
   const handleRequestReset = async (e) => {
@@ -125,29 +128,49 @@ export default function ForgotPassword() {
               <label htmlFor="newPassword" className="block text-sm font-medium text-gray-600">
                 Nueva contraseña
               </label>
-              <input
-                type="password"
-                id="newPassword"
-                placeholder="••••••••"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-gray-300 p-3 text-gray-800 focus:border-blue-500 focus:ring focus:ring-blue-200"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={passwordVisible ? "text" : "password"}
+                  id="newPassword"
+                  placeholder="••••••••"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-gray-300 p-3 text-gray-800 focus:border-blue-500 focus:ring focus:ring-blue-200"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setPasswordVisible(!passwordVisible)}
+                  className="absolute right-3 top-3"
+                  aria-label={passwordVisible ? "Ocultar contraseña" : "Mostrar contraseña"}
+                >
+                  {passwordVisible ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
+                </button>
+              </div>
             </div>
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-600">
                 Confirmar nueva contraseña
               </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-gray-300 p-3 text-gray-800 focus:border-blue-500 focus:ring focus:ring-blue-200"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={confirmPasswordVisible ? "text" : "password"}
+                  id="confirmPassword"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-gray-300 p-3 text-gray-800 focus:border-blue-500 focus:ring focus:ring-blue-200"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+                  className="absolute right-3 top-3"
+                  aria-label={confirmPasswordVisible ? "Ocultar contraseña" : "Mostrar contraseña"}
+                >
+                  {confirmPasswordVisible ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
+                </button>
+              </div>
             </div>
             <button
               type="submit"

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { register } from "../store/user/userSlice.js";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -10,6 +11,8 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -70,28 +73,48 @@ export default function Register() {
             <label htmlFor="password" className="block text-sm font-medium text-gray-600">
               Contraseña
             </label>
-            <input
-              type="password"
-              id="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-gray-300 p-3 text-gray-800 focus:border-blue-500 focus:ring focus:ring-blue-200"
-            />
+            <div className="relative">
+              <input
+                type={passwordVisible ? "text" : "password"}
+                id="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-gray-300 p-3 text-gray-800 focus:border-blue-500 focus:ring focus:ring-blue-200"
+              />
+              <button
+                type="button"
+                onClick={() => setPasswordVisible(!passwordVisible)}
+                className="absolute right-3 top-3"
+                aria-label={passwordVisible ? "Ocultar contraseña" : "Mostrar contraseña"}
+              >
+                {passwordVisible ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
+              </button>
+            </div>
           </div>
 
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-600">
               Confirmar contraseña
             </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-gray-300 p-3 text-gray-800 focus:border-blue-500 focus:ring focus:ring-blue-200"
-            />
+            <div className="relative">
+              <input
+                type={confirmPasswordVisible ? "text" : "password"}
+                id="confirmPassword"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-gray-300 p-3 text-gray-800 focus:border-blue-500 focus:ring focus:ring-blue-200"
+              />
+              <button
+                type="button"
+                onClick={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+                className="absolute right-3 top-3"
+                aria-label={confirmPasswordVisible ? "Ocultar contraseña" : "Mostrar contraseña"}
+              >
+                {confirmPasswordVisible ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
+              </button>
+            </div>
           </div>
 
           {error && <p className="text-center text-sm text-red-600">{error}</p>}
