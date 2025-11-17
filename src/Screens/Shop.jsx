@@ -167,14 +167,14 @@ export default function Shop() {
       else if (sort === "price-desc") { sortBy = "price"; sortOrder = "desc"; }
       else if (sort === "relevance") { sortBy = "relevance"; sortOrder = "desc"; }
 
-      const pageSize = pagination?.size ?? 24;
+      const pageSize = 24;
       dispatch(fetchFilteredProducts({ page: 0, size: pageSize, priceMin: minNum, priceMax: maxNum, brandCodes: brandCodes.length ? brandCodes : null, categoryCodes: categoryCodes.length ? categoryCodes : null, sortBy, sortOrder }));
     };
 
     doFetch();
     // Incluir resolveCategoryCode en las dependencias para que ESLint no advierta y
     // para que si cambian las categorías del servidor se recalcule correctamente.
-  }, [query, appliedFilters, sort, serverCategories, pagination?.size, dispatch, resolveCategoryCode]);
+  }, [query, appliedFilters, sort, serverCategories, dispatch, resolveCategoryCode]);
 
   const applyFilters = (filters) => {
     const { category: fCategory, categoryNames: fCategoryNames, subcategory: fSub, min: fMin, max: fMax, brandCodes = [] } = filters;
@@ -258,6 +258,25 @@ export default function Shop() {
   }, [category, subcategory, min, max, sort]);
 
   const showLoading = status === "loading" || status === "idle" || isLoading;
+
+  const loadFiltered = useCallback((params) => {
+    const usedFilters = appliedFilters || {};
+    const minNum = usedFilters.min === "" || usedFilters.min == null ? null : Math.max(0, Number(usedFilters.min));
+    const maxNum = usedFilters.max === "" || usedFilters.max == null ? null : Math.max(0, Number(usedFilters.max));
+    const brandCodesRaw = Array.isArray(usedFilters.brandCodes) ? usedFilters.brandCodes : (usedFilters.brandCodes ? [usedFilters.brandCodes] : []);
+    const brandCodes = brandCodesRaw.map((c) => { const n = Number(c); return Number.isNaN(n) ? c : n; }).filter(Boolean);
+    const categoryNames = Array.isArray(usedFilters.categoryNames) ? usedFilters.categoryNames : (usedFilters.categoryNames ? [usedFilters.categoryNames] : []);
+    const categoryCodes = categoryNames.map((name) => resolveCategoryCode(name)).filter(Boolean);
+
+    let sortBy = null;
+    let sortOrder = null;
+    if (sort === "price-asc") { sortBy = "price"; sortOrder = "asc"; }
+    else if (sort === "price-desc") { sortBy = "price"; sortOrder = "desc"; }
+    else if (sort === "relevance") { sortBy = "relevance"; sortOrder = "desc"; }
+
+    const pageSize = 24;
+    dispatch(fetchFilteredProducts({ page: params.page, size: pageSize, priceMin: minNum, priceMax: maxNum, brandCodes: brandCodes.length ? brandCodes : null, categoryCodes: categoryCodes.length ? categoryCodes : null, sortBy, sortOrder }));
+  }, [appliedFilters, sort, resolveCategoryCode, dispatch]);
 
   return (
     <div className="px-4 pb-12 pt-6 md:pt-8 md:grid md:grid-cols-[16rem_1fr] md:gap-8">
