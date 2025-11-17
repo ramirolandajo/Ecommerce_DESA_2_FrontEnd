@@ -7,7 +7,7 @@ import FilterSidebar from "../Components/FilterSidebar.jsx";
 import ProductSkeleton from "../Components/ProductSkeleton.jsx";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { ChevronDownIcon, FunnelIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-import { fetchFilteredProducts } from "../store/products/productsSlice";
+import { fetchFilteredProducts, fetchSearchProducts } from "../store/products/productsSlice";
 import { api } from "../api/axios";
 
 function deriveCategories(items) {
@@ -190,7 +190,7 @@ export default function Shop() {
     if (query && !isSearchMode) {
       dispatch(fetchSearchProducts(query));
     }
-  }, [query, isSearchMode, dispatch]);
+  }, [query, dispatch]);
 
   const applyFilters = (filters) => {
     const { category: fCategory, categoryNames: fCategoryNames, subcategory: fSub, min: fMin, max: fMax, brandCodes = [] } = filters;
@@ -220,16 +220,13 @@ export default function Shop() {
     if (brandCodes && brandCodes.length) sp.set('brand', String(brandCodes[0]));
     setSearchParams(sp);
 
-    // Si se limpian los filtros y estamos en modo búsqueda, limpiar la búsqueda
-    if (isSearchMode && catNames.length === 0 && !fSub && !fMin && !fMax && brandCodes.length === 0) {
-      dispatch(fetchFilteredProducts({ page: 0, size: 24 }));
-      setSearchParams(new URLSearchParams());
-      return;
+    // Si estamos en modo búsqueda, limpiar la búsqueda ya que aplicamos filtros sobre todos los productos
+    if (isSearchMode) {
+      setSearchParams(sp); // Ya incluye los filtros, sin query
     }
 
-    if (!isSearchMode) {
-      loadFiltered({ page: 0, filters: newApplied });
-    }
+    // Siempre cargar los productos filtrados
+    loadFiltered({ page: 0, filters: newApplied });
   };
 
   const handleFilterChange = (localFilters) => {

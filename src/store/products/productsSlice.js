@@ -96,8 +96,8 @@ export const fetchProductsWithCategories = createAsyncThunk(
       items: normalized,
       pagination: {
         page: rawResponse.pageable?.pageNumber ?? 0,
-        size: rawResponse.pageable?.pageSize ?? normalized.length,
-        totalPages: rawResponse.totalPages ?? 1,
+        size: size,
+        totalPages: rawResponse.totalPages ?? Math.ceil((rawResponse.totalElements ?? normalized.length) / size),
         totalElements: rawResponse.totalElements ?? normalized.length,
         numberOfElements: rawResponse.numberOfElements ?? normalized.length,
         first: rawResponse.first ?? true,
@@ -137,8 +137,8 @@ export const fetchProducts = createAsyncThunk("products/fetchAll", async (params
     items: normalized,
     pagination: {
       page: rawResponse.pageable?.pageNumber ?? 0,
-      size: rawResponse.pageable?.pageSize ?? normalized.length,
-      totalPages: rawResponse.totalPages ?? 1,
+      size: size,
+      totalPages: rawResponse.totalPages ?? Math.ceil((rawResponse.totalElements ?? normalized.length) / size),
       totalElements: rawResponse.totalElements ?? normalized.length,
       numberOfElements: rawResponse.numberOfElements ?? normalized.length,
       first: rawResponse.first ?? true,
@@ -207,8 +207,8 @@ export const fetchFilteredProducts = createAsyncThunk(
       items: normalized,
       pagination: {
         page: rawResponse.pageable?.pageNumber ?? page,
-        size: rawResponse.pageable?.pageSize ?? size,
-        totalPages: rawResponse.totalPages ?? 1,
+        size: size,
+        totalPages: rawResponse.totalPages ?? Math.ceil((rawResponse.totalElements ?? normalized.length) / size),
         totalElements: rawResponse.totalElements ?? normalized.length,
         numberOfElements: rawResponse.numberOfElements ?? normalized.length,
         first: rawResponse.first ?? (page === 0),
